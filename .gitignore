@@ -1,0 +1,18 @@
+# NetBeans specific
+nbproject/private/
+build/
+dist/
+nbbuild/
+nbactions.xml
+nb-configuration.xml
+
+# Log files
+*.log
+
+# Database local files
+*.mdf
+*.ldf
+
+# OS files
+.DS_Store
+Thumbs.db
