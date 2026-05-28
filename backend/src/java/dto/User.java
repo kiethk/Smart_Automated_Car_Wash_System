@@ -1,4 +1,4 @@
-package entity;
+package dto;
 
 import java.util.Date;
 
