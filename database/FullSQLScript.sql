@@ -74,6 +74,7 @@ CREATE TABLE [User] (
     is_active INT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     role_id INT,
+    avatar_url NVARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (role_id) REFERENCES Role(role_id)
 );
 
