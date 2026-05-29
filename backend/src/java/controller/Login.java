@@ -1,10 +1,8 @@
 package controller;
 
 import dao.UserDAO;
-import dto.User; // Import class User thay vì Customer
+import dto.User;
 import java.io.IOException;
-
-// Sử dụng các gói import của Java EE cũ (javax.servlet)
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -32,21 +30,23 @@ public class Login extends HttpServlet {
             HttpSession session = request.getSession();
             session.setAttribute("USER", user);
 
-            // Chuyển hướng sang trang chủ index.jsp
+            // Chuyển hướng sang trang profile
             response.sendRedirect("profile.jsp");
-            return; // <--- THÊM DÒNG NÀY ĐỂ DỪNG HÀM TẠI ĐÂY, KHÔNG CHẠY XUỐNG DƯỚI NỮA
+            return; 
         } else {
-            // Đăng nhập thất bại
-            request.setAttribute("ERROR", "Invalid email or password. Please try again.");
-            request.getRequestDispatcher("views/auth/login.jsp").forward(request, response);
-            return; // <--- THÊM DÒNG NÀY ĐỂ ĐẢM BẢO AN TOÀN
+            // Đăng nhập thất bại -> Đồng bộ gửi tên ERROR_MSG về cho JSP nhận diện
+            request.setAttribute("ERROR_MSG", "Invalid email or password. Please try again.");
+            
+            // Thêm dấu / phía trước để đảm bảo chạy từ root của ứng dụng
+            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+            return; 
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Nếu người dùng cố tình truy cập link Servlet bằng phương thức GET, đưa họ về trang login
-        response.sendRedirect("views/auth/login.jsp");
+        // Nếu truy cập bằng GET, chuyển hướng thẳng về trang đăng nhập
+        response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
     }
 }
