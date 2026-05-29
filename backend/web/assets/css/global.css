@@ -1,3 +1,48 @@
-.custom_text {
-    color: red;
+/* ==========================================================================
+   PRECISION VELOCITY DESIGN SYSTEM - GLOBAL VARIABLES (VANILLA CSS)
+   ========================================================================== */
+
+:root {
+    /* --- BẢNG MÀU CHÍNH (BRAND COLORS) --- */
+    --primary: #1f108e;
+    --on-primary: #ffffff;
+    --secondary: #0060ac;
+    --on-secondary: #ffffff;
+    --background: #faf8ff;
+    --on-background: #131b2e;
+
+    /* --- PANEL & BỀ MẶT (SURFACE PALETTE) --- */
+    --surface: #faf8ff;
+    --surface-card: #ffffff;
+    --surface-border: #e2e8f0;
+    --surface-container: #eaedff;
+    --on-surface-variant: #464553;
+
+    /* --- TRẠNG THÁI & HẠNG THÀNH VIÊN (SEMANTIC & LOYALTY) --- */
+    --success: #10b981;
+    --error: #f43f5e;
+    --loyalty-gold: #f59e0b;
+    --loyalty-silver: #94a3b8;
+
+    /* --- ĐỘ BO GÓC (SHAPES & ROUNDED) --- */
+    --rounded-sm: 0.25rem;    /* 4px */
+    --rounded-md: 0.5rem;     /* 8px */
+    --rounded-lg: 0.75rem;    /* 12px */
+    --rounded-2xl: 1rem;      /* 16px - Chuẩn Primary Buttons & Cards */
+    --rounded-xl: 1.5rem;     /* 24px */
+    --rounded-full: 9999px;   /* Pill shape */
+
+    /* --- PHÔNG CHỮ (TYPOGRAPHY) --- */
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Áp dụng phông chữ mặc định cho toàn bộ trang web */
+body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--on-background);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
 }
