@@ -1,19 +1,40 @@
-# NetBeans specific
-nbproject/private/
-build/
-dist/
-nbbuild/
+# ==========================================================================
+# NETBEANS & PROJECT SPECIFIC
+# ==========================================================================
+**/nbproject/private/
+**/nbproject/导出的 cấu hình tư nhân (nếu có)
 nbactions.xml
 nb-configuration.xml
 
-# Log files
-*.log
+# Chặn thư mục build đầu ra của NetBeans Ant
+build/
+dist/
+nbbuild/
 
-# Database local files
+# Chặn thư mục build đầu ra của NetBeans Maven (Rất quan trọng nếu dùng Maven)
+target/
+pom.xml.tag
+release.properties
+
+# Không bao giờ chặn thư mục cấu hình WEB-INF của Java Web
+!**/web/WEB-INF/
+!**/web/WEB-INF/**
+!**/WebContent/WEB-INF/
+!**/WebContent/WEB-INF/**
+
+# ==========================================================================
+# LOG FILES & LOCAL DATABASES
+# ==========================================================================
+*.log
 *.mdf
 *.ldf
 
-# OS files
+# ==========================================================================
+# OPERATING SYSTEM FILES
+# ==========================================================================
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
-/DemoBackend/nbproject/private/
+ehthumbs.db
+desktop.ini

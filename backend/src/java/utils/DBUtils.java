@@ -2,30 +2,20 @@ package utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DBUtils {
  
-    private final String serverName = "localhost";
-    private final String dbName = "CAR_WASH_DB";
-    private final String portNumber = "1433";
-    private final String userID = "sa";
-    private final String password = "12345";
+    //    Do not change this code
+    private static final String DB_NAME = "CAR_WASH_DB";
+    private static final String DB_USER_NAME = "SA";
+    private static final String DB_PASSWORD = "12345";
 
-    public Connection getConnection() throws Exception {
-        String url = "jdbc:sqlserver://" + serverName + ":" + portNumber + ";databaseName=" + dbName + ";encrypt=false";
+    public static Connection getConnection() throws ClassNotFoundException, SQLException {
+        Connection conn = null;
         Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-        return DriverManager.getConnection(url, userID, password);
-    }
-
-    // Hàm test nhanh kết nối
-    public static void main(String[] args) {
-        try {
-            DBUtils db = new DBUtils();
-            if (db.getConnection() != null) {
-                System.out.println("Connected to CAR_WASH_DB!");
-            }
-        } catch (Exception e) {
-            System.out.println("Failed connect: " + e.getMessage());
-        }
+        String url = "jdbc:sqlserver://localhost:1433;databaseName=" + DB_NAME;
+        conn = DriverManager.getConnection(url, DB_USER_NAME, DB_PASSWORD);
+        return conn;
     }
 }
