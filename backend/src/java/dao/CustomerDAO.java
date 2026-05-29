@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import dto.Customer;
+import java.sql.Date;
 import utils.DBUtils;
 
 public class CustomerDAO {
@@ -43,5 +44,73 @@ public class CustomerDAO {
             e.printStackTrace();
         }
         return null;
+    }
+    
+ 
+    public int createNewCustomer(Customer c) {
+
+        int result = 0;
+
+        Connection cn = null;
+
+        try {
+
+            cn = DBUtils.getConnection();
+
+            if (cn != null) {
+
+                String sql = "INSERT INTO Customer "
+                        + "(address, total_points, "
+                        + "total_spent, total_washes, "
+                        + "join_date, date_of_birth, "
+                        + "user_id, tier_id, "
+                        + "last_review_date) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+                PreparedStatement st =
+                        cn.prepareStatement(sql);
+
+                st.setString(1, c.getAddress());
+
+                st.setInt(2, c.getTotalPoints());
+
+                st.setLong(3, c.getTotalSpent());
+
+                st.setInt(4, c.getTotalWashes());
+
+                st.setDate(5,
+                        (Date) c.getJoinDate());
+
+                st.setDate(6,
+                        (Date) c.getDateOfBirth());
+
+                st.setInt(7, c.getUserId());
+
+                st.setInt(8, c.getTierId());
+
+                st.setDate(9,
+                        (Date) c.getLastReviewDate());
+
+                result = st.executeUpdate();
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        } finally {
+
+            try {
+
+                if (cn != null) {
+                    cn.close();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
     }
 }
