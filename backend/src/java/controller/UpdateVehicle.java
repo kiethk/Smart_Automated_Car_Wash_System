@@ -36,7 +36,7 @@ public class UpdateVehicle extends HttpServlet {
         HttpSession session = request.getSession(false);
         
         if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp?error=Please login first");
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
         
@@ -80,7 +80,7 @@ public class UpdateVehicle extends HttpServlet {
         HttpSession session = request.getSession(false);
         
         if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp?error=Please login first");
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
         
