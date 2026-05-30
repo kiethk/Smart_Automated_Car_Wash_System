@@ -18,7 +18,6 @@ body {
     border-radius: 20px;
     width: 100%;
     max-width: 440px;
-    /* Hiệu ứng đổ bóng nhiều lớp (Soft Layered Shadow) mịn màng như ảnh mẫu */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 
                 0 10px 20px -3px rgba(0, 0, 0, 0.04), 
                 0 20px 25px -5px rgba(0, 0, 0, 0.03);
@@ -109,7 +108,7 @@ body {
     padding: 13px 14px 13px 44px;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    background-color: #f8fafc; /* Màu nền xám nhẹ dịu mắt */
+    background-color: #f8fafc;
     font-size: 15px;
     color: #1e293b;
     outline: none;
@@ -117,7 +116,7 @@ body {
     transition: all 0.2s ease-in-out;
 }
 
-/* Hiệu ứng focus chuyên nghiệp */
+/* Hiệu ứng focus */
 .input-wrapper input:focus {
     border-color: #0256d0;
     background-color: #ffffff;
@@ -143,7 +142,7 @@ body {
 }
 
 .remember-me input[type="checkbox"] {
-    accent-color: #0256d0; /* Đồng bộ màu tích chọn */
+    accent-color: #0256d0;
     width: 15px;
     height: 15px;
     margin: 0;
@@ -164,7 +163,6 @@ body {
 .btn-signin {
     width: 100%;
     padding: 14px;
-    /* Dải màu chuyển tiếp từ Xanh tối sang Xanh biển sâu sang trọng */
     background: linear-gradient(135deg, #0b1a4a 0%, #0256d0 100%);
     color: #ffffff;
     border: none;
