@@ -283,9 +283,6 @@ CHECK (balance >= 0);
 ALTER TABLE WalletTransaction ADD CONSTRAINT CHK_WT_Type 
 CHECK (type IN (N'deposit', N'payment', N'refund'));
 
--- UNIQUE cho số điện thoại
-ALTER TABLE [User] ADD CONSTRAINT UQ_User_Phone UNIQUE (phone);
-
 
 -- ========================================================
 -- SCRIPT ADD DATA
