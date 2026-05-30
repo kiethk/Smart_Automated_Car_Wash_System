@@ -169,7 +169,8 @@ public class UpdateVehicle extends HttpServlet {
             String message)
             throws ServletException, IOException {
         request.setAttribute("error", message);
-        request.getRequestDispatcher("/views/auth/vehicle/UpdateVehicle.jsp?id=" + vehicleId)
+        request.setAttribute("vehicle", vehicleDAO.getVehicleById(vehicleId));
+        request.getRequestDispatcher("/views/auth/vehicle/UpdateVehicle.jsp")
                 .forward(request, response);
     }
 
