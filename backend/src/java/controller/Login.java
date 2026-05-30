@@ -31,7 +31,7 @@ public class Login extends HttpServlet {
             session.setAttribute("USER", user);
 
             // Chuyển hướng sang trang profile
-            response.sendRedirect("profile.jsp");
+            response.sendRedirect(request.getContextPath() + "/views/auth/customer/profile.jsp");
             return; 
         } else {
             // Đăng nhập thất bại -> Đồng bộ gửi tên ERROR_MSG về cho JSP nhận diện
