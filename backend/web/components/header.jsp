@@ -1,3 +1,4 @@
+<%@page import="dto.User"%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html>
@@ -10,13 +11,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-        <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/images/favicon.png">
-
-        <script src="https://cdn.tailwindcss.com"></script>
-
-        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/global.css">
-
-
+        <jsp:include page="/components/head.jsp" />
         <script>
             tailwind.config = {theme: {
                     extend: {
@@ -96,14 +91,33 @@
 
                 <jsp:include page="/components/logo.jsp" />
 
-                <div class="flex items-center space-x-4">
-                    <% if (session.getAttribute("user") == null) { %>
-                    <a href="${pageContext.request.contextPath}/views/auth/register.jsp" 
-                       class="text-sm font-medium text-primary transition duration-150">
-                        Sign up
-                    </a>
+                <div class="flex items-center space-x-6 relative">
+                    <% User user = (User) session.getAttribute("USER");
+                        if (user == null) { %>
+                    <a href="${pageContext.request.contextPath}/views/auth/register.jsp" class="text-sm font-medium text-primary">Sign up</a>
+                    <a href="${pageContext.request.contextPath}/views/auth/login.jsp" class="btn-primary py-2 px-4 text-sm">Login</a>
+                    <% } else {%>
+                    <div class="relative">
+                        <button onclick="toggleDropdown()" class="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none">
+                            <span class="text-sm font-semibold text-on-background"><%= user.getFullName() != null ? user.getFullName() : "User"%></span>
+                            <div class="w-9 h-9 rounded-full border-2 border-primary/20 overflow-hidden bg-primary/10">
+                                <img src="<%= (user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty()) ? user.getAvatarUrl() : request.getContextPath() + "/assets/images/avatar-placeholder.jpg"%>" alt="Avatar" class="w-full h-full object-cover">
+                            </div>
+                        </button>
+
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-surface-border rounded-xl shadow-lg py-2 z-50">
+                            <a href="${pageContext.request.contextPath}/profile" class="block px-4 py-2 text-sm text-on-background hover:bg-slate-50 transition-colors">
+                                My Profile
+                            </a>
+                            <hr class="my-1 border-surface-border">
+                            <a href="${pageContext.request.contextPath}/logout" class="block px-4 py-2 text-sm text-error hover:bg-red-50 transition-colors">
+                                Logout
+                            </a>
+                        </div>
+                    </div>
                     <% }%>
                 </div>
+
 
             </div>
         </nav>

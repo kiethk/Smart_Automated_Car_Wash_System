@@ -41,89 +41,71 @@ public class AddVehicle extends HttpServlet {
         request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp").forward(request, response);
     }
 
- @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
-        
-        // Kiểm tra đăng nhập
+
         if (session == null || session.getAttribute("USER") == null) {
             response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
-        
-        User currentUser = (User) session.getAttribute("USER");
-        
-        // Lấy customer từ userId
-        Customer customer = customerDAO.getCustomerByUserId(currentUser.getUserId());
-        if (customer == null) {
-            // Sửa đường dẫn báo lỗi quay về form thông qua Servlet điều hướng hành động GET
-            response.sendRedirect(request.getContextPath() + "/addVehicle?error=Customer profile not found");
-            return;
-        }
-        
-        // Lấy thông tin từ form
-        String plateNumber = request.getParameter("plateNumber");
-        String brand = request.getParameter("brand");
-        String model = request.getParameter("model");
-        String vehicleType = request.getParameter("vehicleType");
-        String color = request.getParameter("color");
+
+        // 1. Thu thập dữ liệu vào một đối tượng "tạm"
+        Vehicle vehicle = new Vehicle();
+        vehicle.setPlateNumber(request.getParameter("plateNumber"));
+        vehicle.setBrand(request.getParameter("brand"));
+        vehicle.setModel(request.getParameter("model"));
+        vehicle.setVehicleType(request.getParameter("vehicleType"));
+        vehicle.setColor(request.getParameter("color"));
+
         String manufactureYearStr = request.getParameter("manufactureYear");
-        
-        // Validate biển số
-        if (plateNumber == null || plateNumber.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/addVehicle?error=Plate number is required");
-            return;
-        }
-        plateNumber = plateNumber.trim().toUpperCase();
-        
-        // Validate loại xe
-        if (vehicleType == null || vehicleType.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/addVehicle?error=Vehicle type is required");
-            return;
-        }
-        
-        // Validate năm sản xuất
         int manufactureYear = 0;
-        if (manufactureYearStr != null && !manufactureYearStr.trim().isEmpty()) {
-            try {
+
+        // 2. Validate dữ liệu
+        String errorMsg = null;
+        try {
+            if (vehicle.getPlateNumber() == null || vehicle.getPlateNumber().trim().isEmpty()) {
+                errorMsg = "Plate number is required";
+            } else if (vehicle.getVehicleType() == null || vehicle.getVehicleType().trim().isEmpty()) {
+                errorMsg = "Vehicle type is required";
+            } else if (manufactureYearStr != null && !manufactureYearStr.trim().isEmpty()) {
                 manufactureYear = Integer.parseInt(manufactureYearStr);
-            } catch (NumberFormatException e) {
-                response.sendRedirect(request.getContextPath() + "/addVehicle?error=Invalid manufacture year");
-                return;
             }
+
+            if (errorMsg == null && vehicleDAO.isPlateNumberExists(vehicle.getPlateNumber().trim().toUpperCase())) {
+                errorMsg = "Plate number already exists";
+            }
+        } catch (NumberFormatException e) {
+            errorMsg = "Invalid manufacture year";
         }
-        
-        // 🚨 Kiểm tra trùng biển số (Cần đảm bảo hàm này đã có trong VehicleDAO của bạn)
-        // Lưu ý: Đoạn này redirect về "/profile.jsp" vì hệ thống chưa cấu hình "/vehicles" riêng
-        if (vehicleDAO.isPlateNumberExists(plateNumber)) {
-            session.setAttribute("ERROR", "Plate number already exists");
-            response.sendRedirect(request.getContextPath() + "/views/auth/customer/profile.jsp");
+
+        // 3. Nếu có lỗi: Đẩy đối tượng vehicle cũ và thông báo lỗi về JSP
+        if (errorMsg != null) {
+            request.setAttribute("ERROR", errorMsg);
+            request.setAttribute("vehicle", vehicle); // Gửi đối tượng vehicle để điền lại form
+            request.setAttribute("manufactureYear", manufactureYearStr);
+            request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp").forward(request, response);
             return;
         }
 
-        // Tạo đối tượng Vehicle
-        Vehicle vehicle = new Vehicle();
-        vehicle.setPlateNumber(plateNumber);
-        vehicle.setBrand(brand != null ? brand.trim() : "");
-        vehicle.setModel(model != null ? model.trim() : "");
-        vehicle.setVehicleType(vehicleType);
-        vehicle.setColor(color != null ? color.trim() : "");
+        // 4. Xử lý logic nghiệp vụ khi không có lỗi
+        User currentUser = (User) session.getAttribute("USER");
+        Customer customer = customerDAO.getCustomerByUserId(currentUser.getUserId());
+
+        vehicle.setPlateNumber(vehicle.getPlateNumber().trim().toUpperCase());
         vehicle.setManufactureYear(manufactureYear);
         vehicle.setCustomerId(customer.getCustomerId());
 
-        // Thêm vào database
-        boolean isAdded = vehicleDAO.addVehicle(vehicle);
-
-        if (isAdded) {
+        if (vehicleDAO.addVehicle(vehicle)) {
             session.setAttribute("SUCCESS", "Vehicle added successfully!");
-            // Đưa người dùng quay lại trang quản lý Profile để thấy xe mới cập nhật lập tức
-            response.sendRedirect(request.getContextPath() + "/views/auth/customer/profile.jsp");
+            response.sendRedirect(request.getContextPath() + "/profile");
         } else {
-            session.setAttribute("ERROR", "Failed to add vehicle");
-            response.sendRedirect(request.getContextPath() + "/views/auth/customer/profile.jsp");
+            request.setAttribute("ERROR", "System error: Could not add vehicle.");
+            request.setAttribute("vehicle", vehicle);
+            request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp").forward(request, response);
         }
     }
 

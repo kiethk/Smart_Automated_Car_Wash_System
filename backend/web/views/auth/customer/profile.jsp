@@ -39,17 +39,19 @@
 
             <div class="md:col-span-4 space-y-6">
                 <div class="bg-surface-container rounded-2xl p-6 border border-surface-border flex flex-col items-center text-center">
+                    <div class="relative w-24 h-24">
+                        <div class="w-full h-full bg-primary/10 rounded-full flex items-center justify-center text-primary text-3xl font-bold border-2 border-primary/20 overflow-hidden">
+                            <img src="<%= (loginedUser.getAvatarUrl() != null && !loginedUser.getAvatarUrl().trim().isEmpty()) ? loginedUser.getAvatarUrl() : request.getContextPath() + "/assets/images/avatar-placeholder.jpg"%>" 
+                                 alt="User Avatar" class="w-full h-full object-cover" id="avatar-preview" />
+                        </div>
 
-                    <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center text-primary text-3xl font-bold mb-4 border-2 border-primary/20 overflow-hidden">
-                        <img src="<%
-                            if (loginedUser.getAvatarUrl() != null && !loginedUser.getAvatarUrl().trim().isEmpty()) {
-                                out.print(loginedUser.getAvatarUrl());
-                            } else {
-                                out.print(request.getContextPath() + "/assets/images/avatar-placeholder.jpg");
-                            }
-                             %>" 
-                             alt="User Avatar" 
-                             class="w-full h-full object-cover" />
+                        <label for="avatar-upload" class="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full border-2 border-surface-container cursor-pointer hover:bg-primary-dark transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </label>
+                        <input type="file" id="avatar-upload" class="hidden" accept="image/*" onchange="uploadAvatar(this)">
                     </div>
 
                     <h2 class="text-xl font-bold text-on-background"><%= loginedUser.getFullName()%></h2>
@@ -59,24 +61,65 @@
 
                     <hr class="w-full border-surface-border my-6">
 
-                    <div class="w-full space-y-4 text-left text-sm">
-                        <div>
-                            <label class="form-label">Email Address</label>
-                            <span class="text-on-background font-medium block mt-0.5"><%= loginedUser.getEmail()%></span>
-                        </div>
-                        <div>
-                            <label class="form-label">Phone Number</label>
-                            <span class="text-on-background font-medium block mt-0.5"><%= loginedUser.getPhone() != null ? loginedUser.getPhone() : "Not provided"%></span>
-                        </div>
-                        <div>
-                            <label class="form-label">Member Since</label>
-                            <span class="text-on-background font-medium block mt-0.5"><%= loginedCustomer.getJoinDate()%></span>
-                        </div>
-                    </div>
+                        <div class="w-full space-y-4 text-left text-sm" id="profile-info">
+                            <div>
+                                <label class="form-label block text-xs font-semibold uppercase opacity-70">Email Address</label>
+                                <span class="text-on-background font-medium block mt-1"><%= loginedUser.getEmail()%></span>
+                            </div>
 
-                    <button class="btn-secondary w-full mt-6 py-2.5 text-sm">
-                        Edit Profile
-                    </button>
+                            <div>
+                                <label class="form-label block text-xs font-semibold uppercase opacity-70">Member Since</label>
+                                <span class="text-on-background font-medium block mt-1"><%= loginedCustomer.getJoinDate()%></span>
+                            </div>
+
+                            <div class="editable-group">
+                                <label class="form-label block text-xs font-semibold uppercase opacity-70">Phone Number</label>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span class="text-on-background font-medium" id="phone-text">
+                                        <%= loginedUser.getPhone() != null ? loginedUser.getPhone() : "Not provided"%>
+                                    </span>
+                                    <button onclick="toggleEdit('phone')" class="text-primary hover:text-primary-dark ml-2">✎</button>
+                                </div>
+                                <input type="text" id="phone-input" 
+                                       class="hidden w-full bg-surface-container border border-primary p-2 rounded mt-1 focus:outline-none" 
+                                       value="<%= loginedUser.getPhone() != null ? loginedUser.getPhone() : ""%>" 
+                                       onkeydown="if (event.key === 'Enter')
+                                                   saveField('phone', this.value)"
+                                       onblur="saveField('phone', this.value)">
+                            </div>
+
+                            <div class="editable-group">
+                                <label class="form-label block text-xs font-semibold uppercase opacity-70">Address</label>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span class="text-on-background font-medium" id="address-text">
+                                        <%= loginedCustomer.getAddress() != null ? loginedCustomer.getAddress() : "Not provided"%>
+                                    </span>
+                                    <button onclick="toggleEdit('address')" class="text-primary hover:text-primary-dark ml-2">✎</button>
+                                </div>
+                                <input type="text" id="address-input" 
+                                       class="hidden w-full bg-surface-container border border-primary p-2 rounded mt-1 focus:outline-none" 
+                                       value="<%= loginedCustomer.getAddress() != null ? loginedCustomer.getAddress() : ""%>" 
+                                       onkeydown="if (event.key === 'Enter')
+                                                   saveField('address', this.value)"
+                                       onblur="saveField('address', this.value)">
+                            </div>
+
+                            <div class="editable-group">
+                                <label class="form-label block text-xs font-semibold uppercase opacity-70">DATE OF BIRTH</label>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span class="text-on-background font-medium" id="dob-text">
+                                        <%= loginedCustomer.getDateOfBirth() != null ? loginedCustomer.getDateOfBirth() : "Not provided"%>
+                                    </span>
+                                    <button onclick="toggleEdit('dob')" class="text-primary hover:text-primary-dark ml-2">✎</button>
+                                </div>
+                                <input type="date" id="dob-input" 
+                                       class="hidden w-full bg-surface-container border border-primary p-2 rounded mt-1 focus:outline-none" 
+                                       value="<%= loginedCustomer.getDateOfBirth() != null ? loginedCustomer.getDateOfBirth() : ""%>" 
+                                       onkeydown="if (event.key === 'Enter')
+                                                   saveField('dob', this.value)"
+                                       onblur="saveField('dob', this.value)">
+                            </div>                     
+                        </div>
                 </div>
             </div>
 
@@ -130,17 +173,35 @@
                     </div>
 
                     <div class="bg-surface-container rounded-2xl p-6 border border-surface-border flex flex-col justify-between">
+                        <%
+                            Wallet wallet = (Wallet) session.getAttribute("WALLET");
+                            if (wallet != null) {
+                        %>
                         <div>
                             <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Vehicle Wallet</div>
                             <div class="text-3xl font-bold text-on-background mt-1 tech-data">
-                                <%= loginedWallet != null ? String.format("%,d", loginedWallet.getBalance()) + " VND" : "0 VND"%>
+                                <%= String.format("%,d", wallet.getBalance())%> <span class="text-lg">VND</span>
                             </div>
-                            <p class="text-xs text-slate-500 mt-2">Available balance for instant slot booking activation inside infrastructure.</p>
+                            <p class="text-xs text-slate-500 mt-2">Available balance for instant slot booking.</p>
                         </div>
-
                         <div class="mt-4 pt-3 border-t border-dashed border-surface-border flex gap-2">
                             <button class="text-xs text-primary font-bold hover:underline">Top Up Balance →</button>
                         </div>
+                        <% } else { %>
+                        <div class="flex flex-col items-center justify-center h-full text-center py-4">
+                            <div class="mb-3 text-slate-400">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            </div>
+                            <h4 class="text-sm font-bold text-on-background">No Wallet Found</h4>
+                            <p class="text-xs text-slate-500 mb-4 px-2">Create a digital wallet to start booking slots instantly.</p>
+
+                            <form action="${pageContext.request.contextPath}/createWallet" method="POST">
+                                <button type="submit" class="text-xs bg-primary text-on-primary px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-opacity">
+                                    Create Wallet Now
+                                </button>
+                            </form>
+                        </div>
+                        <% } %>
                     </div>
 
                 </div>
@@ -173,11 +234,25 @@
                                     <div class="text-xs text-slate-400 tracking-wider tech-data font-semibold"><%= vehicle.getPlateNumber()%></div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-[11px] text-slate-400 font-mono"><%= vehicle.getColor()%></span>
-                                <span class="text-xs bg-emerald-50 text-emerald-600 font-medium px-2.5 py-1 rounded-md border border-emerald-100">
-                                    Active
-                                </span>
+
+                            <div class="flex items-center gap-4">
+                                <span class="text-[11px] text-slate-400 font-mono hidden md:block"><%= vehicle.getColor()%></span>
+
+                                <div class="flex items-center gap-2">
+                                    <a href="${pageContext.request.contextPath}/updateVehicle?id=<%= vehicle.getVehicleId()%>" 
+                                       class="p-2 text-primary hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </a>
+
+                                    <button onclick="deleteVehicle('<%= vehicle.getVehicleId()%>')" 
+                                            class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <%
@@ -199,5 +274,88 @@
 
     </div>
 </main>
+
+<script>
+    function toggleEdit(field) {
+        document.getElementById(field + '-text').classList.add('hidden');
+        document.getElementById(field + '-input').classList.remove('hidden');
+        document.getElementById(field + '-input').focus();
+    }
+
+    let isSaving = false; // Biến cờ
+
+    function saveField(field, value) {
+        if (isSaving)
+            return; // Nếu đang lưu thì không làm gì cả
+        isSaving = true;
+
+        // Ẩn input, hiện text lại ngay
+        document.getElementById(field + '-text').classList.remove('hidden');
+        document.getElementById(field + '-input').classList.add('hidden');
+
+        fetch('${pageContext.request.contextPath}/updateProfile', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'field=' + field + '&value=' + encodeURIComponent(value)
+        })
+                .then(response => response.text())
+                .then(data => {
+                    isSaving = false; // Reset cờ
+                    console.log(data);
+                    if (data.trim() === "success") {
+                        document.getElementById(field + '-text').innerText = (value.trim() === "") ? "Not provided" : value;
+                    } else {
+                        alert("Failed to update " + field);
+                    }
+                })
+                .catch(err => {
+                    isSaving = false;
+                    alert("System error!");
+                });
+    }
+
+    async function uploadAvatar(input) {
+        const file = input.files[0];
+        if (!file)
+            return;
+
+        const preview = document.getElementById('avatar-preview');
+        preview.style.opacity = "0.5";
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "avatar_prj_upload");
+
+        try {
+            const response = await fetch("https://api.cloudinary.com/v1_1/dtkasmhud/image/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.secure_url) {
+                preview.src = data.secure_url;
+                preview.style.opacity = "1";
+
+                saveAvatarUrlToDB(data.secure_url);
+            } else {
+                throw new Error("Upload failed!");
+            }
+        } catch (error) {
+            console.error("Error: ", error);
+            preview.style.opacity = "1";
+            alert("Cannot upload your image. Please try again!");
+        }
+    }
+
+    function saveAvatarUrlToDB(url) {
+        fetch('${pageContext.request.contextPath}/updateProfile', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'field=avatar&value=' + encodeURIComponent(url)
+        });
+    }
+</script>
 
 <jsp:include page="/components/footer.jsp" />
