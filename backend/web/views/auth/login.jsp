@@ -1,3 +1,12 @@
+<%
+    // Kiểm tra nếu đã có session USER thì chuyển hướng về profile
+    if (session.getAttribute("USER") != null) {
+        response.sendRedirect(request.getContextPath() + "/profile");
+        return; // Dừng việc tải trang login lại
+    }
+%>
+
+
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -5,6 +14,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>AutoWash Pro - Sign In</title>
+        <jsp:include page="/components/head.jsp" />
         <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/pages/login.css">
     </head>
     <body>
@@ -28,7 +38,7 @@
                 </span>
             </div>
 
-            <form action="${pageContext.request.contextPath}/Login" method="POST">
+            <form action="${pageContext.request.contextPath}/login" method="POST">
 
                 <div class="input-group">
                     <label for="email">Email Address</label>

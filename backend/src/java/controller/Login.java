@@ -1,7 +1,11 @@
 package controller;
 
+import dao.CustomerDAO;
 import dao.UserDAO;
+import dao.WalletDAO;
+import dto.Customer;
 import dto.User;
+import dto.Wallet;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -10,7 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-@WebServlet(name = "Login", urlPatterns = {"/Login"})
+@WebServlet(name = "Login", urlPatterns = {"/login"})
 public class Login extends HttpServlet {
 
     @Override
@@ -18,35 +22,47 @@ public class Login extends HttpServlet {
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
-
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
         UserDAO userDAO = new UserDAO();
-        User user = userDAO.getUser(email, password);
+        CustomerDAO customerDAO = new CustomerDAO();
+        WalletDAO walletDAO = new WalletDAO();
 
-        if (user != null) {
-            // Đăng nhập thành công -> Lưu vào Session
-            HttpSession session = request.getSession();
-            session.setAttribute("USER", user);
+        User user = userDAO.getUserByEmail(email);
 
-            // Chuyển hướng sang trang profile
-            response.sendRedirect(request.getContextPath() + "/views/auth/customer/profile.jsp");
-            return; 
-        } else {
-            // Đăng nhập thất bại -> Đồng bộ gửi tên ERROR_MSG về cho JSP nhận diện
-            request.setAttribute("ERROR_MSG", "Invalid email or password. Please try again.");
-            
-            // Thêm dấu / phía trước để đảm bảo chạy từ root của ứng dụng
+        try {
+            String hashedInputPassword = utils.PasswordUtils.hashSHA256(password);
+
+            if (user != null && user.getPassword().equals(hashedInputPassword)) {
+                // Đăng nhập thành công
+                HttpSession session = request.getSession();
+                session.setAttribute("USER", user);
+
+                // QUAN TRỌNG: Lấy thông tin Customer và lưu vào Session
+                Customer customer = customerDAO.getCustomerByUserId(user.getUserId());
+                if (customer != null) {
+                    session.setAttribute("CUSTOMER", customer);
+                }
+
+                // Khi User login thành công
+                Wallet wallet = walletDAO.getWalletByCustomerId(customer.getCustomerId());
+                session.setAttribute("WALLET", wallet);
+
+                response.sendRedirect(request.getContextPath() + "/profile");
+            } else {
+                request.setAttribute("ERROR_MSG", "Invalid email or password.");
+                request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+            }
+        } catch (Exception e) {
+            request.setAttribute("ERROR_MSG", "System error: " + e.getMessage());
             request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
-            return; 
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Nếu truy cập bằng GET, chuyển hướng thẳng về trang đăng nhập
         response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
     }
 }
