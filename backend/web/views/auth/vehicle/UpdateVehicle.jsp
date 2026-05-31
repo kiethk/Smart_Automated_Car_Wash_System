@@ -1,4 +1,5 @@
 <jsp:include page="/components/header.jsp"/>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <main class="py-12 px-6 bg-slate-50">
     <div class="max-w-3xl mx-auto">
 
