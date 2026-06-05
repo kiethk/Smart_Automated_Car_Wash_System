@@ -29,11 +29,11 @@ public class Login extends HttpServlet {
         CustomerDAO customerDAO = new CustomerDAO();
         WalletDAO walletDAO = new WalletDAO();
 
-        User user = userDAO.getUserByEmail(email);
+
 
         try {
             String hashedInputPassword = utils.PasswordUtils.hashSHA256(password);
-
+            User user = userDAO.getUserByEmailAndPassword(email, hashedInputPassword);
             if (user != null && user.getPassword().equals(hashedInputPassword)) {
                 // Đăng nhập thành công
                 HttpSession session = request.getSession();

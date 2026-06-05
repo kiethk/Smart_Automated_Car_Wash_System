@@ -72,7 +72,7 @@ public class Register extends HttpServlet {
         CustomerDAO customerDAO = new CustomerDAO();
 
         // ===== CHECK EMAIL DUPLICATE =====
-        User foundUser = userDAO.getUserByEmail(email);
+        User foundUser = userDAO.getUserByEmailAndPassword(email, password );
         if (foundUser != null) {
             forwardWithError(request, response, "Email already exists!");
             return;
@@ -115,7 +115,7 @@ public class Register extends HttpServlet {
         }
 
         // ===== GET INSERTED USER =====
-        User insertedUser = userDAO.getUserByEmail(email);
+        User insertedUser = userDAO.getUserByEmailAndPassword(email, password);
         if (insertedUser == null) {
             forwardWithError(request, response, "Registration failed, please try again!");
             return;

@@ -9,12 +9,15 @@ import utils.DBUtils;
 
 public class UserDAO {
 
-    public User getUserByEmailAndPassword(String email, String password) {
+    // ===================================================
+    // GET USER BY EMAIL AND PASSWORD (PASSWORD ĐÃ BĂM SẴN)
+    // ===================================================
+    public User getUserByEmailAndPassword(String email, String hashedPassword) {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
-        // Bỏ hoàn toàn bảng Customer, chỉ SELECT từ bảng [User]
+        // Câu lệnh SQL giữ nguyên để check cả email, password và trạng thái active
         String query = "SELECT user_id, full_name, email, phone, password, is_active, created_at, role_id, avatar_url "
                 + "FROM [User] "
                 + "WHERE email = ? AND password = ? AND is_active = 1";
@@ -24,12 +27,13 @@ public class UserDAO {
             if (conn != null) {
                 ps = conn.prepareStatement(query);
                 ps.setString(1, email);
-                ps.setString(2, password);
+                
+                // 🔑 VÌ LOGIN.JAVA ĐÃ BĂM MẬT KHẨU RỒI, NÊN Ở ĐÂY CHỈ CẦN TRUYỀN THẲNG VÀO SQL
+                ps.setString(2, hashedPassword);
 
                 rs = ps.executeQuery();
 
                 if (rs.next()) {
-                    // Khởi tạo và trả về đối tượng User bằng Constructor có tham số
                     User u = new User(
                             rs.getInt("user_id"),
                             rs.getString("full_name"),
@@ -37,7 +41,7 @@ public class UserDAO {
                             rs.getString("phone"),
                             rs.getString("password"),
                             rs.getInt("is_active"),
-                            rs.getDate("created_at"), // Sẽ trả về java.sql.Date khớp với Constructor
+                            rs.getDate("created_at"), 
                             rs.getInt("role_id"),
                             rs.getString("avatar_url")
                     );
@@ -64,62 +68,16 @@ public class UserDAO {
         return null;
     }
 
-    // =========================
-    // GET USER BY EMAIL
-    // =========================
-    public User getUserByEmail(String email) {
-        User user = null;
-        Connection cn = null;
-        try {
-            cn = DBUtils.getConnection();
-            if (cn != null) {
-                // ✅ Bọc [User] trong ngoặc vuông
-                String sql = "SELECT * FROM [User] WHERE email = ?";
-                PreparedStatement st = cn.prepareStatement(sql);
-                st.setString(1, email);
-                ResultSet rs = st.executeQuery();
-                if (rs.next()) {
-                    user = new User();
-                    user.setUserId(rs.getInt("user_id"));
-                    user.setFullName(rs.getString("full_name"));
-                    user.setEmail(rs.getString("email"));
-                    user.setPhone(rs.getString("phone"));
-                    user.setPassword(rs.getString("password"));
-                    user.setIsActive(rs.getInt("is_active"));
-                    user.setCreatedAt(rs.getDate("created_at"));
-                    user.setRoleId(rs.getInt("role_id"));
-                    user.setAvatarUrl(rs.getString("avatar_url"));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return user;
-    }
-
-    // =========================
-    // CREATE NEW USER
-    // =========================
+    // ===================================================
+    // CÁC HÀM KHÁC (CREATE, UPDATE...) GIỮ NGUYÊN KHÔNG ĐỔI
+    // ===================================================
     public int createNewUser(User u) {
         int result = 0;
         Connection cn = null;
         try {
             cn = DBUtils.getConnection();
             if (cn != null) {
-                // ✅ Bọc [User] trong ngoặc vuông
-                String sql = "INSERT INTO [User] "
-                        + "(full_name, email, phone, "
-                        + "password, is_active, "
-                        + "created_at, role_id, avatar_url) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                String sql = "INSERT INTO [User] (full_name, email, phone, password, is_active, created_at, role_id, avatar_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 PreparedStatement st = cn.prepareStatement(sql);
                 st.setString(1, u.getFullName());
                 st.setString(2, u.getEmail());
@@ -134,46 +92,28 @@ public class UserDAO {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (cn != null) {
-                    cn.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            try { if (cn != null) cn.close(); } catch (Exception e) { e.printStackTrace(); }
         }
         return result;
     }
 
     public boolean updatePhoneById(int userId, String phone) {
         String sql = "UPDATE [User] SET phone = ? WHERE user_id = ?";
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, phone);
             ps.setInt(2, userId);
-
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 
     public boolean updateAvatarById(int userId, String avatarUrl) {
         String sql = "UPDATE [User] SET avatar_url = ? WHERE user_id = ?";
-
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
-
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, avatarUrl);
             ps.setInt(2, userId);
-
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
 }
