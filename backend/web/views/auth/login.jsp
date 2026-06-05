@@ -80,7 +80,7 @@
             </form>
 
             <div class="card-footer">
-                Don't have an account? <a href="register.jsp" class="create-account">Create Account</a>
+                Don't have an account? <a href="${pageContext.request.contextPath}/register" class="create-account">Create Account</a>
             </div>
         </div>
 

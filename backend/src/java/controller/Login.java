@@ -49,20 +49,20 @@ public class Login extends HttpServlet {
                 Wallet wallet = walletDAO.getWalletByCustomerId(customer.getCustomerId());
                 session.setAttribute("WALLET", wallet);
 
-                response.sendRedirect(request.getContextPath() + "/profile");
+                response.sendRedirect(request.getContextPath() + "/MainController?action=dashboard");
             } else {
                 request.setAttribute("ERROR_MSG", "Invalid email or password.");
-                request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+                request.getRequestDispatcher("views/auth/login.jsp").forward(request, response);
             }
         } catch (Exception e) {
             request.setAttribute("ERROR_MSG", "System error: " + e.getMessage());
-            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+            request.getRequestDispatcher("views/auth/login.jsp").forward(request, response);
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.sendRedirect(request.getContextPath() + "/views/auth/login.jsp");
+        request.getRequestDispatcher("views/auth/login.jsp").forward(request, response);
     }
 }

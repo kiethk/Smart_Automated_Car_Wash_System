@@ -33,7 +33,7 @@ public class UpdateVehicle extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
 
@@ -42,20 +42,26 @@ public class UpdateVehicle extends HttpServlet {
 
         String vehicleIdStr = request.getParameter("id");
         if (isNullOrBlank(vehicleIdStr)) {
-            response.sendRedirect(request.getContextPath() + "/profile");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
             return;
         }
 
-        int vehicleId = Integer.parseInt(vehicleIdStr);
-        // Kiểm tra quyền sở hữu
-        if (customer == null || !vehicleDAO.isVehicleBelongsToCustomer(vehicleId, customer.getCustomerId())) {
-            response.sendRedirect(request.getContextPath() + "/profile");
-            return;
-        }
+        try {
+            int vehicleId = Integer.parseInt(vehicleIdStr);
+            if (customer == null || !vehicleDAO.isVehicleBelongsToCustomer(vehicleId, customer.getCustomerId())) {
+                response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
+                return;
+            }
 
-        Vehicle vehicle = vehicleDAO.getVehicleById(vehicleId);
-        request.setAttribute("vehicle", vehicle);
-        request.getRequestDispatcher("/views/auth/vehicle/UpdateVehicle.jsp").forward(request, response);
+            Vehicle vehicle = vehicleDAO.getVehicleById(vehicleId);
+            request.setAttribute("vehicle", vehicle);
+
+            request.getRequestDispatcher("views/auth/vehicle/UpdateVehicle.jsp").forward(request, response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
+        }
     }
 
     @Override
@@ -66,7 +72,7 @@ public class UpdateVehicle extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
 
@@ -85,7 +91,7 @@ public class UpdateVehicle extends HttpServlet {
         vehicle.setModel(request.getParameter("model"));
         vehicle.setVehicleType(request.getParameter("vehicleType"));
         vehicle.setColor(request.getParameter("color"));
-        
+
         String manufactureYearStr = request.getParameter("manufactureYear");
         int manufactureYear = 0;
 
@@ -115,7 +121,7 @@ public class UpdateVehicle extends HttpServlet {
 
         if (vehicleDAO.updateVehicle(vehicle)) {
             session.setAttribute("SUCCESS", "Vehicle updated successfully!");
-            response.sendRedirect(request.getContextPath() + "/profile");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
         } else {
             forwardWithError(request, response, vehicle, "Database error, please try again");
         }

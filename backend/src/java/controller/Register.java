@@ -24,7 +24,7 @@ public class Register extends HttpServlet {
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/views/auth/register.jsp")
+        request.getRequestDispatcher("views/auth/register.jsp")
                 .forward(request, response);
     }
 
@@ -145,7 +145,7 @@ public class Register extends HttpServlet {
 
         // ===== SUCCESS =====
         response.sendRedirect(
-                request.getContextPath() + "/login"
+                request.getContextPath() + "/MainController?action=login"
         );
     }
 
@@ -155,7 +155,7 @@ public class Register extends HttpServlet {
             String message)
             throws ServletException, IOException {
         request.setAttribute("error", message);
-        request.getRequestDispatcher("/views/auth/register.jsp")
+        request.getRequestDispatcher("views/auth/register.jsp")
                 .forward(request, response);
     }
 

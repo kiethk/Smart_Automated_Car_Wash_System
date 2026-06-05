@@ -23,8 +23,8 @@
                 <div class="flex items-center space-x-6 relative">
                     <% User user = (User) session.getAttribute("USER");
                         if (user == null) { %>
-                    <a href="${pageContext.request.contextPath}/views/auth/register.jsp" class="text-sm font-medium text-primary">Sign up</a>
-                    <a href="${pageContext.request.contextPath}/views/auth/login.jsp" class="btn-primary py-2 px-4 text-sm">Login</a>
+                    <a href="${pageContext.request.contextPath}//MainController?action=register" class="text-sm font-medium text-primary">Sign up</a>
+                    <a href="${pageContext.request.contextPath}//MainController?action=login" class="btn-primary py-2 px-4 text-sm">Login</a>
                     <% } else {%>
                     <div class="relative">
                         <button onclick="toggleDropdown()" class="flex items-center space-x-3 hover:opacity-80 transition-opacity focus:outline-none">

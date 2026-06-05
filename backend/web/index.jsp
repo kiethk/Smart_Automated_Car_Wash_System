@@ -20,7 +20,7 @@
             <p class="text-lg text-slate-500 max-w-2xl mx-auto">
                 Experience frictionless, high-trust automotive care. Track your service history, manage your vehicles, and unlock premium rewards with absolute precision.
             </p> <div class="pt-6 flex flex-col sm:flex-row justify-center gap-4">
-                <a href="${pageContext.request.contextPath}/views/auth/login.jsp" class="btn-primary px-8 py-3">
+                <a href="${pageContext.request.contextPath}/MainController?action=login" class="btn-primary px-8 py-3">
                     Get Started
                 </a>
                 <a href="#features" class="btn-secondary px-8 py-3">

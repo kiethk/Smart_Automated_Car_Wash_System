@@ -35,10 +35,10 @@ public class AddVehicle extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
-        request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp").forward(request, response);
+        request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
     }
 
     @Override
@@ -49,7 +49,7 @@ public class AddVehicle extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
 
@@ -87,7 +87,7 @@ public class AddVehicle extends HttpServlet {
             request.setAttribute("ERROR", errorMsg);
             request.setAttribute("vehicle", vehicle); // Gửi đối tượng vehicle để điền lại form
             request.setAttribute("manufactureYear", manufactureYearStr);
-            request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp").forward(request, response);
+            request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
             return;
         }
 
@@ -101,11 +101,11 @@ public class AddVehicle extends HttpServlet {
 
         if (vehicleDAO.addVehicle(vehicle)) {
             session.setAttribute("SUCCESS", "Vehicle added successfully!");
-            response.sendRedirect(request.getContextPath() + "/profile");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
         } else {
             request.setAttribute("ERROR", "System error: Could not add vehicle.");
             request.setAttribute("vehicle", vehicle);
-            request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp").forward(request, response);
+            request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
         }
     }
 

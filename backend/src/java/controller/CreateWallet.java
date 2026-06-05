@@ -86,7 +86,7 @@ public class CreateWallet extends HttpServlet {
             request.getSession().setAttribute("WALLET", newWallet);
         }
 
-        response.sendRedirect(request.getContextPath() + "/profile");
+        response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
     }
 
     /**
