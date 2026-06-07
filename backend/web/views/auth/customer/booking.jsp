@@ -15,7 +15,8 @@
     // 1. Nhận nguyên liệu an toàn từ Controller truyền sang
     List<Vehicle> vehicleList = (List<Vehicle>) request.getAttribute("VEHICLES");
     List<Service> serviceList = (List<Service>) request.getAttribute("SERVICES");
-    List<Slot> bayList = (List<Slot>) request.getAttribute("SLOTS");
+    List<Slot> slotList = (List<Slot>) request.getAttribute("SLOTS");
+    List<Slot> allSlotList = (List<Slot>) request.getAttribute("ALLSLOTLIST");
     List<Promotion> promoList = (List<Promotion>) request.getAttribute("PROMOTIONS");
 
     if (vehicleList == null) {
@@ -24,8 +25,8 @@
     if (serviceList == null) {
         serviceList = new ArrayList<>();
     }
-    if (bayList == null) {
-        bayList = new ArrayList<>();
+    if (slotList == null) {
+        slotList = new ArrayList<>();
     }
     if (promoList == null) {
         promoList = new ArrayList<>();
@@ -78,69 +79,69 @@
                 <label class="cursor-pointer w-full sm:w-auto sm:min-w-[260px] sm:flex-1">
                     <input class="sr-only peer" name="vehicleId" type="radio"
                            value="<%= vehicle.getVehicleId()%>" data-vehicle-type="<%= vehicle.getVehicleType()%>" <%= isFirst ? "checked" : ""%> required/>
-                           <div class="relative p-4 rounded-2xl border-2 border-slate-100 bg-white
-                           flex items-center gap-4
-                           hover:border-indigo-300 hover:shadow-md
-                           peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-indigo-100 peer-checked:shadow-lg
-                           transition-all duration-200">
+                    <div class="relative p-4 rounded-2xl border-2 border-slate-100 bg-white
+                         flex items-center gap-4
+                         hover:border-indigo-300 hover:shadow-md
+                         peer-checked:border-indigo-600 peer-checked:bg-indigo-50/40 peer-checked:shadow-indigo-100 peer-checked:shadow-lg
+                         transition-all duration-200">
 
-                    <%-- Checkmark badge khi được chọn --%>
-                    <div class="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-slate-200
-                         peer-checked:border-indigo-600 bg-white
-                         flex items-center justify-center
-                         opacity-0 peer-checked:opacity-100 transition-opacity">
-                    </div>
-                    <div class="hidden peer-checked:flex absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-indigo-600
-                         items-center justify-center">
-                        <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                        </svg>
-                    </div>
+                        <%-- Checkmark badge khi được chọn --%>
+                        <div class="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-slate-200
+                             peer-checked:border-indigo-600 bg-white
+                             flex items-center justify-center
+                             opacity-0 peer-checked:opacity-100 transition-opacity">
+                        </div>
+                        <div class="hidden peer-checked:flex absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-indigo-600
+                             items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
 
-                    <%-- Icon xe --%>
-                    <div class="w-12 h-12 rounded-xl bg-slate-100 peer-checked:bg-indigo-100
-                         flex items-center justify-center flex-shrink-0 transition-colors">
-                        <img src="<%= (vehicle.getVehicleImageUrl() != null && !vehicle.getVehicleImageUrl().trim().isEmpty())
-                                ? vehicle.getVehicleImageUrl()
-                                : request.getContextPath() + "/assets/images/no-image-car.jpg"%>"
-                             class="w-full h-full object-cover rounded-xl" alt="vehicle"/>
-                    </div>
+                        <%-- Icon xe --%>
+                        <div class="w-12 h-12 rounded-xl bg-slate-100 peer-checked:bg-indigo-100
+                             flex items-center justify-center flex-shrink-0 transition-colors">
+                            <img src="<%= (vehicle.getVehicleImageUrl() != null && !vehicle.getVehicleImageUrl().trim().isEmpty())
+                                    ? vehicle.getVehicleImageUrl()
+                                    : request.getContextPath() + "/assets/images/no-image-car.jpg"%>"
+                                 class="w-full h-full object-cover rounded-xl" alt="vehicle"/>
+                        </div>
 
-                    <%-- Thông tin xe --%>
-                    <div class="flex-1 min-w-0 pr-4">
-                        <div class="font-bold text-slate-800 text-sm truncate">
-                            <%= vehicle.getBrandDisplay()%> <%= vehicle.getModelDisplay()%>
-                        </div>
-                        <div class="text-xs text-slate-400 font-mono mt-0.5 truncate">
-                            <%= vehicle.getPlateNumber()%>
-                        </div>
-                        <div class="flex items-center gap-1.5 mt-1.5">
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                                <%= vehicle.getVehicleType()%>
-                            </span>
-                            <span class="text-[10px] text-slate-400">
-                                <%= vehicle.getColor()%> · <%= vehicle.getManufactureYear()%>
-                            </span>
+                        <%-- Thông tin xe --%>
+                        <div class="flex-1 min-w-0 pr-4">
+                            <div class="font-bold text-slate-800 text-sm truncate">
+                                <%= vehicle.getBrandDisplay()%> <%= vehicle.getModelDisplay()%>
+                            </div>
+                            <div class="text-xs text-slate-400 font-mono mt-0.5 truncate">
+                                <%= vehicle.getPlateNumber()%>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-1.5">
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                                    <%= vehicle.getVehicleType()%>
+                                </span>
+                                <span class="text-[10px] text-slate-400">
+                                    <%= vehicle.getColor()%> · <%= vehicle.getManufactureYear()%>
+                                </span>
+                            </div>
                         </div>
                     </div>
-            </div>
-            </label>
-            <%
-                }
-            } else {
-            %>
-            <div class="w-full flex flex-col items-center justify-center py-8 text-center
-                 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
-                <span class="material-symbols-outlined text-slate-300 text-4xl mb-2">no_crash</span>
-                <p class="text-sm font-semibold text-slate-400">No vehicles found</p>
-                <p class="text-xs text-slate-400 mt-1">
-                    Please <a href="${pageContext.request.contextPath}/profile"
-                              class="text-indigo-600 hover:underline font-medium">add a vehicle</a> in your profile first.
-                </p>
-            </div>
-            <%
-                }
-            %>
+                </label>
+                <%
+                    }
+                } else {
+                %>
+                <div class="w-full flex flex-col items-center justify-center py-8 text-center
+                     border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+                    <span class="material-symbols-outlined text-slate-300 text-4xl mb-2">no_crash</span>
+                    <p class="text-sm font-semibold text-slate-400">No vehicles found</p>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Please <a href="${pageContext.request.contextPath}/profile"
+                                  class="text-indigo-600 hover:underline font-medium">add a vehicle</a> in your profile first.
+                    </p>
+                </div>
+                <%
+                    }
+                %>
             </div>
         </section>
 
@@ -224,13 +225,13 @@
                     <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Available Times</label>
                     <div class="grid grid-cols-2 gap-3">
                         <%
-                            if (!bayList.isEmpty()) {
-                                for (Slot bay : bayList) {
+                            if (!slotList.isEmpty()) {
+                                for (Slot slot : slotList) {
                         %>
                         <label class="cursor-pointer block text-center">
-                            <input class="peer sr-only" name="slotId" type="radio" value="<%= bay.getSlotId()%>" required/>
+                            <input class="peer sr-only" name="slotId" type="radio" value="<%= slot.getSlotId()%>" required/>
                             <div class="py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold font-mono hover:border-indigo-900 peer-checked:bg-indigo-950 peer-checked:text-white peer-checked:border-indigo-950 transition-colors">
-                                <%= bay.getTimeValue()%>
+                                <%= slot.getTimeValue()%>
                             </div>
                         </label>
                         <%
@@ -364,314 +365,352 @@
 </div>
 
 <script>
+    // Toàn bộ slot data từ server, load 1 lần duy nhất
+    const allSlots = [
+    <%
+        for (Slot slot : allSlotList) {
+            // Kiểm tra slot này có full trong ngày đang chọn không
+            boolean isFull = false;
+            for (Slot s : slotList) {
+                if (s.getSlotId() == slot.getSlotId()) {
+                    isFull = s.isFull();
+                    break;
+                }
+            }
+    %>
+    {
+    slotId: <%= slot.getSlotId()%>,
+            timeValue: "<%= slot.getTimeValue()%>",
+            startTime: "<%= slot.getStartTime()%>",
+            endTime: "<%= slot.getEndTime()%>",
+            isActive: <%= slot.getIsActive()%>,
+            isFull: <%= isFull%>
+    },
+    <%
+        }
+    %>
+    ];
     // --- FILTER SERVICE THEO LOẠI XE ĐƯỢC CHỌN ---
     function filterServicesByVehicleType(vehicleType) {
-        const type = vehicleType.toLowerCase();
-        // Sedan -> hiện sedan, ẩn suvtruck | SUV/Truck -> hiện suvtruck, ẩn sedan
-        const targetType = (type === 'suv' || type === 'truck') ? 'suvtruck' : 'sedan';
-
-        document.querySelectorAll('#serviceGrid label[data-service-type]').forEach(card => {
-            const radio = card.querySelector('input[type="radio"]');
-            if (card.dataset.serviceType === targetType) {
-                card.classList.remove('hidden');
-                radio.disabled = false;
-            } else {
-                card.classList.add('hidden');
-                radio.disabled = true;
-                radio.checked = false;
-            }
-        });
-
-        // Tự động chọn service đầu tiên còn hiển thị
-        const firstVisible = document.querySelector('#serviceGrid label[data-service-type="' + targetType + '"] input[type="radio"]');
-        if (firstVisible) {
-            firstVisible.checked = true;
-            appliedPointsValue = 0;
-            document.getElementById('redeemPointsInput').value = "";
-            updateOrderSummary();
-        }
+    const type = vehicleType.toLowerCase();
+    // Sedan -> hiện sedan, ẩn suvtruck | SUV/Truck -> hiện suvtruck, ẩn sedan
+    const targetType = (type === 'suv' || type === 'truck') ? 'suvtruck' : 'sedan';
+    document.querySelectorAll('#serviceGrid label[data-service-type]').forEach(card => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (card.dataset.serviceType === targetType) {
+    card.classList.remove('hidden');
+    radio.disabled = false;
+    } else {
+    card.classList.add('hidden');
+    radio.disabled = true;
+    radio.checked = false;
+    }
+    });
+    // Tự động chọn service đầu tiên còn hiển thị
+    const firstVisible = document.querySelector('#serviceGrid label[data-service-type="' + targetType + '"] input[type="radio"]');
+    if (firstVisible) {
+    firstVisible.checked = true;
+    appliedPointsValue = 0;
+    document.getElementById('redeemPointsInput').value = "";
+    updateOrderSummary();
+    }
     }
 
 // Gắn event lắng nghe thay đổi xe
     document.querySelectorAll('input[name="vehicleId"]').forEach(radio => {
-        radio.addEventListener('change', function () {
-            const selectedLabel = this.closest('label');
-            // Lấy vehicleType từ data attribute trên label
-            const vehicleType = this.getAttribute('data-vehicle-type');
-            if (vehicleType)
-                filterServicesByVehicleType(vehicleType);
-        });
+    radio.addEventListener('change', function () {
+    const selectedLabel = this.closest('label');
+    // Lấy vehicleType từ data attribute trên label
+    const vehicleType = this.getAttribute('data-vehicle-type');
+    if (vehicleType)
+            filterServicesByVehicleType(vehicleType);
     });
-
+    });
     // 2. Mock danh sách Khuyến mãi đồng bộ từ DB
     const promoDatabase = [
     <%
         if (!promoList.isEmpty()) {
             for (Promotion p : promoList) {
     %>
-        {
-            id: <%= p.getPromotionId()%>,
+    {
+    id: <%= p.getPromotionId()%>,
             code: "<%= p.getCode().trim().toUpperCase()%>",
             type: "<%= p.getDiscountType()%>",
             value: <%= p.getDiscountValue()%>,
             minOrder: <%= p.getMinOrderAmount()%>,
             targetTier: <%= (p.getTargetTierId() != null) ? p.getTargetTierId() : "null"%>
-        },
+    },
     <%
             }
         }
     %>
     ];
-
     let currentPackagePrice = 0;
     let appliedTierDiscount = 0;
     let appliedVoucherDiscount = 0;
     let appliedPointsValue = 0;
     let currentVoucherObj = null;
     let finalPayCalculated = 0;
-
     const userDiscountRate = <%= discountRate%>;
     const maxUserPoints = <%= availablePoints%>;
     const userTierId = <%= tierId%>;
     const bookingWindowDays = <%= maxBookingDays%>;
-
     // --- LOGIC CUSTOM CALENDAR CHUẨN KHOẢNG NGÀY ĐẶT THEO TIER ---
+    // Ngày hợp lệ nằm trong khoảng cho phép chọn
+    function renderSlots() {
+    const grid = document.getElementById('slotGrid');
+    const activeSlots = allSlots.filter(s => s.isActive === 1);
+    if (activeSlots.length === 0) {
+    grid.innerHTML = `
+            <p class="text-xs text-slate-400 col-span-2 text-center py-6
+                       border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                No available slots.
+            </p>`;
+    return;
+    }
+
+    // Tìm slot đầu tiên còn chỗ để auto-check
+    const firstAvailable = activeSlots.find(s => !s.isFull);
+    grid.innerHTML = activeSlots.map(slot => `
+        <label class="cursor-pointer block text-center ${slot.isFull ? 'cursor-not-allowed' : ''}">
+            <input class="peer sr-only" name="slotId" type="radio"
+                   value="${slot.slotId}"
+    ${firstAvailable && slot.slotId == firstAvailable.slotId ? 'checked' : ''}
+    ${slot.isFull ? 'disabled' : ''} required/>
+            <div class="py-2.5 px-3 rounded-xl border text-xs font-bold font-mono transition-colors
+    ${slot.isFull
+      ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
+      : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-900 peer-checked:bg-indigo-950 peer-checked:text-white peer-checked:border-indigo-950'}">
+      ${slot.timeValue}
+      ${slot.isFull ? '<span class="block text-[10px] font-normal opacity-60">Full</span>' : ''}
+            </div>
+        </label>
+    `).join('');
+    }
+
     function renderCustomCalendar() {
-        const grid = document.getElementById('calendarDaysGrid');
-        const title = document.getElementById('calendarMonthYear');
-        grid.innerHTML = '';
+    const grid = document.getElementById('calendarDaysGrid');
+    const title = document.getElementById('calendarMonthYear');
+    grid.innerHTML = '';
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    title.innerText = monthNames[currentMonth] + " " + currentYear;
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    // Tạo khoảng trắng ô đệm đầu tháng
+    for (let i = 0; i < firstDayIndex; i++) {
+    const emptyDiv = document.createElement('div');
+    grid.appendChild(emptyDiv);
+    }
 
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth();
-
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        title.innerText = monthNames[currentMonth] + " " + currentYear;
-
-        const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-        const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        // Tạo khoảng trắng ô đệm đầu tháng
-        for (let i = 0; i < firstDayIndex; i++) {
-            const emptyDiv = document.createElement('div');
-            grid.appendChild(emptyDiv);
-        }
-
-        const selectedDateStr = document.getElementById('bookingDate').value;
-
-        // Sinh lưới ngày
-        for (let day = 1; day <= totalDaysInMonth; day++) {
-            const cellDate = new Date(currentYear, currentMonth, day);
-            const dateStr = cellDate.toISOString().split('T')[0];
-
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.innerText = day;
-            btn.className = "p-2 text-xs font-semibold font-mono rounded-lg transition-all flex items-center justify-center w-full ";
-
-            // Tính khoảng cách ngày so với hôm nay để check giới hạn Tier
-            const diffTime = cellDate - new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays >= 0 && diffDays < bookingWindowDays) {
-                // Ngày hợp lệ nằm trong khoảng cho phép chọn
-                if (dateStr === selectedDateStr) {
-                    btn.className += " bg-indigo-950 text-white font-bold ";
-                } else {
-                    btn.className += " bg-white border border-slate-100 text-slate-800 hover:border-indigo-900 ";
-                }
-                btn.onclick = function () {
-                    document.getElementById('bookingDate').value = dateStr;
-                    window.location.href = "${pageContext.request.contextPath}/booking?date=" + dateStr;
-                };
-            } else {
-                // Ngày nằm ngoài giới hạn Booking Window của Tier -> Khóa (Disable)
-                btn.className += " bg-slate-100 text-slate-300 cursor-not-allowed opacity-40 ";
-                btn.disabled = true;
-            }
-            grid.appendChild(btn);
-        }
+    const selectedDateStr = document.getElementById('bookingDate').value;
+    // Sinh lưới ngày
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+    const cellDate = new Date(currentYear, currentMonth, day);
+    const dateStr = cellDate.getFullYear() + '-'
+            + String(cellDate.getMonth() + 1).padStart(2, '0') + '-'
+            + String(cellDate.getDate()).padStart(2, '0');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerText = day;
+    btn.className = "p-2 text-xs font-semibold font-mono rounded-lg transition-all flex items-center justify-center w-full ";
+    // Tính khoảng cách ngày so với hôm nay để check giới hạn Tier
+    const diffTime = cellDate - new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays >= 0 && diffDays < bookingWindowDays) {
+    if (dateStr === selectedDateStr) {
+    btn.className += " bg-indigo-950 text-white font-bold ";
+    } else {
+    btn.className += " bg-white border border-slate-100 text-slate-800 hover:border-indigo-900 ";
+    }
+    btn.onclick = function () {
+    document.getElementById('bookingDate').value = dateStr;
+    // Cập nhật highlight ngày được chọn
+    document.querySelectorAll('#calendarDaysGrid button').forEach(b => {
+    b.classList.remove('bg-indigo-950', 'text-white', 'font-bold');
+    b.classList.add('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
+    });
+    this.classList.remove('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
+    this.classList.add('bg-indigo-950', 'text-white', 'font-bold');
+    renderSlots();
+    };
+    } else {
+    // Ngày nằm ngoài giới hạn Booking Window của Tier -> Khóa (Disable)
+    btn.className += " bg-slate-100 text-slate-300 cursor-not-allowed opacity-40 ";
+    btn.disabled = true;
+    }
+    grid.appendChild(btn);
+    }
     }
 
     // --- HÀM TÍNH TOÁN REAL-TIME TỔNG HÓA ĐƠN ---
     function updateOrderSummary() {
-        const selectedPackage = document.querySelector('input[name="serviceId"]:checked');
-        let packageName = "Selected Package";
+    const selectedPackage = document.querySelector('input[name="serviceId"]:checked');
+    let packageName = "Selected Package";
+    if (selectedPackage) {
+    currentPackagePrice = parseFloat(selectedPackage.getAttribute('data-price')) || 0;
+    packageName = selectedPackage.getAttribute('data-name');
+    } else {
+    currentPackagePrice = 0;
+    }
 
-        if (selectedPackage) {
-            currentPackagePrice = parseFloat(selectedPackage.getAttribute('data-price')) || 0;
-            packageName = selectedPackage.getAttribute('data-name');
-        } else {
-            currentPackagePrice = 0;
-        }
+    appliedTierDiscount = currentPackagePrice * userDiscountRate;
+    appliedVoucherDiscount = 0;
+    if (currentVoucherObj) {
+    if (currentPackagePrice < currentVoucherObj.minOrder) {
+    currentVoucherObj = null;
+    const msgEl = document.getElementById('couponMsg');
+    msgEl.innerText = "Voucher removed. Base price too low!";
+    msgEl.className = "text-[10px] text-red-500 mt-1";
+    document.getElementById('couponInput').value = "";
+    document.getElementById('hiddenPromotionId').value = "";
+    } else {
+    if (currentVoucherObj.type === 'percent') {
+    appliedVoucherDiscount = currentPackagePrice * (currentVoucherObj.value / 100);
+    } else if (currentVoucherObj.type === 'fixed') {
+    appliedVoucherDiscount = currentVoucherObj.value;
+    }
+    }
+    }
 
-        appliedTierDiscount = currentPackagePrice * userDiscountRate;
-
-        appliedVoucherDiscount = 0;
-        if (currentVoucherObj) {
-            if (currentPackagePrice < currentVoucherObj.minOrder) {
-                currentVoucherObj = null;
-                const msgEl = document.getElementById('couponMsg');
-                msgEl.innerText = "Voucher removed. Base price too low!";
-                msgEl.className = "text-[10px] text-red-500 mt-1";
-                document.getElementById('couponInput').value = "";
-                document.getElementById('hiddenPromotionId').value = "";
-            } else {
-                if (currentVoucherObj.type === 'percent') {
-                    appliedVoucherDiscount = currentPackagePrice * (currentVoucherObj.value / 100);
-                } else if (currentVoucherObj.type === 'fixed') {
-                    appliedVoucherDiscount = currentVoucherObj.value;
-                }
-            }
-        }
-
-        let totalDiscountSystem = appliedTierDiscount + appliedVoucherDiscount;
-        if (totalDiscountSystem > currentPackagePrice)
+    let totalDiscountSystem = appliedTierDiscount + appliedVoucherDiscount;
+    if (totalDiscountSystem > currentPackagePrice)
             totalDiscountSystem = currentPackagePrice;
+    let maxAllowedPoints = currentPackagePrice - totalDiscountSystem;
+    if (appliedPointsValue > maxAllowedPoints) {
+    appliedPointsValue = maxAllowedPoints;
+    document.getElementById('redeemPointsInput').value = appliedPointsValue;
+    }
 
-        let maxAllowedPoints = currentPackagePrice - totalDiscountSystem;
-        if (appliedPointsValue > maxAllowedPoints) {
-            appliedPointsValue = maxAllowedPoints;
-            document.getElementById('redeemPointsInput').value = appliedPointsValue;
-        }
-
-        finalPayCalculated = currentPackagePrice - totalDiscountSystem - appliedPointsValue;
-        if (finalPayCalculated < 0)
+    finalPayCalculated = currentPackagePrice - totalDiscountSystem - appliedPointsValue;
+    if (finalPayCalculated < 0)
             finalPayCalculated = 0;
-
-        document.getElementById('summaryPackageName').innerText = packageName;
-        document.getElementById('summaryPackagePrice').innerText = currentPackagePrice.toLocaleString('vi-VN') + " VND";
-        document.getElementById('summaryTierDiscount').innerText = "-" + appliedTierDiscount.toLocaleString('vi-VN') + " VND";
-        document.getElementById('summaryVoucherDiscount').innerText = "-" + appliedVoucherDiscount.toLocaleString('vi-VN') + " VND";
-        document.getElementById('summaryTotal').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
-
-        document.getElementById('hiddenDiscountAmount').value = totalDiscountSystem;
-        document.getElementById('hiddenPointsRedeemed').value = appliedPointsValue;
+    document.getElementById('summaryPackageName').innerText = packageName;
+    document.getElementById('summaryPackagePrice').innerText = currentPackagePrice.toLocaleString('vi-VN') + " VND";
+    document.getElementById('summaryTierDiscount').innerText = "-" + appliedTierDiscount.toLocaleString('vi-VN') + " VND";
+    document.getElementById('summaryVoucherDiscount').innerText = "-" + appliedVoucherDiscount.toLocaleString('vi-VN') + " VND";
+    document.getElementById('summaryTotal').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
+    document.getElementById('hiddenDiscountAmount').value = totalDiscountSystem;
+    document.getElementById('hiddenPointsRedeemed').value = appliedPointsValue;
     }
 
     function applyVoucher() {
-        const inputCode = document.getElementById('couponInput').value.trim().toUpperCase();
-        const msgEl = document.getElementById('couponMsg');
-        msgEl.classList.remove('hidden');
+    const inputCode = document.getElementById('couponInput').value.trim().toUpperCase();
+    const msgEl = document.getElementById('couponMsg');
+    msgEl.classList.remove('hidden');
+    if (!inputCode) {
+    msgEl.innerText = "Enter a code.";
+    msgEl.className = "text-[10px] text-red-500 mt-1";
+    return;
+    }
 
-        if (!inputCode) {
-            msgEl.innerText = "Enter a code.";
-            msgEl.className = "text-[10px] text-red-500 mt-1";
-            return;
-        }
+    const voucher = promoDatabase.find(v => v.code === inputCode);
+    if (!voucher) {
+    msgEl.innerText = "Invalid code.";
+    msgEl.className = "text-[10px] text-red-500 mt-1";
+    currentVoucherObj = null;
+    document.getElementById('hiddenPromotionId').value = "";
+    updateOrderSummary();
+    return;
+    }
 
-        const voucher = promoDatabase.find(v => v.code === inputCode);
+    if (voucher.targetTier && userTierId < voucher.targetTier) {
+    msgEl.innerText = "Tier too low.";
+    msgEl.className = "text-[10px] text-red-500 mt-1";
+    currentVoucherObj = null;
+    document.getElementById('hiddenPromotionId').value = "";
+    updateOrderSummary();
+    return;
+    }
 
-        if (!voucher) {
-            msgEl.innerText = "Invalid code.";
-            msgEl.className = "text-[10px] text-red-500 mt-1";
-            currentVoucherObj = null;
-            document.getElementById('hiddenPromotionId').value = "";
-            updateOrderSummary();
-            return;
-        }
+    if (currentPackagePrice < voucher.minOrder) {
+    msgEl.innerText = "Min order: " + voucher.minOrder.toLocaleString('vi-VN') + " VND";
+    msgEl.className = "text-[10px] text-red-500 mt-1";
+    currentVoucherObj = null;
+    document.getElementById('hiddenPromotionId').value = "";
+    updateOrderSummary();
+    return;
+    }
 
-        if (voucher.targetTier && userTierId < voucher.targetTier) {
-            msgEl.innerText = "Tier too low.";
-            msgEl.className = "text-[10px] text-red-500 mt-1";
-            currentVoucherObj = null;
-            document.getElementById('hiddenPromotionId').value = "";
-            updateOrderSummary();
-            return;
-        }
-
-        if (currentPackagePrice < voucher.minOrder) {
-            msgEl.innerText = "Min order: " + voucher.minOrder.toLocaleString('vi-VN') + " VND";
-            msgEl.className = "text-[10px] text-red-500 mt-1";
-            currentVoucherObj = null;
-            document.getElementById('hiddenPromotionId').value = "";
-            updateOrderSummary();
-            return;
-        }
-
-        msgEl.innerText = "Code applied!";
-        msgEl.className = "text-[10px] text-emerald-600 mt-1 font-bold";
-        currentVoucherObj = voucher;
-        document.getElementById('hiddenPromotionId').value = voucher.id;
-        updateOrderSummary();
+    msgEl.innerText = "Code applied!";
+    msgEl.className = "text-[10px] text-emerald-600 mt-1 font-bold";
+    currentVoucherObj = voucher;
+    document.getElementById('hiddenPromotionId').value = voucher.id;
+    updateOrderSummary();
     }
 
     function applyPoints() {
-        const pointsInput = document.getElementById('redeemPointsInput');
-        const pointsValue = parseInt(pointsInput.value) || 0;
-        const errorEl = document.getElementById('pointsError');
-        errorEl.classList.add('hidden');
+    const pointsInput = document.getElementById('redeemPointsInput');
+    const pointsValue = parseInt(pointsInput.value) || 0;
+    const errorEl = document.getElementById('pointsError');
+    errorEl.classList.add('hidden');
+    if (pointsValue < 0 || pointsValue > maxUserPoints) {
+    errorEl.innerText = "Not enough points.";
+    errorEl.classList.remove('hidden');
+    return;
+    }
 
-        if (pointsValue < 0 || pointsValue > maxUserPoints) {
-            errorEl.innerText = "Not enough points.";
-            errorEl.classList.remove('hidden');
-            return;
-        }
+    let currentTotalDiscountSystem = appliedTierDiscount + appliedVoucherDiscount;
+    let maxAllowedPoints = currentPackagePrice - currentTotalDiscountSystem;
+    if (pointsValue > maxAllowedPoints) {
+    errorEl.innerText = "Exceeds remaining price.";
+    errorEl.classList.remove('hidden');
+    return;
+    }
 
-        let currentTotalDiscountSystem = appliedTierDiscount + appliedVoucherDiscount;
-        let maxAllowedPoints = currentPackagePrice - currentTotalDiscountSystem;
-
-        if (pointsValue > maxAllowedPoints) {
-            errorEl.innerText = "Exceeds remaining price.";
-            errorEl.classList.remove('hidden');
-            return;
-        }
-
-        appliedPointsValue = pointsValue;
-        updateOrderSummary();
+    appliedPointsValue = pointsValue;
+    updateOrderSummary();
     }
 
     // --- LUỒNG XỬ LÝ CHECKOUT / POPUP THEO PHƯƠNG THỨC THANH TOÁN ---
     function handleBookingCheckout() {
-        const form = document.getElementById('bookingForm');
-        if (!form.reportValidity())
+    const form = document.getElementById('bookingForm');
+    if (!form.reportValidity())
             return;
-
-        const method = document.querySelector('input[name="paymentMethod"]:checked').value;
-
-        if (method === 'QRCODE') {
-            // Hiển thị Popup QR Code real-time số tiền
-            document.getElementById('qrTotalText').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
-            // Sử dụng link sinh mã QR mẫu từ QR Server API miễn phí
-            document.getElementById('qrImageElement').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=AutoWashPayment_" + finalPayCalculated;
-            document.getElementById('qrModal').classList.remove('hidden');
-        } else {
-            // WALLET hoặc CASH -> Thực hiện gửi thẳng form lên Controller xử lý
-            form.submit();
-        }
+    const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+    if (method === 'QRCODE') {
+    // Hiển thị Popup QR Code real-time số tiền
+    document.getElementById('qrTotalText').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
+    // Sử dụng link sinh mã QR mẫu từ QR Server API miễn phí
+    document.getElementById('qrImageElement').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=AutoWashPayment_" + finalPayCalculated;
+    document.getElementById('qrModal').classList.remove('hidden');
+    } else {
+    // WALLET hoặc CASH -> Thực hiện gửi thẳng form lên Controller xử lý
+    form.submit();
+    }
     }
 
     function closeQrModal() {
-        document.getElementById('qrModal').classList.add('hidden');
+    document.getElementById('qrModal').classList.add('hidden');
     }
 
     function confirmPaidQr() {
-        // Sau khi khách bấm xác nhận đã quét QR -> Tự đóng popup và submit form
-        document.getElementById('qrModal').classList.add('hidden');
-        document.getElementById('bookingForm').submit();
+    // Sau khi khách bấm xác nhận đã quét QR -> Tự đóng popup và submit form
+    document.getElementById('qrModal').classList.add('hidden');
+    document.getElementById('bookingForm').submit();
     }
 
     document.querySelectorAll('input[name="serviceId"]').forEach(radio => {
-        radio.addEventListener('change', () => {
-            appliedPointsValue = 0;
-            document.getElementById('redeemPointsInput').value = "";
-            updateOrderSummary();
-        });
+    radio.addEventListener('change', () => {
+    appliedPointsValue = 0;
+    document.getElementById('redeemPointsInput').value = "";
+    updateOrderSummary();
     });
-
+    });
     document.addEventListener('DOMContentLoaded', () => {
-        // Tự động tích chọn gói đầu tiên để có data tính toán
-        const firstRadio = document.querySelector('input[name="serviceId"]');
-        if (firstRadio)
+    // Tự động tích chọn gói đầu tiên để có data tính toán
+    const firstRadio = document.querySelector('input[name="serviceId"]');
+    if (firstRadio)
             firstRadio.checked = true;
-
-        const firstVehicle = document.querySelector('input[name="vehicleId"]:checked');
-        if (firstVehicle)
+    const firstVehicle = document.querySelector('input[name="vehicleId"]:checked');
+    if (firstVehicle)
             filterServicesByVehicleType(firstVehicle.getAttribute('data-vehicle-type'));
-
-        renderCustomCalendar();
-        updateOrderSummary();
+    renderCustomCalendar();
+    renderSlots();
+    updateOrderSummary();
     });
-</script>
+    </script>
 
-<jsp:include page="/components/footer.jsp" />
+    <jsp:include page="/components/footer.jsp" />
