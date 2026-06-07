@@ -5,19 +5,17 @@ public class Slot {
     private String timeValue;
     private String startTime;
     private String endTime;
-    private int maxCapacity;
     private int isActive;
-    private boolean isFull; // Trường tính toán, không có trong DB
+    private boolean isFull; // Trường tính toán: true khi total_booked >= số bay available
 
     public Slot() {}
 
     public Slot(int slotId, String timeValue, String startTime, String endTime,
-                int maxCapacity, int isActive, boolean isFull) {
+                int isActive, boolean isFull) {
         this.slotId = slotId;
         this.timeValue = timeValue;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.maxCapacity = maxCapacity;
         this.isActive = isActive;
         this.isFull = isFull;
     }
@@ -33,9 +31,6 @@ public class Slot {
 
     public String getEndTime() { return endTime; }
     public void setEndTime(String endTime) { this.endTime = endTime; }
-
-    public int getMaxCapacity() { return maxCapacity; }
-    public void setMaxCapacity(int maxCapacity) { this.maxCapacity = maxCapacity; }
 
     public int getIsActive() { return isActive; }
     public void setIsActive(int isActive) { this.isActive = isActive; }

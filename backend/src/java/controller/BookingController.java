@@ -1,7 +1,9 @@
 package controller;
 
+import dao.BayDAO;
 import dao.BookingDAO;
 import dao.CustomerDAO;
+import dao.PromotionDAO;
 import dao.ServiceDAO;
 import dao.SlotDAO;
 import dao.VehicleDAO;
@@ -39,7 +41,7 @@ public class BookingController extends HttpServlet {
         VehicleDAO vd = new VehicleDAO();
         ServiceDAO sd = new ServiceDAO();
         SlotDAO sld = new SlotDAO();
-        dao.PromotionDAO pd = new dao.PromotionDAO(); // <-- Nạp nguyên liệu mới tạo
+        PromotionDAO pd = new PromotionDAO();
 
         try {
             if (loginedCustomer == null) {
@@ -56,12 +58,14 @@ public class BookingController extends HttpServlet {
             List<Vehicle> vehicleList = vd.getVehiclesByCustomerId(loginedCustomer.getCustomerId());
             List<Service> serviceList = sd.getActiveServices();
             List<Slot> slotList = sld.getSlotsByDate(selectedDate);
+            List<Slot> allSlotList = sld.getAllSlots();
             List<dto.Promotion> promoList = pd.getAllActivePromotions(); // <-- Lấy danh sách Voucher từ DB
 
             request.setAttribute("CUSTOMER", loginedCustomer);
             request.setAttribute("VEHICLES", vehicleList);
             request.setAttribute("SERVICES", serviceList);
             request.setAttribute("SLOTS", slotList);
+            request.setAttribute("ALLSLOTLIST", allSlotList);
             request.setAttribute("PROMOTIONS", promoList); // <-- Đẩy sang JSP với key chuẩn "PROMOTIONS"
             request.setAttribute("SELECTED_DATE", selectedDate);
 
@@ -91,6 +95,7 @@ public class BookingController extends HttpServlet {
 
         CustomerDAO cd = new CustomerDAO();
         BookingDAO bd = new BookingDAO();
+        BayDAO bayDAO = new BayDAO();
 
         try {
             Customer loginedCustomer = cd.getCustomerByUserId(loginedUser.getUserId());
@@ -102,7 +107,14 @@ public class BookingController extends HttpServlet {
             String bookingDate = request.getParameter("bookingDate");
             int slotId = Integer.parseInt(request.getParameter("slotId"));
             int vehicleId = Integer.parseInt(request.getParameter("vehicleId"));
+            Integer assignedBayId = bayDAO.getAvailableBayId(bookingDate, slotId);
             String notes = request.getParameter("notes");
+
+            if (assignedBayId == null) {
+                request.setAttribute("ERROR_MSG", "This slot is fully booked. Please choose another slot.");
+                request.getRequestDispatcher("/views/error.jsp").forward(request, response);
+                return;
+            }
 
             long totalAmount = 100000;
             int pointsEarned = 2;
@@ -117,8 +129,8 @@ public class BookingController extends HttpServlet {
             newBooking.setNotes(notes);
             newBooking.setCustomerId(loginedCustomer.getCustomerId());
             newBooking.setVehicleId(vehicleId);
-            newBooking.setBayId(null);
             newBooking.setPromotionId(null);
+            newBooking.setBayId(assignedBayId);
 
             boolean isSuccess = bd.insertBooking(newBooking);
 

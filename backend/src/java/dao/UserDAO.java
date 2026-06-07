@@ -9,6 +9,32 @@ import utils.DBUtils;
 
 public class UserDAO {
 
+    public User getUserByEmail(String email) {
+        String sql = "SELECT user_id, full_name, email, phone, password, is_active, created_at, role_id, avatar_url "
+                + "FROM [User] WHERE email = ? AND is_active = 1";
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try ( ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new User(
+                            rs.getInt("user_id"),
+                            rs.getString("full_name"),
+                            rs.getString("email"),
+                            rs.getString("phone"),
+                            rs.getString("password"),
+                            rs.getInt("is_active"),
+                            rs.getDate("created_at"),
+                            rs.getInt("role_id"),
+                            rs.getString("avatar_url")
+                    );
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     // ===================================================
     // GET USER BY EMAIL AND PASSWORD (PASSWORD ĐÃ BĂM SẴN)
     // ===================================================
