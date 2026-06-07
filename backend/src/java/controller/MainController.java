@@ -1,7 +1,9 @@
 package controller;
 
+import dao.ServiceDAO;
+import dto.Service;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +15,7 @@ public class MainController extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8"); // Đảm bảo không lỗi font tiếng Việt khi submit form
+        
         try {
             String url = "views/error.jsp"; // File báo lỗi hệ thống chung
             String ac = request.getParameter("action");
@@ -23,8 +26,26 @@ public class MainController extends HttpServlet {
 
             switch (ac) {
                 case "home":
+                    // ========================================================
+                    // XỬ LÝ DỮ LIỆU ĐỘNG CHO TRANG CHỦ
+                    // ========================================================
+                    try {
+                        // 1. Khởi tạo lớp xử lý dữ liệu ServiceDAO của bạn
+                        ServiceDAO serviceDAO = new ServiceDAO();
+                        
+                        // 2. Gọi hàm lấy danh sách dịch vụ đang hoạt động
+                        List<Service> servicesList = serviceDAO.getActiveServices();
+                        
+                        // 3. Đóng gói danh sách vào request dưới tên biến SERVICES_LIST
+                        request.setAttribute("SERVICES_LIST", servicesList);
+                    } catch (Exception e) {
+                        // Log lỗi cục bộ để nếu lỗi DB thì trang chủ vẫn không bị sập (vẫn hiển thị giao diện trống)
+                        System.out.println("Error loading services at MainController: " + e.getMessage());
+                    }
+                    
                     url = "index.jsp";
                     break;
+                    
                 case "login":
                     url = "login"; 
                     break;
@@ -48,7 +69,6 @@ public class MainController extends HttpServlet {
                 // 2. CÁC ROUTE MỚI CHO WORKSHOP 2 (Nhiệm vụ JIRA-01 của bạn)
                 // ========================================================
                 case "dashboard":
-                    // Chuyển hướng đến trang Dashboard sau khi đăng nhập thành công
                     url = "dashboard";
                     break;
 
@@ -57,8 +77,6 @@ public class MainController extends HttpServlet {
                     break;
 
                 case "bookingSubmit":
-                    // Khi khách ấn nút "Confirm Booking", form submit lên đây để xử lý tính toán,
-                    // trừ tiền ví, cộng điểm và lưu vào DB
                     url = "bookingSubmit";
                     break;
 
@@ -74,43 +92,20 @@ public class MainController extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
+        return "Main Controller handling routing and context initialization";
+    }
 }

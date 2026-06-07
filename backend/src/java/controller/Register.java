@@ -7,7 +7,6 @@ import dto.User;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import javax.servlet.ServletException;
