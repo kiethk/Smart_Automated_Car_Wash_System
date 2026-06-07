@@ -226,33 +226,56 @@
                         %>
                         <div class="py-4 flex justify-between items-center first:pt-0 last:pb-0">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 font-black text-[10px] tracking-tight tech-data uppercase px-1">
-                                    <%= vehicle.getVehicleType()%>
+                                <%-- Ảnh xe: nếu có vehicle_image_url thì hiện, không thì dùng placeholder --%>
+                                <div class="w-16 h-12 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                    <% if (vehicle.getVehicleImageUrl() != null && !vehicle.getVehicleImageUrl().trim().isEmpty()) {%>
+                                    <img src="<%= vehicle.getVehicleImageUrl()%>" 
+                                         alt="Vehicle" class="w-full h-full object-cover" />
+                                    <% } else { %>
+                                    <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                              d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                              d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 .001M13 16H9m4 0h5.5M13 16V9.5l3.5-1.5L20 11v5H18m-5 0h5"/>
+                                    </svg>
+                                    <% }%>
                                 </div>
+
                                 <div>
-                                    <div class="font-bold text-on-background"><%= vehicle.getBrand()%> <%= vehicle.getModel()%></div>
-                                    <div class="text-xs text-slate-400 tracking-wider tech-data font-semibold"><%= vehicle.getPlateNumber()%></div>
+                                    <%-- Brand + Model: dùng brandDisplay/modelDisplay từ VIEW --%>
+                                    <div class="font-bold text-on-background">
+                                        <%= vehicle.getBrandDisplay()%> <%= vehicle.getModelDisplay()%>
+                                    </div>
+                                    <div class="text-xs text-slate-400 tracking-wider tech-data font-semibold mt-0.5">
+                                        <%= vehicle.getPlateNumber()%>
+                                    </div>
+                                    <%-- Thêm màu sắc + năm sản xuất + loại xe --%>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[11px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">
+                                            <%= vehicle.getVehicleType()%>
+                                        </span>
+                                        <span class="text-[11px] text-slate-400">
+                                            <%= vehicle.getColor()%> · <%= vehicle.getManufactureYear()%>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-4">
-                                <span class="text-[11px] text-slate-400 font-mono hidden md:block"><%= vehicle.getColor()%></span>
-
-                                <div class="flex items-center gap-2">
-                                    <a href="${pageContext.request.contextPath}/updateVehicle?id=<%= vehicle.getVehicleId()%>" 
-                                       class="p-2 text-primary hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </a>
-
-                                    <button onclick="deleteVehicle('<%= vehicle.getVehicleId()%>')" 
-                                            class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <a href="${pageContext.request.contextPath}/updateVehicle?id=<%= vehicle.getVehicleId()%>"
+                                   class="p-2 text-primary hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                <button onclick="deleteVehicle('<%= vehicle.getVehicleId()%>')"
+                                        class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                         <%

@@ -91,31 +91,36 @@ CREATE TABLE Customer (
 );
 
 -- Bảng Hãng xe
-CREATE TABLE Brands (
+CREATE TABLE Brand (
     brand_id INT PRIMARY KEY IDENTITY(1,1),
     brand_name NVARCHAR(50) UNIQUE NOT NULL
 );
 
 -- Bảng Dòng xe
-CREATE TABLE Models (
+-- FIX: REFERENCES Brand(brand_id) thay vì Brands(brand_id)
+CREATE TABLE Model (
     model_id INT PRIMARY KEY IDENTITY(1,1),
     model_name NVARCHAR(50) NOT NULL,
     brand_id INT NOT NULL,
-    FOREIGN KEY (brand_id) REFERENCES Brands(brand_id) ON DELETE CASCADE
+    FOREIGN KEY (brand_id) REFERENCES Brand(brand_id) ON DELETE CASCADE
 );
 
 -- Bảng Xe
+-- FIX: REFERENCES Model(model_id) thay vì Models(model_id)
+-- FIX: Thêm custom_brand_name và custom_model_name để hỗ trợ hãng/dòng xe không có trong hệ thống
 CREATE TABLE Vehicle (
     vehicle_id INT PRIMARY KEY IDENTITY(1,1),
     plate_number NVARCHAR(20) UNIQUE NOT NULL,
-    model_id INT NOT NULL, 
+    model_id INT NOT NULL,
     vehicle_type NVARCHAR(30),
     color NVARCHAR(20),
     manufacture_year INT,
     customer_id INT,
     is_active INT DEFAULT 1,
     vehicle_image_url NVARCHAR(255) DEFAULT NULL,
-    FOREIGN KEY (model_id) REFERENCES Models(model_id),
+    custom_brand_name NVARCHAR(50) DEFAULT NULL,   -- Hãng xe tự nhập (khi brand không có trong hệ thống)
+    custom_model_name NVARCHAR(50) DEFAULT NULL,   -- Dòng xe tự nhập (khi model không có trong hệ thống)
+    FOREIGN KEY (model_id) REFERENCES Model(model_id),
     FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
 );
 
@@ -177,7 +182,7 @@ CREATE TABLE Booking (
     FOREIGN KEY (promotion_id) REFERENCES Promotion(promotion_id)
 );
 
--- Bảng Thanh toán (ĐÃ THÊM 2 THUỘC TÍNH ẢNH THEO YÊU CẦU)
+-- Bảng Thanh toán
 CREATE TABLE Payment (
     payment_id INT PRIMARY KEY IDENTITY(1,1),
     payment_method NVARCHAR(50), 
@@ -275,8 +280,9 @@ DELETE FROM Booking;
 DELETE FROM Notifications;
 DELETE FROM LoyaltyPointHistory;
 DELETE FROM Vehicle;
-DELETE FROM Models;
-DELETE FROM Brands;
+-- FIX: Tên bảng đúng là Model và Brand (không phải Models, Brands)
+DELETE FROM Model;
+DELETE FROM Brand;
 DELETE FROM Customer;
 DELETE FROM [User];
 DELETE FROM Service;
@@ -302,133 +308,143 @@ INSERT INTO Tiers (tier_id, tier_name, min_washes, min_spent, point_multiplier, 
 
 -- Nạp bảng Promotion
 INSERT INTO Promotion (code, discount_type, discount_value, min_order_amount, usage_limit, start_date, end_date, is_active, target_tier_id) VALUES
-(N'WELCOME50', N'fixed', 50000, 0, 100, '2026-01-01', '2026-12-31', 1, NULL),
-(N'GOLDPREMIUM', N'percent', 15, 100000, 50, '2026-01-01', '2026-12-31', 1, 3);
+(N'WELCOME50',   N'fixed',   50000, 0,      100, '2026-01-01', '2026-12-31', 1, NULL),
+(N'GOLDPREMIUM', N'percent', 15,    100000, 50,  '2026-01-01', '2026-12-31', 1, 3);
 
 -- Nạp bảng Bay
 INSERT INTO Bay (bay_name, status, capacity_per_hour) VALUES
-(N'Bay Tự Động 01', N'available', 6),
-(N'Bay Tự Động 02', N'available', 6),
+(N'Bay Tự Động 01', N'available',  6),
+(N'Bay Tự Động 02', N'available',  6),
 (N'Bay Tự động 03', N'maintenance', 0);
 
 -- Nạp bảng Service
 INSERT INTO Service (service_name, description, price, duration_minutes, is_active) VALUES
-(N'Express Wash (Sedan)', N'Rửa nhanh áp lực cao, bọt tuyết, sấy khô cho Sedan', 50000, 5, 1),
-(N'Deluxe Wash (Sedan)', N'Gói Express + làm sạch mâm lốp, dưỡng bóng lốp cho Sedan', 80000, 7, 1),
-(N'Ultimate Wax Wash (Sedan)', N'Gói Deluxe + xịt sáp bóng ceramic, khử mùi cabin cho Sedan', 120000, 10, 1),
-(N'Express Wash (SUV/Truck)', N'Rửa nhanh áp lực cao công suất lớn cho gầm cao SUV/Truck', 70000, 7, 1),
-(N'Deluxe Wash (SUV/Truck)', N'Gói Express + tẩy ố lazang chuyên sâu cho SUV/Truck', 100000, 10, 1),
-(N'Ultimate Wax Wash (SUV/Truck)', N'Gói Deluxe + phủ bóng sáp bảo vệ sơn cho SUV/Truck', 150000, 13, 1);
+(N'Express Wash (Sedan)',       N'Rửa nhanh áp lực cao, bọt tuyết, sấy khô cho Sedan',            50000,  5,  1),
+(N'Deluxe Wash (Sedan)',        N'Gói Express + làm sạch mâm lốp, dưỡng bóng lốp cho Sedan',       80000,  7,  1),
+(N'Ultimate Wax Wash (Sedan)',  N'Gói Deluxe + xịt sáp bóng ceramic, khử mùi cabin cho Sedan',    120000, 10, 1),
+(N'Express Wash (SUV/Truck)',   N'Rửa nhanh áp lực cao công suất lớn cho gầm cao SUV/Truck',       70000,  7,  1),
+(N'Deluxe Wash (SUV/Truck)',    N'Gói Express + tẩy ố lazang chuyên sâu cho SUV/Truck',            100000, 10, 1),
+(N'Ultimate Wax Wash (SUV/Truck)', N'Gói Deluxe + phủ bóng sáp bảo vệ sơn cho SUV/Truck',        150000, 13, 1);
 
 -- Nạp bảng User
 INSERT INTO [User] (full_name, email, phone, password, is_active, role_id) VALUES
-(N'Nguyễn Admin', 'admin@autowash.com', '0900000001', 'password123', 1, 1),
-(N'Trần Nhân Viên', 'staff@autowash.com', '0900000002', 'password123', 1, 2),
+(N'Nguyễn Admin',    'admin@autowash.com', '0900000001', 'password123', 1, 1),
+(N'Trần Nhân Viên',  'staff@autowash.com', '0900000002', 'password123', 1, 2),
 (N'Nguyễn Minh Hoàng', 'hoang@gmail.com', '0912345678', 'password123', 1, 3),
-(N'Trần Thị Ngọc', 'ngoc@gmail.com', '0987654321', 'password123', 1, 3),    
-(N'Cao Minh Kỳ', 'ky@gmail.com', '0905111222', 'password123', 1, 3),       
-(N'Lê Hoàng Long', 'long@gmail.com', '0933444555', 'password123', 1, 3);
+(N'Trần Thị Ngọc',  'ngoc@gmail.com',  '0987654321', 'password123', 1, 3),    
+(N'Cao Minh Kỳ',    'ky@gmail.com',    '0905111222', 'password123', 1, 3),       
+(N'Lê Hoàng Long',  'long@gmail.com',  '0933444555', 'password123', 1, 3);
 
 -- Nạp bảng Customer
 INSERT INTO Customer (address, total_points, total_spent, total_washes, join_date, date_of_birth, user_id, tier_id, last_review_date) VALUES
-(N'Quận 9, TP. HCM', 3,  150000,   3,  '2026-01-15', '1998-05-20', 3, 1, '2026-05-01'),
-(N'Quận 7, TP. HCM', 8,  2400000,  6,  '2026-02-10', '1995-11-12', 4, 2, '2026-05-01'),
-(N'Thủ Đức, TP. HCM', 25, 7200000,  16, '2025-12-01', '1990-02-15', 5, 3, '2026-05-01'),
-(N'Quận 1, TP. HCM', 45, 16500000, 32, '2025-08-20', '1988-08-08', 6, 4, '2026-05-01');
+(N'Quận 9, TP. HCM',   3,  150000,   3,  '2026-01-15', '1998-05-20', 3, 1, '2026-05-01'),
+(N'Quận 7, TP. HCM',   8,  2400000,  6,  '2026-02-10', '1995-11-12', 4, 2, '2026-05-01'),
+(N'Thủ Đức, TP. HCM',  25, 7200000,  16, '2025-12-01', '1990-02-15', 5, 3, '2026-05-01'),
+(N'Quận 1, TP. HCM',   45, 16500000, 32, '2025-08-20', '1988-08-08', 6, 4, '2026-05-01');
 
-INSERT INTO Brands (brand_name) VALUES 
-(N'Honda'),         -- brand_id: 1
-(N'Toyota'),        -- brand_id: 2
-(N'Mazda'),         -- brand_id: 3
-(N'Ford'),          -- brand_id: 4
-(N'Hyundai'),       -- brand_id: 5
-(N'Kia'),           -- brand_id: 6
-(N'Mitsubishi'),    -- brand_id: 7
-(N'VinFast'),       -- brand_id: 8
-(N'Suzuki'),        -- brand_id: 9
-(N'Mercedes-Benz'), -- brand_id: 10
-(N'BMW');           -- brand_id: 11
+-- Nạp bảng Brand
+-- FIX: Thêm dòng 'Other' (brand_id = 12) để hỗ trợ hãng xe tự nhập
+INSERT INTO Brand (brand_name) VALUES 
+(N'Honda'),          -- brand_id: 1
+(N'Toyota'),         -- brand_id: 2
+(N'Mazda'),          -- brand_id: 3
+(N'Ford'),           -- brand_id: 4
+(N'Hyundai'),        -- brand_id: 5
+(N'Kia'),            -- brand_id: 6
+(N'Mitsubishi'),     -- brand_id: 7
+(N'VinFast'),        -- brand_id: 8
+(N'Suzuki'),         -- brand_id: 9
+(N'Mercedes-Benz'),  -- brand_id: 10
+(N'BMW'),            -- brand_id: 11
+(N'Other');          -- brand_id: 12 | Dành cho hãng xe không có trong danh sách
 GO
 
-INSERT INTO Models (model_name, brand_id) VALUES 
--- Các dòng xe thuộc Honda (brand_id = 1)
-(N'Civic', 1),       -- model_id: 1
-(N'City', 1),        -- model_id: 2
-(N'CR-V', 1),        -- model_id: 3
-(N'HR-V', 1),        -- model_id: 4
+-- Nạp bảng Model
+-- FIX: Thêm dòng 'Other' thuộc brand Other (brand_id = 12) để hỗ trợ dòng xe tự nhập
+INSERT INTO Model (model_name, brand_id) VALUES 
+-- Honda (brand_id = 1)
+(N'Civic', 1),            -- model_id: 1
+(N'City', 1),             -- model_id: 2
+(N'CR-V', 1),             -- model_id: 3
+(N'HR-V', 1),             -- model_id: 4
 
--- Các dòng xe thuộc Toyota (brand_id = 2)
-(N'Vios', 2),        -- model_id: 5
-(N'Camry', 2),       -- model_id: 6
-(N'Innova', 2),      -- model_id: 7
-(N'Corolla Cross', 2),-- model_id: 8
-(N'Veloz Cross', 2), -- model_id: 9
+-- Toyota (brand_id = 2)
+(N'Vios', 2),             -- model_id: 5
+(N'Camry', 2),            -- model_id: 6
+(N'Innova', 2),           -- model_id: 7
+(N'Corolla Cross', 2),    -- model_id: 8
+(N'Veloz Cross', 2),      -- model_id: 9
 
--- Các dòng xe thuộc Mazda (brand_id = 3)
-(N'Mazda 3', 3),     -- model_id: 10
-(N'CX-5', 3),        -- model_id: 11
-(N'Mazda 6', 3),     -- model_id: 12
-(N'CX-8', 3),        -- model_id: 13
+-- Mazda (brand_id = 3)
+(N'Mazda 3', 3),          -- model_id: 10
+(N'CX-5', 3),             -- model_id: 11
+(N'Mazda 6', 3),          -- model_id: 12
+(N'CX-8', 3),             -- model_id: 13
 
--- Các dòng xe thuộc Ford (brand_id = 4)
-(N'Ranger', 4),      -- model_id: 14
-(N'Everest', 4),     -- model_id: 15
-(N'Territory', 4),   -- model_id: 16
+-- Ford (brand_id = 4)
+(N'Ranger', 4),           -- model_id: 14
+(N'Everest', 4),          -- model_id: 15
+(N'Territory', 4),        -- model_id: 16
 
--- Các dòng xe thuộc Hyundai (brand_id = 5)
-(N'Accent', 5),      -- model_id: 17
-(N'Grand i10', 5),   -- model_id: 18
-(N'Tucson', 5),      -- model_id: 19
-(N'Santa Fe', 5),    -- model_id: 20
-(N'Creta', 5),       -- model_id: 21
+-- Hyundai (brand_id = 5)
+(N'Accent', 5),           -- model_id: 17
+(N'Grand i10', 5),        -- model_id: 18
+(N'Tucson', 5),           -- model_id: 19
+(N'Santa Fe', 5),         -- model_id: 20
+(N'Creta', 5),            -- model_id: 21
 
--- Các dòng xe thuộc Kia (brand_id = 6)
-(N'Morning', 6),     -- model_id: 22
-(N'K3', 6),          -- model_id: 23
-(N'Seltos', 6),      -- model_id: 24
-(N'Sorento', 6),     -- model_id: 25
-(N'Carnival', 6),    -- model_id: 26
+-- Kia (brand_id = 6)
+(N'Morning', 6),          -- model_id: 22
+(N'K3', 6),               -- model_id: 23
+(N'Seltos', 6),           -- model_id: 24
+(N'Sorento', 6),          -- model_id: 25
+(N'Carnival', 6),         -- model_id: 26
 
--- Các dòng xe thuộc Mitsubishi (brand_id = 7)
-(N'Xpander', 7),     -- model_id: 27
-(N'Outlander', 7),   -- model_id: 28
-(N'Atrafe', 7),      -- model_id: 29
-(N'Triton', 7),      -- model_id: 30
+-- Mitsubishi (brand_id = 7)
+(N'Xpander', 7),          -- model_id: 27
+(N'Outlander', 7),        -- model_id: 28
+(N'Attrage', 7),          -- model_id: 29
+(N'Triton', 7),           -- model_id: 30
 
--- Các dòng xe thuộc VinFast (brand_id = 8)
-(N'Fadil', 8),       -- model_id: 31
-(N'VF 5', 8),        -- model_id: 32
-(N'VF 8', 8),        -- model_id: 33
-(N'VF 9', 8),        -- model_id: 34
-(N'VF e34', 8),      -- model_id: 35
+-- VinFast (brand_id = 8)
+(N'Fadil', 8),            -- model_id: 31
+(N'VF 5', 8),             -- model_id: 32
+(N'VF 8', 8),             -- model_id: 33
+(N'VF 9', 8),             -- model_id: 34
+(N'VF e34', 8),           -- model_id: 35
 
--- Các dòng xe thuộc Suzuki (brand_id = 9)
-(N'XL7', 9),         -- model_id: 36
-(N'Swift', 9),       -- model_id: 37
-(N'Ertiga', 9),      -- model_id: 38
+-- Suzuki (brand_id = 9)
+(N'XL7', 9),              -- model_id: 36
+(N'Swift', 9),            -- model_id: 37
+(N'Ertiga', 9),           -- model_id: 38
 
--- Các dòng xe thuộc Mercedes-Benz (brand_id = 10)
-(N'C-Class', 10),    -- model_id: 39
-(N'E-Class', 10),    -- model_id: 40
-(N'GLC', 10),        -- model_id: 41
+-- Mercedes-Benz (brand_id = 10)
+(N'C-Class', 10),         -- model_id: 39
+(N'E-Class', 10),         -- model_id: 40
+(N'GLC', 10),             -- model_id: 41
 
--- Các dòng xe thuộc BMW (brand_id = 11)
-(N'3 Series', 11),   -- model_id: 42
-(N'5 Series', 11),   -- model_id: 43
-(N'X5', 11);         -- model_id: 44
+-- BMW (brand_id = 11)
+(N'3 Series', 11),        -- model_id: 42
+(N'5 Series', 11),        -- model_id: 43
+(N'X5', 11),              -- model_id: 44
+
+-- Other (brand_id = 12) | Dòng xe placeholder cho trường hợp tự nhập
+(N'Other', 12);           -- model_id: 45
 GO
 
-INSERT INTO Vehicle (plate_number, model_id, vehicle_type, color, manufacture_year, customer_id) VALUES
-('51G-12345', 5,  'Sedan', N'Trắng', 2021, 1), -- Vios (model_id = 5)
-('51H-67890', 11, 'SUV',   N'Đỏ',   2022, 2), -- CX-5 (model_id = 11)
-('51K-55555', 2,  'Sedan', N'Đen',   2023, 3), -- City (model_id = 2)
-('51L-99999', 14, 'Truck', N'Xám',   2022, 4); -- Ranger (model_id = 14)
+-- Nạp bảng Vehicle
+-- Ghi chú: Khi model_id = 45 (Other/Other), điền custom_brand_name và custom_model_name
+INSERT INTO Vehicle (plate_number, model_id, vehicle_type, color, manufacture_year, customer_id, custom_brand_name, custom_model_name) VALUES
+('51G-12345', 5,  'Sedan', N'White', 2021, 1, NULL, NULL),  -- Toyota Vios
+('51H-67890', 11, 'SUV',   N'Red',   2022, 2, NULL, NULL),  -- Mazda CX-5
+('51K-55555', 2,  'Sedan', N'Black', 2023, 3, NULL, NULL),  -- Honda City
+('51L-99999', 14, 'Truck', N'Grey',  2022, 4, NULL, NULL);  -- Ford Ranger
 GO
 
 -- Nạp bảng Wallet
 INSERT INTO Wallet (balance, customer_id) VALUES
-(100000, 1),
-(500000, 2),
+(100000,  1),
+(500000,  2),
 (1200000, 3),
 (2500000, 4);
 
@@ -442,18 +458,48 @@ INSERT INTO Slot (time_value, start_time, end_time, max_capacity, is_active) VAL
 
 -- Nạp bảng Booking
 INSERT INTO Booking (booking_date, slot_id, discount_amount, total_amount, points_earned, status, notes, customer_id, vehicle_id, bay_id, promotion_id) VALUES
-('2026-05-24', 1, 0, 50000, 1, N'completed', N'Rửa nhanh sạch sẽ', 1, 1, 1, NULL),
-('2026-05-25', 2, 0, 100000, 2, N'completed', N'Rửa kỹ mâm lốp', 2, 2, 2, NULL),
-('2026-06-05', 4, 12000, 108000, 2, N'pending', N'Khách hàng Gold đặt gói Premium Wax', 3, 3, 1, NULL);
+('2026-05-24', 1, 0,     50000,  1, N'completed', N'Rửa nhanh sạch sẽ',                   1, 1, 1, NULL),
+('2026-05-25', 2, 0,     100000, 2, N'completed', N'Rửa kỹ mâm lốp',                       2, 2, 2, NULL),
+('2026-06-05', 4, 12000, 108000, 2, N'pending',   N'Khách hàng Gold đặt gói Premium Wax',  3, 3, 1, NULL);
 
 -- Nạp bảng BookingService
 INSERT INTO BookingService (quantity, price, booking_id, service_id) VALUES
-(1, 50000, 1, 1),  
-(1, 100000, 2, 5), 
-(1, 120000, 3, 3); 
+(1, 50000,  1, 1),  -- Express Wash Sedan
+(1, 100000, 2, 5),  -- Deluxe Wash SUV/Truck
+(1, 120000, 3, 3);  -- Ultimate Wax Wash Sedan
 
--- Nạp bảng Payment (ĐÃ BỔ SUNG MOCK URL CHO 2 ĐƠN HÀNG HOÀN THÀNH)
+-- Nạp bảng Payment
 INSERT INTO Payment (payment_method, payment_status, amount, paid_at, transaction_id, booking_id, checkin_image_url, checkout_image_url) VALUES
-(N'cash', N'completed', 50000, '2026-05-24 08:38:00', N'TXN-001', 1, N'/assets/images/mock/checkin_01.jpg', N'/assets/images/mock/checkout_01.jpg'),
+(N'cash',   N'completed', 50000,  '2026-05-24 08:38:00', N'TXN-001', 1, N'/assets/images/mock/checkin_01.jpg', N'/assets/images/mock/checkout_01.jpg'),
 (N'wallet', N'completed', 100000, '2026-05-25 10:13:00', N'TXN-002', 2, N'/assets/images/mock/checkin_02.jpg', N'/assets/images/mock/checkout_02.jpg');
+GO
+
+-- ========================================================
+-- 4. VIEW HỖ TRỢ HIỂN THỊ THÔNG TIN XE (Brand/Model)
+-- ========================================================
+-- Dùng view này thay vì JOIN trực tiếp để tự động xử lý
+-- trường hợp xe tự nhập (Other) vs xe có trong danh sách.
+
+CREATE VIEW VehicleDetail AS
+SELECT
+    v.vehicle_id,
+    v.plate_number,
+    v.vehicle_type,
+    v.color,
+    v.manufacture_year,
+    v.is_active,
+    v.vehicle_image_url,
+    v.customer_id,
+    v.model_id,
+    CASE 
+        WHEN b.brand_name = N'Other' THEN v.custom_brand_name 
+        ELSE b.brand_name 
+    END AS brand_display,
+    CASE 
+        WHEN m.model_name = N'Other' THEN v.custom_model_name 
+        ELSE m.model_name 
+    END AS model_display
+FROM Vehicle v
+JOIN Model m ON v.model_id = m.model_id
+JOIN Brand b ON m.brand_id  = b.brand_id;
 GO

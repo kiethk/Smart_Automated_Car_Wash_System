@@ -8,7 +8,7 @@ import dao.VehicleDAO;
 import dto.Booking;
 import dto.Customer;
 import dto.Service;
-import dto.Slot; 
+import dto.Slot;
 import dto.User;
 import dto.Vehicle;
 import java.io.IOException;
@@ -39,6 +39,7 @@ public class BookingController extends HttpServlet {
         VehicleDAO vd = new VehicleDAO();
         ServiceDAO sd = new ServiceDAO();
         SlotDAO sld = new SlotDAO();
+        dao.PromotionDAO pd = new dao.PromotionDAO(); // <-- Nạp nguyên liệu mới tạo
 
         try {
             if (loginedCustomer == null) {
@@ -47,28 +48,30 @@ public class BookingController extends HttpServlet {
             }
 
             String selectedDate = request.getParameter("date");
-            
+
             if (selectedDate == null || selectedDate.trim().isEmpty()) {
-                selectedDate = LocalDate.now().toString(); 
+                selectedDate = LocalDate.now().toString();
             }
 
             List<Vehicle> vehicleList = vd.getVehiclesByCustomerId(loginedCustomer.getCustomerId());
-            List<Service> serviceList = sd.getActiveServices(); 
+            List<Service> serviceList = sd.getActiveServices();
             List<Slot> slotList = sld.getSlotsByDate(selectedDate);
+            List<dto.Promotion> promoList = pd.getAllActivePromotions(); // <-- Lấy danh sách Voucher từ DB
 
             request.setAttribute("CUSTOMER", loginedCustomer);
             request.setAttribute("VEHICLES", vehicleList);
             request.setAttribute("SERVICES", serviceList);
             request.setAttribute("SLOTS", slotList);
-            request.setAttribute("SELECTED_DATE", selectedDate); 
+            request.setAttribute("PROMOTIONS", promoList); // <-- Đẩy sang JSP với key chuẩn "PROMOTIONS"
+            request.setAttribute("SELECTED_DATE", selectedDate);
 
-            // ĐÃ SỬA: Thêm dấu / ở đầu đường dẫn forward sang JSP
+            // Điều hướng thẳng tới trang giao diện đặt lịch
             request.getRequestDispatcher("/views/auth/customer/booking.jsp").forward(request, response);
 
         } catch (Exception e) {
             log("Error at BookingController (doGet): " + e.getMessage());
+            e.printStackTrace(); // In ra console để bạn dễ theo dõi nếu có lỗi SQL ngầm
             request.setAttribute("ERROR_MSG", "System error while loading booking form: " + e.getMessage());
-            // ĐÃ SỬA: Thêm dấu / ở đầu đường dẫn forward sang JSP
             request.getRequestDispatcher("/views/error.jsp").forward(request, response);
         }
     }
@@ -83,9 +86,9 @@ public class BookingController extends HttpServlet {
             return;
         }
 
-        request.setCharacterEncoding("UTF-8"); 
+        request.setCharacterEncoding("UTF-8");
         User loginedUser = (User) session.getAttribute("USER");
-        
+
         CustomerDAO cd = new CustomerDAO();
         BookingDAO bd = new BookingDAO();
 
@@ -100,9 +103,9 @@ public class BookingController extends HttpServlet {
             int slotId = Integer.parseInt(request.getParameter("slotId"));
             int vehicleId = Integer.parseInt(request.getParameter("vehicleId"));
             String notes = request.getParameter("notes");
-            
-            long totalAmount = 100000; 
-            int pointsEarned = 2;       
+
+            long totalAmount = 100000;
+            int pointsEarned = 2;
 
             Booking newBooking = new Booking();
             newBooking.setBookingDate(bookingDate);
@@ -110,12 +113,12 @@ public class BookingController extends HttpServlet {
             newBooking.setDiscountAmount(0);
             newBooking.setTotalAmount(totalAmount);
             newBooking.setPointsEarned(pointsEarned);
-            newBooking.setStatus("pending"); 
+            newBooking.setStatus("pending");
             newBooking.setNotes(notes);
             newBooking.setCustomerId(loginedCustomer.getCustomerId());
             newBooking.setVehicleId(vehicleId);
-            newBooking.setBayId(null);         
-            newBooking.setPromotionId(null);   
+            newBooking.setBayId(null);
+            newBooking.setPromotionId(null);
 
             boolean isSuccess = bd.insertBooking(newBooking);
 
