@@ -16,7 +16,6 @@
     List<Vehicle> vehicleList = (List<Vehicle>) request.getAttribute("VEHICLES");
     List<Service> serviceList = (List<Service>) request.getAttribute("SERVICES");
     List<Slot> slotList = (List<Slot>) request.getAttribute("SLOTS");
-    List<Slot> allSlotList = (List<Slot>) request.getAttribute("ALLSLOTLIST");
     List<Promotion> promoList = (List<Promotion>) request.getAttribute("PROMOTIONS");
 
     if (vehicleList == null) {
@@ -223,25 +222,8 @@
                 <%-- Available Times --%>
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Available Times</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <%
-                            if (!slotList.isEmpty()) {
-                                for (Slot slot : slotList) {
-                        %>
-                        <label class="cursor-pointer block text-center">
-                            <input class="peer sr-only" name="slotId" type="radio" value="<%= slot.getSlotId()%>" required/>
-                            <div class="py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold font-mono hover:border-indigo-900 peer-checked:bg-indigo-950 peer-checked:text-white peer-checked:border-indigo-950 transition-colors">
-                                <%= slot.getTimeValue()%>
-                            </div>
-                        </label>
-                        <%
-                            }
-                        } else {
-                        %>
-                        <p class="text-xs text-slate-400 col-span-2 text-center py-6 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">Please select a date from the calendar to view slots.</p>
-                        <%
-                            }
-                        %>
+                    <div class="grid grid-cols-2 gap-3" id="slotGrid">
+
                     </div>
                 </div>
             </div>
@@ -249,41 +231,85 @@
 
         <%-- SECTION 4: ADDITIONAL NOTES --%>
         <section class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-            <h2 class="text-xl font-bold mb-3 text-slate-900">Additional Notes</h2>
-            <textarea name="notes" class="w-full rounded-xl border-slate-200 bg-white focus:border-indigo-900 focus:ring focus:ring-indigo-900/10 transition-shadow p-3 text-xs resize-none" placeholder="Notes for the Station / Special Requests..." rows="3"></textarea>
+            <div class="flex flex-col gap-2.5">
+                <label for="notes" class="text-base font-semibold tracking-tight text-slate-900">
+                    Additional Notes
+                </label>
+                <textarea 
+                    id="notes"
+                    name="notes" 
+                    rows="3"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50/30 p-3.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none transition-all duration-200 focus:border-slate-400 focus:bg-white focus:ring-4 focus:ring-slate-100" 
+                    placeholder="Notes for the Station / Special Requests..."
+                    ></textarea>
+            </div>
         </section>
 
         <%-- SECTION 5: PAYMENT METHOD --%>
         <section class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-            <h2 class="text-xl font-bold mb-4 text-slate-900">Payment Method</h2>
-            <div class="flex flex-col gap-3">
-                <%-- Option 1: Digital Wallet --%>
-                <label class="cursor-pointer block">
-                    <input checked="" class="peer sr-only" name="paymentMethod" type="radio" value="WALLET"/>
-                    <div class="p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-600 peer-checked:border-indigo-950 peer-checked:bg-indigo-50/20 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-indigo-950">account_balance_wallet</span>
-                        <span class="text-xs font-bold text-slate-700 flex-grow">AutoWash Digital Wallet</span>
-                        <span class="text-xs font-mono text-slate-400 font-bold">(Balance: <%= String.format("%,.0f", walletBalance)%> VND)</span>
-                    </div>
+            <div class="flex flex-col gap-4">
+                <label class="text-base font-semibold tracking-tight text-slate-900">
+                    Payment Method
                 </label>
-                <%-- Option 2: Scan QR Code --%>
-                <label class="cursor-pointer block">
-                    <input class="peer sr-only" name="paymentMethod" type="radio" value="QRCODE"/>
-                    <div class="p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-600 peer-checked:border-indigo-950 peer-checked:bg-indigo-50/20 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-slate-700">qr_code_scanner</span>
-                        <span class="text-xs font-bold text-slate-700">Scan QR Code via Mobile App</span>
-                    </div>
-                </label>
-                <%-- Option 3: Cash --%>
-                <label class="cursor-pointer block">
-                    <input class="peer sr-only" name="paymentMethod" type="radio" value="CASH"/>
-                    <div class="p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-600 peer-checked:border-indigo-950 peer-checked:bg-indigo-50/20 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-slate-700">payments</span>
-                        <span class="text-xs font-bold text-slate-700">Pay with Cash at Station</span>
-                    </div>
-                </label>
+
+                <div class="flex flex-col gap-3">
+                    <%-- Option 1: Digital Wallet --%>
+                    <label class="cursor-pointer block">
+                        <input checked type="radio" name="paymentMethod" value="WALLET" class="peer sr-only"/>
+                        <div class="p-4 rounded-xl border border-slate-200 bg-white transition-all duration-200
+                             hover:border-slate-300 hover:bg-slate-50/30
+                             peer-checked:border-slate-900 peer-checked:bg-slate-50/50 peer-checked:ring-4 peer-checked:ring-slate-100
+                             flex items-center gap-4">
+
+                            <%-- Lucide Wallet Icon --%>
+                            <div class="text-slate-400 transition-colors duration-200 peer-checked:text-slate-900 flex items-center justify-center shrink-0">
+                                <i data-lucide="wallet" class="w-5 h-5 stroke-[1.75]"></i>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-grow">
+                                <span class="text-sm font-medium text-slate-800">AutoWash Digital Wallet</span>
+                                <span class="text-xs font-mono text-slate-400 font-medium">(Balance: <%= String.format("%,.0f", walletBalance)%> VND)</span>
+                            </div>
+                        </div>
+                    </label>
+
+                    <%-- Option 2: Scan QR Code --%>
+                    <label class="cursor-pointer block">
+                        <input type="radio" name="paymentMethod" value="QRCODE" class="peer sr-only"/>
+                        <div class="p-4 rounded-xl border border-slate-200 bg-white transition-all duration-200
+                             hover:border-slate-300 hover:bg-slate-50/30
+                             peer-checked:border-slate-900 peer-checked:bg-slate-50/50 peer-checked:ring-4 peer-checked:ring-slate-100
+                             flex items-center gap-4">
+
+                            <%-- Lucide QR Code Icon --%>
+                            <div class="text-slate-400 transition-colors duration-200 peer-checked:text-slate-900 flex items-center justify-center shrink-0">
+                                <i data-lucide="qr-code" class="w-5 h-5 stroke-[1.75]"></i>
+                            </div>
+
+                            <span class="text-sm font-medium text-slate-800 flex-grow">Scan QR Code via Mobile App</span>
+                        </div>
+                    </label>
+
+                    <%-- Option 3: Cash --%>
+                    <label class="cursor-pointer block">
+                        <input type="radio" name="paymentMethod" value="CASH" class="peer sr-only"/>
+                        <div class="p-4 rounded-xl border border-slate-200 bg-white transition-all duration-200
+                             hover:border-slate-300 hover:bg-slate-50/30
+                             peer-checked:border-slate-900 peer-checked:bg-slate-50/50 peer-checked:ring-4 peer-checked:ring-slate-100
+                             flex items-center gap-4">
+
+                            <%-- Lucide Banknote Icon --%>
+                            <div class="text-slate-400 transition-colors duration-200 peer-checked:text-slate-900 flex items-center justify-center shrink-0">
+                                <i data-lucide="banknote" class="w-5 h-5 stroke-[1.75]"></i>
+                            </div>
+
+                            <span class="text-sm font-medium text-slate-800 flex-grow">Pay with Cash at Station</span>
+                        </div>
+                    </label>
+                </div>
             </div>
         </section>
+
 
         <%-- Các trường input ẩn phụ trợ gửi giá trị tính toán lên DB --%>
         <input type="hidden" name="hiddenDiscountAmount" id="hiddenDiscountAmount" value="0">
@@ -291,53 +317,132 @@
         <input type="hidden" name="hiddenPromotionId" id="hiddenPromotionId" value="">
     </form>
 
-    <%-- CỘT BÊN PHẢI: ORDER SUMMARY (STICKY CHUẨN MẪU) --%>
+    <%-- CỘT BÊN PHẢI: ORDER SUMMARY (PHONG CÁCH CHỌN PROMOTION KIỂU SHOPEE - KHÔNG BÁO ĐỎ) --%>
     <div class="w-full md:w-1/3">
-        <div class="sticky top-[32px] bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-5">
-            <h2 class="text-lg font-bold border-b border-slate-100 pb-3 text-slate-900">Order Summary</h2>
+        <div class="sticky top-8 bg-white rounded-2xl border border-surface-border shadow-sm p-6 flex flex-col gap-6">
 
-            <div class="space-y-2 text-xs">
-                <div class="flex justify-between text-slate-500">
+            <%-- Header --%>
+            <div class="flex items-center gap-2 border-b border-slate-100 pb-4">
+                <i data-lucide="shopping-bag" class="w-5 h-5 text-primary stroke-[2]"></i>
+                <h2 class="text-lg font-bold text-slate-900 tracking-tight">Order Summary</h2>
+            </div>
+
+            <%-- Bill Breakdown --%>
+            <div class="space-y-3 text-sm">
+                <%-- Base Package Price --%>
+                <div class="flex justify-between items-center text-slate-500">
                     <span id="summaryPackageName">Selected Package</span>
-                    <span id="summaryPackagePrice" class="font-bold font-mono text-slate-800">0 VND</span>
+                    <span id="summaryPackagePrice" class="tech-data text-slate-800">0 VND</span>
                 </div>
-                <div class="flex justify-between text-emerald-600 font-semibold">
-                    <span><%= tierName%> Discount (<%= (int) (discountRate * 100)%>%)</span>
-                    <span id="summaryTierDiscount" class="font-mono">-0 VND</span>
+
+                <%-- Tier Member Discount --%>
+                <div class="flex justify-between items-center text-success font-medium bg-emerald-50/40 px-3 py-2 rounded-xl">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="award" class="w-4 h-4 stroke-[2]"></i>
+                        <span><%= tierName%> (<%= (int) (discountRate * 100)%>%)</span>
+                    </div>
+                    <span id="summaryTierDiscount" class="tech-data">-0 VND</span>
                 </div>
-                <div class="flex justify-between text-indigo-600 font-semibold border-b border-slate-100 pb-2">
-                    <span>Voucher Coupon</span>
-                    <span id="summaryVoucherDiscount" class="font-mono">-0 VND</span>
+
+                <%-- Promotion Discount (Đổi text linh hoạt theo option được chọn) --%>
+                <div class="flex justify-between items-center text-primary font-medium bg-slate-50 px-3 py-2 rounded-xl">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="ticket-percent" class="w-4 h-4 stroke-[2]"></i>
+                        <span id="appliedPromoLabel">Selected Promotion</span>
+                    </div>
+                    <span id="summaryPromotionDiscount" class="tech-data">-0 VND</span>
+                </div>
+
+                <%-- Points Redeemed Discount --%>
+                <div class="flex justify-between items-center text-slate-600 font-medium border-b border-slate-100 pb-3 px-3">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="coins" class="w-4 h-4 stroke-[2]"></i>
+                        <span>Points Redeemed</span>
+                    </div>
+                    <span id="summaryPointsDiscount" class="tech-data">-0 VND</span>
                 </div>
             </div>
 
-            <%-- Nhập Voucher --%>
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Apply Promo Code</label>
+            <%-- THAY Ô NHẬP TEXT THÀNH THẺ SELECT ĐỔI PROMOTION (KIỂU SHOPEE VOUCHER) --%>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label for="promotionSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Available Promotions
+                    </label>
+                    <span class="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full">
+                        Best Value Applied
+                    </span>
+                </div>
+
+                <div class="relative">
+                    <%-- Biểu tượng ticket nhỏ trang trí ở đầu thẻ select --%>
+                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <i data-lucide="tag" class="w-4 h-4 stroke-[2]"></i>
+                    </div>
+
+                    <%-- Thẻ Select tùy biến cao cấp chỉnh padding-left để chừa chỗ cho icon --%>
+                    <select id="promotionSelect" 
+                            onchange="handlePromotionChange(this.value)"
+                            class="w-full pl-10 pr-10 py-2 bg-slate-50 border border-surface-border rounded-2xl focus:outline-none focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-primary transition-all duration-150 text-xs text-slate-700 font-medium appearance-none cursor-pointer">
+
+                        <option value="" data-discount="0">-- No Promotion Applied --</option>
+
+                        <%-- 
+                           Ví dụ vòng lặp JSTL đổ dữ liệu từ danh sách khuyến mãi hợp lệ của user.
+                           Sử dụng thuộc tính html5 `data-*` để lưu số tiền hoặc % được giảm cho JS xử lý nhanh.
+                        --%>
+                        <option value="PROMO1" data-discount="50000" selected>
+                            [SUMMER50] - Giảm 50.000 VND (Đã chọn tốt nhất)
+                        </option>
+                        <option value="PROMO2" data-discount="30000">
+                            [WELCOME30] - Giảm 30.000 VND
+                        </option>
+                    </select>
+
+                    <%-- Mũi tên chỉ xuống tùy biến thay cho mũi tên mặc định của trình duyệt --%>
+                    <div class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <i data-lucide="chevron-down" class="w-4 h-4 stroke-[2]"></i>
+                    </div>
+                </div>
+                <p id="couponMsg" class="text-xs text-slate-500 mt-1"></p>
+            </div>
+
+            <%-- Khu vực đổi điểm thưởng (Loyalty Points) --%>
+            <div class="border-t border-slate-100 pt-4 space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-400">Redeem Points</span>
+                    <span class="text-[11px] text-slate-400 font-medium font-sans">Max: <%= availablePoints%> pts</span>
+                </div>
                 <div class="flex gap-2">
-                    <input id="couponInput" class="flex-grow rounded-xl border-slate-200 bg-white px-3 py-2 text-xs uppercase font-mono font-bold focus:border-indigo-900 focus:ring-0" placeholder="CODE" type="text"/>
-                    <button type="button" onclick="applyVoucher()" class="px-3 py-2 bg-indigo-950 text-white hover:bg-indigo-900 rounded-xl text-xs font-bold transition-colors">Apply</button>
+                    <div class="relative flex-grow">
+                        <input id="redeemPointsInput" 
+                               class="w-full px-4 py-2 bg-slate-50 border border-surface-border rounded-2xl focus:outline-none focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-primary transition-all duration-150 placeholder:text-slate-400 text-xs font-mono pr-8" 
+                               placeholder="0" 
+                               type="number" 
+                               min="0" 
+                               max="<%= availablePoints%>"/>
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase font-mono selection:bg-transparent">PTS</span>
+                    </div>
+                    <button type="button" 
+                            onclick="applyPoints()" 
+                            class="border border-surface-border text-primary font-semibold px-4 py-2 rounded-2xl hover:bg-slate-50 transition-all duration-200 text-center inline-flex items-center justify-center text-xs whitespace-nowrap">
+                        Redeem
+                    </button>
                 </div>
-                <p id="couponMsg" class="text-[10px] mt-1 hidden"></p>
+                <p id="pointsError" class="text-xs text-error mt-1 hidden"></p>
             </div>
 
-            <%-- Đổi điểm --%>
-            <div class="border-t border-slate-100 pt-3">
-                <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Redeem Points (Max: <%= availablePoints%> pts)</label>
-                <div class="flex gap-2">
-                    <input id="redeemPointsInput" class="flex-grow rounded-xl border-slate-200 bg-white px-3 py-2 text-xs font-mono" placeholder="Points" type="number" min="0" max="<%= availablePoints%>"/>
-                    <button type="button" onclick="applyPoints()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors">Apply</button>
-                </div>
-                <p id="pointsError" class="text-[10px] text-red-500 mt-1 hidden"></p>
+            <%-- Total Payment --%>
+            <div class="border-t border-slate-100 pt-4 flex justify-between items-center">
+                <span class="text-sm font-semibold text-slate-900">Total to Pay</span>
+                <span id="summaryTotal" class="text-primary font-mono text-xl font-bold tracking-tight">0 VND</span>
             </div>
 
-            <div class="border-t border-slate-100 pt-3 flex justify-between items-center text-base font-bold">
-                <span class="text-slate-900">Total to Pay</span>
-                <span id="summaryTotal" class="text-indigo-950 font-mono text-lg">0 VND</span>
-            </div>
-
-            <button onclick="handleBookingCheckout()" type="button" class="w-full bg-gradient-to-r from-indigo-950 to-slate-900 text-white font-bold text-xs py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 hover:opacity-95 transition-opacity">
-                <span class="material-symbols-outlined text-sm">check_circle</span>
+            <%-- Submit Button --%>
+            <button onclick="handleBookingCheckout()" 
+                    type="button" 
+                    class="w-full bg-gradient-to-br from-primary to-secondary text-on-primary font-semibold px-6 py-3.5 rounded-2xl shadow-sm hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 transition-all duration-200 text-center inline-flex items-center justify-center gap-2 text-sm">
+                <i data-lucide="check-circle" class="w-5 h-5 stroke-[2]"></i>
                 Confirm Booking
             </button>
         </div>
@@ -365,86 +470,57 @@
 </div>
 
 <script>
-    // Toàn bộ slot data từ server, load 1 lần duy nhất
-    const allSlots = [
-    <%
-        for (Slot slot : allSlotList) {
-            // Kiểm tra slot này có full trong ngày đang chọn không
-            boolean isFull = false;
-            for (Slot s : slotList) {
-                if (s.getSlotId() == slot.getSlotId()) {
-                    isFull = s.isFull();
-                    break;
-                }
-            }
-    %>
-    {
-    slotId: <%= slot.getSlotId()%>,
-            timeValue: "<%= slot.getTimeValue()%>",
-            startTime: "<%= slot.getStartTime()%>",
-            endTime: "<%= slot.getEndTime()%>",
-            isActive: <%= slot.getIsActive()%>,
-            isFull: <%= isFull%>
-    },
-    <%
-        }
-    %>
-    ];
     // --- FILTER SERVICE THEO LOẠI XE ĐƯỢC CHỌN ---
     function filterServicesByVehicleType(vehicleType) {
-    const type = vehicleType.toLowerCase();
-    // Sedan -> hiện sedan, ẩn suvtruck | SUV/Truck -> hiện suvtruck, ẩn sedan
-    const targetType = (type === 'suv' || type === 'truck') ? 'suvtruck' : 'sedan';
-    document.querySelectorAll('#serviceGrid label[data-service-type]').forEach(card => {
-    const radio = card.querySelector('input[type="radio"]');
-    if (card.dataset.serviceType === targetType) {
-    card.classList.remove('hidden');
-    radio.disabled = false;
-    } else {
-    card.classList.add('hidden');
-    radio.disabled = true;
-    radio.checked = false;
-    }
-    });
-    // Tự động chọn service đầu tiên còn hiển thị
-    const firstVisible = document.querySelector('#serviceGrid label[data-service-type="' + targetType + '"] input[type="radio"]');
-    if (firstVisible) {
-    firstVisible.checked = true;
-    appliedPointsValue = 0;
-    document.getElementById('redeemPointsInput').value = "";
-    updateOrderSummary();
-    }
+        const type = vehicleType.toLowerCase();
+        const targetType = (type === 'suv' || type === 'truck') ? 'suvtruck' : 'sedan';
+        document.querySelectorAll('#serviceGrid label[data-service-type]').forEach(card => {
+            const radio = card.querySelector('input[type="radio"]');
+            if (card.dataset.serviceType === targetType) {
+                card.classList.remove('hidden');
+                radio.disabled = false;
+            } else {
+                card.classList.add('hidden');
+                radio.disabled = true;
+                radio.checked = false;
+            }
+        });
+        const firstVisible = document.querySelector('#serviceGrid label[data-service-type="' + targetType + '"] input[type="radio"]');
+        if (firstVisible) {
+            firstVisible.checked = true;
+            appliedPointsValue = 0;
+            document.getElementById('redeemPointsInput').value = "";
+            updateOrderSummary();
+        }
     }
 
-// Gắn event lắng nghe thay đổi xe
     document.querySelectorAll('input[name="vehicleId"]').forEach(radio => {
-    radio.addEventListener('change', function () {
-    const selectedLabel = this.closest('label');
-    // Lấy vehicleType từ data attribute trên label
-    const vehicleType = this.getAttribute('data-vehicle-type');
-    if (vehicleType)
-            filterServicesByVehicleType(vehicleType);
+        radio.addEventListener('change', function () {
+            const vehicleType = this.getAttribute('data-vehicle-type');
+            if (vehicleType)
+                filterServicesByVehicleType(vehicleType);
+        });
     });
-    });
-    // 2. Mock danh sách Khuyến mãi đồng bộ từ DB
+
     const promoDatabase = [
     <%
         if (!promoList.isEmpty()) {
             for (Promotion p : promoList) {
     %>
-    {
-    id: <%= p.getPromotionId()%>,
+        {
+            id: <%= p.getPromotionId()%>,
             code: "<%= p.getCode().trim().toUpperCase()%>",
             type: "<%= p.getDiscountType()%>",
             value: <%= p.getDiscountValue()%>,
             minOrder: <%= p.getMinOrderAmount()%>,
             targetTier: <%= (p.getTargetTierId() != null) ? p.getTargetTierId() : "null"%>
-    },
+        },
     <%
             }
         }
     %>
     ];
+
     let currentPackagePrice = 0;
     let appliedTierDiscount = 0;
     let appliedVoucherDiscount = 0;
@@ -455,262 +531,290 @@
     const maxUserPoints = <%= availablePoints%>;
     const userTierId = <%= tierId%>;
     const bookingWindowDays = <%= maxBookingDays%>;
-    // --- LOGIC CUSTOM CALENDAR CHUẨN KHOẢNG NGÀY ĐẶT THEO TIER ---
-    // Ngày hợp lệ nằm trong khoảng cho phép chọn
-    function renderSlots() {
-    const grid = document.getElementById('slotGrid');
-    const activeSlots = allSlots.filter(s => s.isActive === 1);
-    if (activeSlots.length === 0) {
-    grid.innerHTML = `
-            <p class="text-xs text-slate-400 col-span-2 text-center py-6
-                       border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                No available slots.
-            </p>`;
-    return;
+    // --- FETCH VÀ RENDER SLOT THEO NGÀY ---
+    function fetchAndRenderSlots(dateStr) {
+        const grid = document.getElementById('slotGrid');
+        grid.innerHTML = `<div class="col-span-2 text-center py-6 text-xs text-slate-400 animate-pulse">Loading slots...</div>`;
+        fetch('${pageContext.request.contextPath}/api/slots?date=' + dateStr)
+                .then(res => res.json())
+                .then(slots => {
+                    if (!slots || slots.length === 0) {
+                        grid.innerHTML = `
+                        <p class="text-xs text-slate-400 col-span-2 text-center py-6
+                                   border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                            No available slots for this date.
+                        </p>`;
+                        return;
+                    }
+
+                    // Đảm bảo hidden input slotId tồn tại
+                    let hiddenSlot = document.getElementById('hiddenSlotId');
+                    if (!hiddenSlot) {
+                        hiddenSlot = document.createElement('input');
+                        hiddenSlot.type = 'hidden';
+                        hiddenSlot.name = 'slotId';
+                        hiddenSlot.id = 'hiddenSlotId';
+                        document.getElementById('bookingForm').appendChild(hiddenSlot);
+                    }
+
+                    // Render slot cards
+                    grid.innerHTML = slots.map(function (slot) {
+                        var containerClass = slot.isFull ? 'cursor-not-allowed' : 'cursor-pointer';
+                        var cardClass = slot.isFull
+                                ? 'border-slate-100 bg-slate-50 text-slate-300'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-900';
+                        var fullBadge = slot.isFull
+                                ? '<span class="block text-[10px] font-normal opacity-60">Full</span>'
+                                : '';
+
+                        return '<div class="slot-item block text-center ' + containerClass + '" '
+                                + 'data-slot-id="' + slot.slotId + '" '
+                                + 'data-full="' + slot.isFull + '">'
+                                + '<div class="slot-card py-2.5 px-3 rounded-xl border text-xs font-bold font-mono transition-colors ' + cardClass + '">'
+                                + slot.timeValue
+                                + fullBadge
+                                + '</div>'
+                                + '</div>';
+                    }).join('');
+                    // Gắn event click cho từng slot
+                    grid.querySelectorAll('.slot-item').forEach(item => {
+                        if (item.dataset.full === 'true')
+                            return;
+                        item.addEventListener('click', function () {
+                            selectSlot(this, parseInt(this.dataset.slotId));
+                        });
+                    });
+                    // Auto select slot available đầu tiên
+                    const firstAvailable = grid.querySelector('.slot-item[data-full="false"]');
+                    if (firstAvailable) {
+                        selectSlot(firstAvailable, parseInt(firstAvailable.dataset.slotId));
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    grid.innerHTML = `
+                    <p class="text-xs text-red-400 col-span-2 text-center py-6
+                               border border-dashed border-red-100 rounded-xl">
+                        Failed to load slots. Please try again.
+                    </p>`;
+                });
     }
 
-    // Tìm slot đầu tiên còn chỗ để auto-check
-    const firstAvailable = activeSlots.find(s => !s.isFull);
-    grid.innerHTML = activeSlots.map(slot => `
-        <label class="cursor-pointer block text-center ${slot.isFull ? 'cursor-not-allowed' : ''}">
-            <input class="peer sr-only" name="slotId" type="radio"
-                   value="${slot.slotId}"
-    ${firstAvailable && slot.slotId == firstAvailable.slotId ? 'checked' : ''}
-    ${slot.isFull ? 'disabled' : ''} required/>
-            <div class="py-2.5 px-3 rounded-xl border text-xs font-bold font-mono transition-colors
-    ${slot.isFull
-      ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
-      : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-900 peer-checked:bg-indigo-950 peer-checked:text-white peer-checked:border-indigo-950'}">
-      ${slot.timeValue}
-      ${slot.isFull ? '<span class="block text-[10px] font-normal opacity-60">Full</span>' : ''}
-            </div>
-        </label>
-    `).join('');
+    function selectSlot(el, slotId) {
+        // Bỏ highlight tất cả
+        document.querySelectorAll('#slotGrid .slot-card').forEach(card => {
+            card.classList.remove('bg-indigo-950', 'text-white', 'border-indigo-950');
+            card.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
+        });
+        // Highlight card được chọn
+        const card = el.querySelector('.slot-card');
+        card.classList.remove('border-slate-200', 'bg-white', 'text-slate-700');
+        card.classList.add('bg-indigo-950', 'text-white', 'border-indigo-950');
+        // Lưu slotId vào hidden input
+        document.getElementById('hiddenSlotId').value = slotId;
     }
 
+    // --- CALENDAR ---
     function renderCustomCalendar() {
-    const grid = document.getElementById('calendarDaysGrid');
-    const title = document.getElementById('calendarMonthYear');
-    grid.innerHTML = '';
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    title.innerText = monthNames[currentMonth] + " " + currentYear;
-    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    // Tạo khoảng trắng ô đệm đầu tháng
-    for (let i = 0; i < firstDayIndex; i++) {
-    const emptyDiv = document.createElement('div');
-    grid.appendChild(emptyDiv);
+        const grid = document.getElementById('calendarDaysGrid');
+        const title = document.getElementById('calendarMonthYear');
+        grid.innerHTML = '';
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"];
+        title.innerText = monthNames[currentMonth] + " " + currentYear;
+        const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+        const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        for (let i = 0; i < firstDayIndex; i++) {
+            grid.appendChild(document.createElement('div'));
+        }
+
+        const selectedDateStr = document.getElementById('bookingDate').value;
+        for (let day = 1; day <= totalDaysInMonth; day++) {
+            const cellDate = new Date(currentYear, currentMonth, day);
+            const dateStr = cellDate.getFullYear() + '-'
+                    + String(cellDate.getMonth() + 1).padStart(2, '0') + '-'
+                    + String(cellDate.getDate()).padStart(2, '0');
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerText = day;
+            btn.className = "p-2 text-xs font-semibold font-mono rounded-lg transition-all flex items-center justify-center w-full";
+            const diffTime = cellDate - new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays >= 0 && diffDays < bookingWindowDays) {
+                if (dateStr === selectedDateStr) {
+                    btn.className += " bg-indigo-950 text-white font-bold";
+                } else {
+                    btn.className += " bg-white border border-slate-100 text-slate-800 hover:border-indigo-900";
+                }
+                btn.onclick = function () {
+                    document.getElementById('bookingDate').value = dateStr;
+                    document.querySelectorAll('#calendarDaysGrid button').forEach(b => {
+                        b.classList.remove('bg-indigo-950', 'text-white', 'font-bold');
+                        b.classList.add('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
+                    });
+                    this.classList.remove('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
+                    this.classList.add('bg-indigo-950', 'text-white', 'font-bold');
+                    fetchAndRenderSlots(dateStr);
+                };
+            } else {
+                btn.className += " bg-slate-100 text-slate-300 cursor-not-allowed opacity-40";
+                btn.disabled = true;
+            }
+            grid.appendChild(btn);
+        }
     }
 
-    const selectedDateStr = document.getElementById('bookingDate').value;
-    // Sinh lưới ngày
-    for (let day = 1; day <= totalDaysInMonth; day++) {
-    const cellDate = new Date(currentYear, currentMonth, day);
-    const dateStr = cellDate.getFullYear() + '-'
-            + String(cellDate.getMonth() + 1).padStart(2, '0') + '-'
-            + String(cellDate.getDate()).padStart(2, '0');
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.innerText = day;
-    btn.className = "p-2 text-xs font-semibold font-mono rounded-lg transition-all flex items-center justify-center w-full ";
-    // Tính khoảng cách ngày so với hôm nay để check giới hạn Tier
-    const diffTime = cellDate - new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays >= 0 && diffDays < bookingWindowDays) {
-    if (dateStr === selectedDateStr) {
-    btn.className += " bg-indigo-950 text-white font-bold ";
-    } else {
-    btn.className += " bg-white border border-slate-100 text-slate-800 hover:border-indigo-900 ";
-    }
-    btn.onclick = function () {
-    document.getElementById('bookingDate').value = dateStr;
-    // Cập nhật highlight ngày được chọn
-    document.querySelectorAll('#calendarDaysGrid button').forEach(b => {
-    b.classList.remove('bg-indigo-950', 'text-white', 'font-bold');
-    b.classList.add('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
-    });
-    this.classList.remove('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
-    this.classList.add('bg-indigo-950', 'text-white', 'font-bold');
-    renderSlots();
-    };
-    } else {
-    // Ngày nằm ngoài giới hạn Booking Window của Tier -> Khóa (Disable)
-    btn.className += " bg-slate-100 text-slate-300 cursor-not-allowed opacity-40 ";
-    btn.disabled = true;
-    }
-    grid.appendChild(btn);
-    }
-    }
+    // --- ORDER SUMMARY ---
+    let appliedPromotionDiscount = 0; // Thay đổi tên biến cho chuẩn với Promotion
 
-    // --- HÀM TÍNH TOÁN REAL-TIME TỔNG HÓA ĐƠN ---
     function updateOrderSummary() {
-    const selectedPackage = document.querySelector('input[name="serviceId"]:checked');
-    let packageName = "Selected Package";
-    if (selectedPackage) {
-    currentPackagePrice = parseFloat(selectedPackage.getAttribute('data-price')) || 0;
-    packageName = selectedPackage.getAttribute('data-name');
-    } else {
-    currentPackagePrice = 0;
-    }
+        const selectedPackage = document.querySelector('input[name="serviceId"]:checked');
+        let packageName = "Selected Package";
+        if (selectedPackage) {
+            currentPackagePrice = parseFloat(selectedPackage.getAttribute('data-price')) || 0;
+            packageName = selectedPackage.getAttribute('data-name');
+        } else {
+            currentPackagePrice = 0;
+        }
 
-    appliedTierDiscount = currentPackagePrice * userDiscountRate;
-    appliedVoucherDiscount = 0;
-    if (currentVoucherObj) {
-    if (currentPackagePrice < currentVoucherObj.minOrder) {
-    currentVoucherObj = null;
-    const msgEl = document.getElementById('couponMsg');
-    msgEl.innerText = "Voucher removed. Base price too low!";
-    msgEl.className = "text-[10px] text-red-500 mt-1";
-    document.getElementById('couponInput').value = "";
-    document.getElementById('hiddenPromotionId').value = "";
-    } else {
-    if (currentVoucherObj.type === 'percent') {
-    appliedVoucherDiscount = currentPackagePrice * (currentVoucherObj.value / 100);
-    } else if (currentVoucherObj.type === 'fixed') {
-    appliedVoucherDiscount = currentVoucherObj.value;
-    }
-    }
-    }
+        appliedTierDiscount = currentPackagePrice * userDiscountRate;
 
-    let totalDiscountSystem = appliedTierDiscount + appliedVoucherDiscount;
-    if (totalDiscountSystem > currentPackagePrice)
+        let totalDiscountSystem = appliedTierDiscount + appliedPromotionDiscount;
+        if (totalDiscountSystem > currentPackagePrice) {
             totalDiscountSystem = currentPackagePrice;
-    let maxAllowedPoints = currentPackagePrice - totalDiscountSystem;
-    if (appliedPointsValue > maxAllowedPoints) {
-    appliedPointsValue = maxAllowedPoints;
-    document.getElementById('redeemPointsInput').value = appliedPointsValue;
-    }
+        }
 
-    finalPayCalculated = currentPackagePrice - totalDiscountSystem - appliedPointsValue;
-    if (finalPayCalculated < 0)
+        let maxAllowedPoints = currentPackagePrice - totalDiscountSystem;
+        if (appliedPointsValue > maxAllowedPoints) {
+            appliedPointsValue = maxAllowedPoints;
+            document.getElementById('redeemPointsInput').value = appliedPointsValue;
+        }
+
+        finalPayCalculated = currentPackagePrice - totalDiscountSystem - appliedPointsValue;
+        if (finalPayCalculated < 0) {
             finalPayCalculated = 0;
-    document.getElementById('summaryPackageName').innerText = packageName;
-    document.getElementById('summaryPackagePrice').innerText = currentPackagePrice.toLocaleString('vi-VN') + " VND";
-    document.getElementById('summaryTierDiscount').innerText = "-" + appliedTierDiscount.toLocaleString('vi-VN') + " VND";
-    document.getElementById('summaryVoucherDiscount').innerText = "-" + appliedVoucherDiscount.toLocaleString('vi-VN') + " VND";
-    document.getElementById('summaryTotal').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
-    document.getElementById('hiddenDiscountAmount').value = totalDiscountSystem;
-    document.getElementById('hiddenPointsRedeemed').value = appliedPointsValue;
+        }
+
+        // Cập nhật giao diện với ID mới
+        document.getElementById('summaryPackageName').innerText = packageName;
+        document.getElementById('summaryPackagePrice').innerText = currentPackagePrice.toLocaleString('vi-VN') + " VND";
+        document.getElementById('summaryTierDiscount').innerText = "-" + appliedTierDiscount.toLocaleString('vi-VN') + " VND";
+
+        // FIX: Đã đổi 'summaryVoucherDiscount' thành 'summaryPromotionDiscount'
+        document.getElementById('summaryPromotionDiscount').innerText = "-" + appliedPromotionDiscount.toLocaleString('vi-VN') + " VND";
+
+        // FIX: Bổ sung thêm dòng hiển thị trừ tiền của Điểm thưởng (Points)
+        document.getElementById('summaryPointsDiscount').innerText = "-" + appliedPointsValue.toLocaleString('vi-VN') + " VND";
+
+        document.getElementById('summaryTotal').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
+
+        document.getElementById('hiddenDiscountAmount').value = totalDiscountSystem;
+        document.getElementById('hiddenPointsRedeemed').value = appliedPointsValue;
     }
 
-    function applyVoucher() {
-    const inputCode = document.getElementById('couponInput').value.trim().toUpperCase();
-    const msgEl = document.getElementById('couponMsg');
-    msgEl.classList.remove('hidden');
-    if (!inputCode) {
-    msgEl.innerText = "Enter a code.";
-    msgEl.className = "text-[10px] text-red-500 mt-1";
-    return;
+    // --- HÀM XỬ LÝ KHI KHÁCH HÀNG CHỌN PROMOTION TỪ THẺ SELECT ---
+    function handlePromotionChange(promoId) {
+        const selectEl = document.getElementById('promotionSelect');
+        const selectedOption = selectEl.options[selectEl.selectedIndex];
+        const labelEl = document.getElementById('appliedPromoLabel');
+
+        if (!promoId) {
+            // Khách hàng chọn mục "-- No Promotion Applied --"
+            labelEl.innerText = "Promotion Code";
+            appliedPromotionDiscount = 0;
+            document.getElementById('hiddenPromotionId').value = "";
+        } else {
+            // Lấy giá trị giảm giá từ data-attribute của option được chọn
+            labelEl.innerText = "Active Promotion";
+            appliedPromotionDiscount = parseFloat(selectedOption.getAttribute('data-discount')) || 0;
+            document.getElementById('hiddenPromotionId').value = promoId;
+        }
+
+        // Validate lại nếu tiền giảm lớn hơn tiền hóa đơn
+        if (appliedPromotionDiscount > currentPackagePrice) {
+            appliedPromotionDiscount = currentPackagePrice;
+        }
+
+        updateOrderSummary();
     }
 
-    const voucher = promoDatabase.find(v => v.code === inputCode);
-    if (!voucher) {
-    msgEl.innerText = "Invalid code.";
-    msgEl.className = "text-[10px] text-red-500 mt-1";
-    currentVoucherObj = null;
-    document.getElementById('hiddenPromotionId').value = "";
-    updateOrderSummary();
-    return;
-    }
-
-    if (voucher.targetTier && userTierId < voucher.targetTier) {
-    msgEl.innerText = "Tier too low.";
-    msgEl.className = "text-[10px] text-red-500 mt-1";
-    currentVoucherObj = null;
-    document.getElementById('hiddenPromotionId').value = "";
-    updateOrderSummary();
-    return;
-    }
-
-    if (currentPackagePrice < voucher.minOrder) {
-    msgEl.innerText = "Min order: " + voucher.minOrder.toLocaleString('vi-VN') + " VND";
-    msgEl.className = "text-[10px] text-red-500 mt-1";
-    currentVoucherObj = null;
-    document.getElementById('hiddenPromotionId').value = "";
-    updateOrderSummary();
-    return;
-    }
-
-    msgEl.innerText = "Code applied!";
-    msgEl.className = "text-[10px] text-emerald-600 mt-1 font-bold";
-    currentVoucherObj = voucher;
-    document.getElementById('hiddenPromotionId').value = voucher.id;
-    updateOrderSummary();
-    }
-
+    // --- HÀM XỬ LÝ NHẬP ĐIỂM (LOYALTY POINTS) ---
     function applyPoints() {
-    const pointsInput = document.getElementById('redeemPointsInput');
-    const pointsValue = parseInt(pointsInput.value) || 0;
-    const errorEl = document.getElementById('pointsError');
-    errorEl.classList.add('hidden');
-    if (pointsValue < 0 || pointsValue > maxUserPoints) {
-    errorEl.innerText = "Not enough points.";
-    errorEl.classList.remove('hidden');
-    return;
-    }
+        const pointsValue = parseInt(document.getElementById('redeemPointsInput').value) || 0;
+        const errorEl = document.getElementById('pointsError');
+        errorEl.classList.add('hidden');
 
-    let currentTotalDiscountSystem = appliedTierDiscount + appliedVoucherDiscount;
-    let maxAllowedPoints = currentPackagePrice - currentTotalDiscountSystem;
-    if (pointsValue > maxAllowedPoints) {
-    errorEl.innerText = "Exceeds remaining price.";
-    errorEl.classList.remove('hidden');
-    return;
-    }
-
-    appliedPointsValue = pointsValue;
-    updateOrderSummary();
-    }
-
-    // --- LUỒNG XỬ LÝ CHECKOUT / POPUP THEO PHƯƠNG THỨC THANH TOÁN ---
-    function handleBookingCheckout() {
-    const form = document.getElementById('bookingForm');
-    if (!form.reportValidity())
+        if (pointsValue < 0 || pointsValue > maxUserPoints) {
+            errorEl.innerText = "Not enough points.";
+            errorEl.classList.remove('hidden');
             return;
-    const method = document.querySelector('input[name="paymentMethod"]:checked').value;
-    if (method === 'QRCODE') {
-    // Hiển thị Popup QR Code real-time số tiền
-    document.getElementById('qrTotalText').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
-    // Sử dụng link sinh mã QR mẫu từ QR Server API miễn phí
-    document.getElementById('qrImageElement').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=AutoWashPayment_" + finalPayCalculated;
-    document.getElementById('qrModal').classList.remove('hidden');
-    } else {
-    // WALLET hoặc CASH -> Thực hiện gửi thẳng form lên Controller xử lý
-    form.submit();
+        }
+
+        // Cập nhật lại biến cho khớp với tên mới
+        let maxAllowedPoints = currentPackagePrice - appliedTierDiscount - appliedPromotionDiscount;
+        if (pointsValue > maxAllowedPoints) {
+            errorEl.innerText = "Exceeds remaining price.";
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        appliedPointsValue = pointsValue;
+        updateOrderSummary();
     }
+    function handleBookingCheckout() {
+        const form = document.getElementById('bookingForm');
+        if (!form.reportValidity())
+            return;
+        // Kiểm tra đã chọn slot chưa
+        const hiddenSlot = document.getElementById('hiddenSlotId');
+        if (!hiddenSlot || !hiddenSlot.value) {
+            alert('Please select a time slot.');
+            return;
+        }
+
+        const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+        if (method === 'QRCODE') {
+            document.getElementById('qrTotalText').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
+            document.getElementById('qrImageElement').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=AutoWashPayment_" + finalPayCalculated;
+            document.getElementById('qrModal').classList.remove('hidden');
+        } else {
+            form.submit();
+        }
     }
 
     function closeQrModal() {
-    document.getElementById('qrModal').classList.add('hidden');
+        document.getElementById('qrModal').classList.add('hidden');
     }
 
     function confirmPaidQr() {
-    // Sau khi khách bấm xác nhận đã quét QR -> Tự đóng popup và submit form
-    document.getElementById('qrModal').classList.add('hidden');
-    document.getElementById('bookingForm').submit();
+        document.getElementById('qrModal').classList.add('hidden');
+        document.getElementById('bookingForm').submit();
     }
 
     document.querySelectorAll('input[name="serviceId"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-    appliedPointsValue = 0;
-    document.getElementById('redeemPointsInput').value = "";
-    updateOrderSummary();
-    });
+        radio.addEventListener('change', () => {
+            appliedPointsValue = 0;
+            document.getElementById('redeemPointsInput').value = "";
+            updateOrderSummary();
+        });
     });
     document.addEventListener('DOMContentLoaded', () => {
-    // Tự động tích chọn gói đầu tiên để có data tính toán
-    const firstRadio = document.querySelector('input[name="serviceId"]');
-    if (firstRadio)
+        const firstRadio = document.querySelector('input[name="serviceId"]');
+        if (firstRadio)
             firstRadio.checked = true;
-    const firstVehicle = document.querySelector('input[name="vehicleId"]:checked');
-    if (firstVehicle)
+        const firstVehicle = document.querySelector('input[name="vehicleId"]:checked');
+        if (firstVehicle)
             filterServicesByVehicleType(firstVehicle.getAttribute('data-vehicle-type'));
-    renderCustomCalendar();
-    renderSlots();
-    updateOrderSummary();
+        renderCustomCalendar();
+        const selectedDate = document.getElementById('bookingDate').value;
+        if (selectedDate)
+            fetchAndRenderSlots(selectedDate);
+        updateOrderSummary();
     });
-    </script>
+    lucide.createIcons();
+</script>
 
-    <jsp:include page="/components/footer.jsp" />
+<jsp:include page="/components/footer.jsp" />

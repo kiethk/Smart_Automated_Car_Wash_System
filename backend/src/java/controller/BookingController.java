@@ -45,7 +45,7 @@ public class BookingController extends HttpServlet {
 
         try {
             if (loginedCustomer == null) {
-                response.sendRedirect(request.getContextPath() + "/MainController?action=home");
+                response.sendRedirect(request.getContextPath() + "/MainController?action=login");
                 return;
             }
 
@@ -86,7 +86,7 @@ public class BookingController extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=login");
             return;
         }
 
