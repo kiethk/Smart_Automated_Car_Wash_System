@@ -10,21 +10,21 @@ import java.sql.Date;
 import utils.DBUtils;
 
 public class CustomerDAO {
-    
+
     /**
      * Lấy thông tin Customer theo UserId
+     *
      * @param userId ID của User
      * @return Customer object hoặc null nếu không tìm thấy
      */
     public Customer getCustomerByUserId(int userId) {
         String sql = "SELECT * FROM Customer WHERE user_id = ?";
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
-            
+
             if (rs.next()) {
                 Customer customer = new Customer();
                 customer.setCustomerId(rs.getInt("customer_id"));
@@ -39,14 +39,13 @@ public class CustomerDAO {
                 customer.setLastReviewDate(rs.getDate("last_review_date"));
                 return customer;
             }
-            
+
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
-    
- 
+
     public int createNewCustomer(Customer c) {
 
         int result = 0;
@@ -67,8 +66,8 @@ public class CustomerDAO {
                         + "last_review_date) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-                PreparedStatement st =
-                        cn.prepareStatement(sql);
+                PreparedStatement st
+                        = cn.prepareStatement(sql);
 
                 st.setString(1, c.getAddress());
 
@@ -112,5 +111,39 @@ public class CustomerDAO {
         }
 
         return result;
+    }
+
+    public boolean updateAddressById(int customerId, String address) {
+        String sql = "UPDATE Customer SET address = ? WHERE customer_id = ?";
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, address);
+            ps.setInt(2, customerId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateDobById(int customerId, String dob) {
+        String sql = "UPDATE Customer SET date_of_birth = ? WHERE customer_id = ?";
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            java.sql.Date date = java.sql.Date.valueOf(dob);
+
+            ps.setDate(1, date);
+            ps.setInt(2, customerId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

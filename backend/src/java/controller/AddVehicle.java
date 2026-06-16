@@ -8,15 +8,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
 import dao.CustomerDAO;
 import dao.VehicleDAO;
 import dto.Customer;
 import dto.User;
 import dto.Vehicle;
 
-@WebServlet(name = "AddVehicle", urlPatterns = {"/addVehicle"})
+@WebServlet("/addVehicle")
 public class AddVehicle extends HttpServlet {
+
+    private static final long serialVersionUID = 1L;
 
     private VehicleDAO vehicleDAO;
     private CustomerDAO customerDAO;
@@ -28,23 +29,18 @@ public class AddVehicle extends HttpServlet {
         customerDAO = new CustomerDAO();
     }
 
-    // ===== HANDLE GET: show add vehicle page =====
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         HttpSession session = request.getSession(false);
 
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+        if (session == null || session.getAttribute("USER") == null) {
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
-
-        request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp")
-                .forward(request, response);
+        request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
     }
 
-    // ===== HANDLE POST: process add vehicle =====
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -52,83 +48,65 @@ public class AddVehicle extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
 
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");   //doi login
+        if (session == null || session.getAttribute("USER") == null) {
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
 
-        User currentUser = (User) session.getAttribute("user");
-
-        Customer customer = customerDAO.getCustomerByUserId(currentUser.getUserId());
-        if (customer == null) {
-            forwardWithError(request, response, "Customer profile not found");
-            return;
-        }
-
-        String plateNumber = request.getParameter("plateNumber");
-        String brand = request.getParameter("brand");
-        String model = request.getParameter("model");
-        String vehicleType = request.getParameter("vehicleType");
-        String color = request.getParameter("color");
-        String manufactureYearStr = request.getParameter("manufactureYear");
-
-        if (isNullOrBlank(plateNumber)) {
-            forwardWithError(request, response, "Plate number is required");
-            return;
-        }
-        plateNumber = plateNumber.trim().toUpperCase();
-
-        if (isNullOrBlank(vehicleType)) {
-            forwardWithError(request, response, "Vehicle type is required");
-            return;
-        }
-
-        int manufactureYear = 0;
-        if (!isNullOrBlank(manufactureYearStr)) {
-            try {
-                manufactureYear = Integer.parseInt(manufactureYearStr);
-            } catch (NumberFormatException e) {
-                forwardWithError(request, response, "Invalid manufacture year");
-                return;
-            }
-        }
-
-        if (vehicleDAO.isPlateNumberExists(plateNumber)) {
-            session.setAttribute("errorMessage", "Plate number already exists");
-            response.sendRedirect(request.getContextPath() + "/vehicles");
-            return;
-        }
-
+        // 1. Thu thập dữ liệu vào một đối tượng "tạm"
         Vehicle vehicle = new Vehicle();
-        vehicle.setPlateNumber(plateNumber);
-        vehicle.setBrand(brand != null ? brand.trim() : "");
-        vehicle.setModel(model != null ? model.trim() : "");
-        vehicle.setVehicleType(vehicleType);
-        vehicle.setColor(color != null ? color.trim() : "");
+        vehicle.setPlateNumber(request.getParameter("plateNumber"));
+        vehicle.setBrand(request.getParameter("brand"));
+        vehicle.setModel(request.getParameter("model"));
+        vehicle.setVehicleType(request.getParameter("vehicleType"));
+        vehicle.setColor(request.getParameter("color"));
+
+        String manufactureYearStr = request.getParameter("manufactureYear");
+        int manufactureYear = 0;
+
+        // 2. Validate dữ liệu
+        String errorMsg = null;
+        try {
+            if (vehicle.getPlateNumber() == null || vehicle.getPlateNumber().trim().isEmpty()) {
+                errorMsg = "Plate number is required";
+            } else if (vehicle.getVehicleType() == null || vehicle.getVehicleType().trim().isEmpty()) {
+                errorMsg = "Vehicle type is required";
+            } else if (manufactureYearStr != null && !manufactureYearStr.trim().isEmpty()) {
+                manufactureYear = Integer.parseInt(manufactureYearStr);
+            }
+
+            if (errorMsg == null && vehicleDAO.isPlateNumberExists(vehicle.getPlateNumber().trim().toUpperCase())) {
+                errorMsg = "Plate number already exists";
+            }
+        } catch (NumberFormatException e) {
+            errorMsg = "Invalid manufacture year";
+        }
+
+        // 3. Nếu có lỗi: Đẩy đối tượng vehicle cũ và thông báo lỗi về JSP
+        if (errorMsg != null) {
+            request.setAttribute("ERROR", errorMsg);
+            request.setAttribute("vehicle", vehicle); // Gửi đối tượng vehicle để điền lại form
+            request.setAttribute("manufactureYear", manufactureYearStr);
+            request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
+            return;
+        }
+
+        // 4. Xử lý logic nghiệp vụ khi không có lỗi
+        User currentUser = (User) session.getAttribute("USER");
+        Customer customer = customerDAO.getCustomerByUserId(currentUser.getUserId());
+
+        vehicle.setPlateNumber(vehicle.getPlateNumber().trim().toUpperCase());
         vehicle.setManufactureYear(manufactureYear);
         vehicle.setCustomerId(customer.getCustomerId());
 
-        boolean isAdded = vehicleDAO.addVehicle(vehicle);
-
-        if (isAdded) {
-            session.setAttribute("successMessage", "Vehicle added successfully!");
-            response.sendRedirect(request.getContextPath() + "/vehicles");
+        if (vehicleDAO.addVehicle(vehicle)) {
+            session.setAttribute("SUCCESS", "Vehicle added successfully!");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
         } else {
-            session.setAttribute("errorMessage", "Failed to add vehicle");
-            response.sendRedirect(request.getContextPath() + "/vehicles");
+            request.setAttribute("ERROR", "System error: Could not add vehicle.");
+            request.setAttribute("vehicle", vehicle);
+            request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
         }
     }
 
-    private void forwardWithError(HttpServletRequest request,
-            HttpServletResponse response,
-            String message)
-            throws ServletException, IOException {
-        request.setAttribute("error", message);
-        request.getRequestDispatcher("/views/auth/vehicle/AddVehicle.jsp")
-                .forward(request, response);
-    }
-
-    private boolean isNullOrBlank(String value) {
-        return value == null || value.trim().isEmpty();
-    }
 }

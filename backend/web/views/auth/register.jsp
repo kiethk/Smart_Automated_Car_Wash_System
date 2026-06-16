@@ -1,3 +1,11 @@
+<%
+    // Kiểm tra nếu đã có session USER thì chuyển hướng về profile
+    if (session.getAttribute("USER") != null) {
+        response.sendRedirect(request.getContextPath() + "/profile");
+        return; // Dừng việc tải trang login lại
+    }
+%>
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,6 +20,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <jsp:include page="/components/head.jsp" />
 
     <script id="tailwind-config">
         tailwind.config = {

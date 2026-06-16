@@ -7,7 +7,6 @@ import dto.User;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import javax.servlet.ServletException;
@@ -24,7 +23,7 @@ public class Register extends HttpServlet {
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/views/auth/register.jsp")
+        request.getRequestDispatcher("views/auth/register.jsp")
                 .forward(request, response);
     }
 
@@ -81,10 +80,9 @@ public class Register extends HttpServlet {
         // ===== HASH PASSWORD =====
         String hashedPassword;
         try {
-            hashedPassword = hashSHA256(password);
+            hashedPassword = utils.PasswordUtils.hashSHA256(password);
         } catch (NoSuchAlgorithmException e) {
-            forwardWithError(request, response,
-                    "Server error, please try again!");
+            forwardWithError(request, response, "Server error, please try again!");
             return;
         }
 
@@ -146,7 +144,7 @@ public class Register extends HttpServlet {
 
         // ===== SUCCESS =====
         response.sendRedirect(
-                request.getContextPath() + "/login"
+                request.getContextPath() + "/MainController?action=login"
         );
     }
 
@@ -156,24 +154,12 @@ public class Register extends HttpServlet {
             String message)
             throws ServletException, IOException {
         request.setAttribute("error", message);
-        request.getRequestDispatcher("/views/auth/register.jsp")
+        request.getRequestDispatcher("views/auth/register.jsp")
                 .forward(request, response);
     }
 
     // ===== HELPER: check null or blank =====
     private boolean isNullOrBlank(String value) {
         return value == null || value.trim().isEmpty();
-    }
-
-    // ===== HELPER: hash SHA-256 =====
-    private String hashSHA256(String input)
-            throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        byte[] hashed = md.digest(input.getBytes());
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashed) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
     }
 }

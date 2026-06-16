@@ -1,7 +1,6 @@
 package controller;
 
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -28,52 +27,43 @@ public class UpdateVehicle extends HttpServlet {
         customerDAO = new CustomerDAO();
     }
 
-    // ===== HANDLE GET: show update vehicle page =====
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         HttpSession session = request.getSession(false);
 
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp"); // doi login
+        if (session == null || session.getAttribute("USER") == null) {
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
 
-        User currentUser = (User) session.getAttribute("user");
+        User currentUser = (User) session.getAttribute("USER");
         Customer customer = customerDAO.getCustomerByUserId(currentUser.getUserId());
-
-        if (customer == null) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Customer not found");
-            return;
-        }
 
         String vehicleIdStr = request.getParameter("id");
         if (isNullOrBlank(vehicleIdStr)) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Vehicle ID required");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
             return;
         }
 
-        int vehicleId;
         try {
-            vehicleId = Integer.parseInt(vehicleIdStr);
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Invalid vehicle ID");
-            return;
-        }
+            int vehicleId = Integer.parseInt(vehicleIdStr);
+            if (customer == null || !vehicleDAO.isVehicleBelongsToCustomer(vehicleId, customer.getCustomerId())) {
+                response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
+                return;
+            }
 
-        if (!vehicleDAO.isVehicleBelongsToCustomer(vehicleId, customer.getCustomerId())) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Access denied");
-            return;
-        }
+            Vehicle vehicle = vehicleDAO.getVehicleById(vehicleId);
+            request.setAttribute("vehicle", vehicle);
 
-        Vehicle vehicle = vehicleDAO.getVehicleById(vehicleId);
-        request.setAttribute("vehicle", vehicle);
-        request.getRequestDispatcher("/views/auth/vehicle/UpdateVehicle.jsp")
-                .forward(request, response);
+            request.getRequestDispatcher("views/auth/vehicle/UpdateVehicle.jsp").forward(request, response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
+        }
     }
 
-    // ===== HANDLE POST: process update vehicle =====
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -81,96 +71,67 @@ public class UpdateVehicle extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
 
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+        if (session == null || session.getAttribute("USER") == null) {
+            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
 
-        User currentUser = (User) session.getAttribute("user");
+        User currentUser = (User) session.getAttribute("USER");
         Customer customer = customerDAO.getCustomerByUserId(currentUser.getUserId());
 
-        if (customer == null) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Customer not found");
-            return;
-        }
-
+        // Lấy thông tin từ form
         String vehicleIdStr = request.getParameter("vehicleId");
-        String plateNumber = request.getParameter("plateNumber");
-        String brand = request.getParameter("brand");
-        String model = request.getParameter("model");
-        String vehicleType = request.getParameter("vehicleType");
-        String color = request.getParameter("color");
-        String manufactureYearStr = request.getParameter("manufactureYear");
+        int vehicleId = Integer.parseInt(vehicleIdStr);
 
-        if (isNullOrBlank(vehicleIdStr)) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Vehicle ID required");
-            return;
-        }
-
-        int vehicleId;
-        try {
-            vehicleId = Integer.parseInt(vehicleIdStr);
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Invalid vehicle ID");
-            return;
-        }
-
-        if (!vehicleDAO.isVehicleBelongsToCustomer(vehicleId, customer.getCustomerId())) {
-            response.sendRedirect(request.getContextPath() + "/vehicles?error=Access denied");
-            return;
-        }
-
-        if (isNullOrBlank(plateNumber)) {
-            forwardWithError(request, response, vehicleId, "Plate number required");
-            return;
-        }
-        plateNumber = plateNumber.trim().toUpperCase();
-
-        if (vehicleDAO.isPlateNumberExistsExcludeSelf(plateNumber, vehicleId)) {
-            session.setAttribute("errorMessage", "Plate number already exists");
-            response.sendRedirect(request.getContextPath() + "/vehicles");
-            return;
-        }
-
-        int manufactureYear = 0;
-        if (!isNullOrBlank(manufactureYearStr)) {
-            try {
-                manufactureYear = Integer.parseInt(manufactureYearStr);
-            } catch (NumberFormatException e) {
-                forwardWithError(request, response, vehicleId, "Invalid year");
-                return;
-            }
-        }
-
+        // Tạo object tạm để hứng dữ liệu nếu có lỗi (UX)
         Vehicle vehicle = new Vehicle();
         vehicle.setVehicleId(vehicleId);
-        vehicle.setPlateNumber(plateNumber);
-        vehicle.setBrand(brand != null ? brand.trim() : "");
-        vehicle.setModel(model != null ? model.trim() : "");
-        vehicle.setVehicleType(vehicleType);
-        vehicle.setColor(color != null ? color.trim() : "");
+        vehicle.setPlateNumber(request.getParameter("plateNumber"));
+        vehicle.setBrand(request.getParameter("brand"));
+        vehicle.setModel(request.getParameter("model"));
+        vehicle.setVehicleType(request.getParameter("vehicleType"));
+        vehicle.setColor(request.getParameter("color"));
+
+        String manufactureYearStr = request.getParameter("manufactureYear");
+        int manufactureYear = 0;
+
+        // Validation
+        if (isNullOrBlank(vehicle.getPlateNumber())) {
+            forwardWithError(request, response, vehicle, "Plate number is required");
+            return;
+        }
+
+        if (vehicleDAO.isPlateNumberExistsExcludeSelf(vehicle.getPlateNumber().trim().toUpperCase(), vehicleId)) {
+            forwardWithError(request, response, vehicle, "Plate number already exists");
+            return;
+        }
+
+        try {
+            if (!isNullOrBlank(manufactureYearStr)) {
+                manufactureYear = Integer.parseInt(manufactureYearStr);
+            }
+        } catch (NumberFormatException e) {
+            forwardWithError(request, response, vehicle, "Invalid year format");
+            return;
+        }
+
+        // Cập nhật thông tin
         vehicle.setManufactureYear(manufactureYear);
         vehicle.setCustomerId(customer.getCustomerId());
 
-        boolean isUpdated = vehicleDAO.updateVehicle(vehicle);
-
-        if (isUpdated) {
-            session.setAttribute("successMessage", "Vehicle updated successfully!");
-            response.sendRedirect(request.getContextPath() + "/vehicles");
+        if (vehicleDAO.updateVehicle(vehicle)) {
+            session.setAttribute("SUCCESS", "Vehicle updated successfully!");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
         } else {
-            session.setAttribute("errorMessage", "Failed to update vehicle");
-            response.sendRedirect(request.getContextPath() + "/vehicles");
+            forwardWithError(request, response, vehicle, "Database error, please try again");
         }
     }
 
-    private void forwardWithError(HttpServletRequest request,
-            HttpServletResponse response,
-            int vehicleId,
-            String message)
+    private void forwardWithError(HttpServletRequest request, HttpServletResponse response, Vehicle vehicle, String message)
             throws ServletException, IOException {
-        request.setAttribute("error", message);
-        request.getRequestDispatcher("/views/auth/vehicle/UpdateVehicle.jsp?id=" + vehicleId)
-                .forward(request, response);
+        request.setAttribute("ERROR", message);
+        request.setAttribute("vehicle", vehicle); // Giữ lại thông tin người dùng vừa nhập
+        request.getRequestDispatcher("/views/auth/vehicle/UpdateVehicle.jsp").forward(request, response);
     }
 
     private boolean isNullOrBlank(String value) {
