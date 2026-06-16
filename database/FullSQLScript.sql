@@ -238,8 +238,10 @@ ALTER TABLE Tiers ADD CONSTRAINT CHK_Tier_MinSpent CHECK (min_spent >= 0);
 ALTER TABLE Service ADD CONSTRAINT CHK_Service_Price CHECK (price > 0);
 ALTER TABLE Service ADD CONSTRAINT CHK_Service_Duration CHECK (duration_minutes > 0);
 ALTER TABLE Booking ADD CONSTRAINT CHK_Booking_Amount CHECK (total_amount >= 0);
+ALTER TABLE Booking ADD CONSTRAINT CHK_Booking_Status 
+    CHECK (status IN (N'pending', N'accepted', N'completed', N'cancelled', N'no_show'));
 ALTER TABLE Wallet ADD CONSTRAINT CHK_Wallet_Balance CHECK (balance >= 0);
-ALTER TABLE WalletTransaction ADD CONSTRAINT CHK_WT_Type CHECK (type IN (N'deposit', N'payment', N'refund'));
+ALTER TABLE WalletTransaction ADD CONSTRAINT CHK_WT_Type CHECK (type IN (N'deposit', N'payment'));
 GO
 
 -- ========================================================
@@ -290,12 +292,12 @@ INSERT INTO Bay (bay_name, status) VALUES
 (N'Bay Tự Động 03', N'maintenance');
 
 INSERT INTO Service (service_name, description, price, duration_minutes, is_active) VALUES
-(N'Express Wash (Sedan)',          N'Rửa nhanh áp lực cao, bọt tuyết, sấy khô cho Sedan',           50000,  5,  1),
-(N'Deluxe Wash (Sedan)',           N'Gói Express + làm sạch mâm lốp, dưỡng bóng lốp cho Sedan',      80000,  7,  1),
-(N'Ultimate Wax Wash (Sedan)',     N'Gói Deluxe + xịt sáp bóng ceramic, khử mùi cabin cho Sedan',   120000, 10, 1),
-(N'Express Wash (SUV/Truck)',      N'Rửa nhanh áp lực cao công suất lớn cho gầm cao SUV/Truck',      70000,  7,  1),
-(N'Deluxe Wash (SUV/Truck)',       N'Gói Express + tẩy ố lazang chuyên sâu cho SUV/Truck',           100000, 10, 1),
-(N'Ultimate Wax Wash (SUV/Truck)', N'Gói Deluxe + phủ bóng sáp bảo vệ sơn cho SUV/Truck',          150000, 13, 1);
+(N'Express Wash (Sedan)',        N'High-pressure express wash, Triple foam conditioner, Heated air blow dry for Sedan',            50000,  5,  1),
+(N'Deluxe Wash (Sedan)',         N'Express wash features, Wheel & rim deep clean, Tire shine & dressing for Sedan',               80000,  7,  1),
+(N'Ultimate Wax Wash (Sedan)',   N'Deluxe wash features, Ceramic wax coating, Cabin deodorization & freshener for Sedan',    120000, 10, 1),
+(N'Express Wash (SUV/Truck)',    N'Heavy-duty express wash, Underbody high-pressure rinse, High-clearance frame prep',             70000,  7,  1),
+(N'Deluxe Wash (SUV/Truck)',     N'Express wash features, Deep rim de-ironing, Wheel hub restoration treatment',                 100000, 10,  1),
+(N'Ultimate Wax Wash (SUV/Truck)', N'Deluxe wash features, Premium protective paint wax, Hydro-shield surface coat',              150000, 12,  1);
 
 INSERT INTO [User] (full_name, email, phone, password, is_active, role_id) VALUES
 (N'Nguyễn Admin',      'admin@autowash.com', '0900000001', 'password123', 1, 1),
