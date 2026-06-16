@@ -241,7 +241,7 @@
 
                         </ul>
 
-                        <a href="${pageContext.request.contextPath}/MainController?action=login&serviceId=${service.serviceId}"
+                        <a href="${pageContext.request.contextPath}/MainController?action=booking&serviceId=${service.serviceId}"
                            class="${fn:containsIgnoreCase(service.serviceName, 'Deluxe') ? 'btn-primary' : 'btn-secondary'} w-full text-center">
                             Book ${displayName}
                         </a>
@@ -410,7 +410,7 @@
 
                         </ul>
 
-                        <a href="${pageContext.request.contextPath}/MainController?action=login&serviceId=${service.serviceId}"
+                        <a href="${pageContext.request.contextPath}/MainController?action=booking&serviceId=${service.serviceId}"
                            class="${fn:containsIgnoreCase(service.serviceName, 'Deluxe') ? 'btn-primary' : 'btn-secondary'} w-full text-center">
                             Book ${displayName}
                         </a>
