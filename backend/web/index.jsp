@@ -434,7 +434,7 @@
                 <div class="md:hidden absolute top-10 bottom-10 left-12 w-0.5 bg-slate-200 z-0"></div>
 
                 <div class="relative z-10 flex md:flex-col items-center gap-4 md:w-1/5 group">
-                    <div class="w-24 h-24 rounded-full bg-white border-2 border-primary flex items-center justify-center shadow-sm group-hover:-translate-y-1 transition-transform shrink-0">
+                    <div class="w-24 h-24 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center shadow-sm group-hover:-translate-y-1 transition-transform shrink-0">
                         <i class="w-10 h-10 text-primary" data-lucide="scan-line"></i>
                     </div>
                     <div>
