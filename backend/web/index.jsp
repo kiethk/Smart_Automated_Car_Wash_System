@@ -40,7 +40,7 @@
 
         <section id="features" class="relative z-10 w-full mt-2 py-1 shrink-0">
             <div class="w-full mx-auto">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols- 1 md:grid-cols-3 gap-6">
 
                     <div class="service-card text-left p-4.5 bg-white border border-surface-border rounded-2xl shadow-sm">
                         <div class="text-primary font-bold text-xl mb-1">01. Swift Booking</div>
@@ -65,10 +65,10 @@
 </main>
 
 <!-- ==================== SERVICES CATALOGUE SECTION (DYNAMIC WORD SPLIT) ==================== -->
-<section id="services-catalogue" class="w-full border-t border-surface-border pt-10 pb-20 bg-white flex justify-center">
+<section id="services-catalogue" class="w-full border-t border-surface-border pt-7 pb-20 bg-white flex justify-center">
     <div class="w-full max-w-[1280px] mx-auto px-4 md:px-16 text-center">
 
-        <div class="flex flex-col items-center mb-16">
+        <div class="flex flex-col items-center mb-10">
             <h2 class="text-3xl md:text-4xl font-bold text-on-background mb-8">Select Your Service Level</h2>
             <div class="flex items-center p-1 bg-slate-100 rounded-full border border-surface-border">
                 <button id="btn-sedan" class="px-6 py-2 rounded-full font-semibold text-sm transition-all duration-300 bg-primary text-on-primary shadow-sm focus:outline-none">
@@ -80,137 +80,345 @@
             </div>
         </div>
 
-        <c:forEach var="item" items="${SERVICES_LIST}">
-            <c:if test="${fn:containsIgnoreCase(item.serviceName, 'Express') && fn:containsIgnoreCase(item.serviceName, 'Sedan')}">
-                <c:set var="expSedanId" value="${item.serviceId}"/>
-                <c:set var="expSedanPrice" value="${item.price}"/>
-            </c:if>
-            <c:if test="${fn:containsIgnoreCase(item.serviceName, 'Express') && fn:containsIgnoreCase(item.serviceName, 'SUV')}">
-                <c:set var="expSuvId" value="${item.serviceId}"/>
-                <c:set var="expSuvPrice" value="${item.price}"/>
-            </c:if>
-            <c:if test="${fn:containsIgnoreCase(item.serviceName, 'Deluxe') && fn:containsIgnoreCase(item.serviceName, 'Sedan')}">
-                <c:set var="dlxSedanId" value="${item.serviceId}"/>
-                <c:set var="dlxSedanPrice" value="${item.price}"/>
-            </c:if>
-            <c:if test="${fn:containsIgnoreCase(item.serviceName, 'Deluxe') && fn:containsIgnoreCase(item.serviceName, 'SUV')}">
-                <c:set var="dlxSuvId" value="${item.serviceId}"/>
-                <c:set var="dlxSuvPrice" value="${item.price}"/>
-            </c:if>
-            <c:if test="${fn:containsIgnoreCase(item.serviceName, 'Ultimate') && fn:containsIgnoreCase(item.serviceName, 'Sedan')}">
-                <c:set var="ultSedanId" value="${item.serviceId}"/>
-                <c:set var="ultSedanPrice" value="${item.price}"/>
-            </c:if>
-            <c:if test="${fn:containsIgnoreCase(item.serviceName, 'Ultimate') && fn:containsIgnoreCase(item.serviceName, 'SUV')}">
-                <c:set var="ultSuvId" value="${item.serviceId}"/>
-                <c:set var="ultSuvPrice" value="${item.price}"/>
-            </c:if>
-        </c:forEach>
-
-        <fmt:formatNumber var="fmtExpSedan" value="${expSedanPrice}" pattern="#,###"/>
-        <fmt:formatNumber var="fmtExpSuv" value="${expSuvPrice}" pattern="#,###"/>
-        <fmt:formatNumber var="fmtDlxSedan" value="${dlxSedanPrice}" pattern="#,###"/>
-        <fmt:formatNumber var="fmtDlxSuv" value="${dlxSuvPrice}" pattern="#,###"/>
-        <fmt:formatNumber var="fmtUltSedan" value="${ultSedanPrice}" pattern="#,###"/>
-        <fmt:formatNumber var="fmtUltSuv" value="${ultSuvPrice}" pattern="#,###"/>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24 text-left items-stretch">
 
-            <div class="service-card flex flex-col relative bg-[var(--surface-card)] mt-8 p-8 border border-surface-border shadow-sm">
-                <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-on-background mb-2">Express Wash</h3>
-                    <p class="text-sm text-slate-500">Quick and efficient everyday clean.</p>
-                </div>
-                <div class="mb-8">
-                    <span id="price-express" class="text-4xl md:text-5xl font-black font-sans tracking-tight text-on-background tech-data price-display" 
-                                  data-sedan="${fmtExpSedan}đ" data-suv="${fmtExpSuv}đ">${fmtExpSedan}đ</span>
-                    <span class="text-xs font-sans font-bold text-slate-400 ml-1">/wash</span>
-                </div>
+            <!-- ==================== SEDAN SERVICES ==================== -->
+            <c:forEach var="service" items="${SERVICES_LIST}">
+                <c:if test="${fn:containsIgnoreCase(service.serviceName, 'Sedan')}">
 
-                <ul class="space-y-4 mb-8 flex-grow">
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="droplets"></i>
-                        <span class="text-sm text-on-background font-medium">High-pressure express wash</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="cloud-rain"></i>
-                        <span class="text-sm text-on-background font-medium">Triple foam conditioner</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="wind"></i>
-                        <span class="text-sm text-on-background font-medium">Heated air blow dry</span>
-                    </li>
-                </ul>
-                <a id="link-express" href="${pageContext.request.contextPath}/MainController?action=login&serviceId=${expSedanId}" 
-                   data-sedan-id="${expSedanId}" data-suv-id="${expSuvId}" class="btn-secondary w-full text-center">
-                    Book Express
-                </a>
-            </div>
+                    <c:set var="displayName" value="${fn:replace(service.serviceName, ' (Sedan)', '')}" />
 
-            <div class="service-card flex flex-col relative bg-[var(--surface-card)] mt-8 p-8 border-2 border-primary transform md:-translate-y-4 shadow-lg">
-                <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <span class="bg-primary text-on-primary text-[10px] font-bold uppercase tracking-wider px-4 py-1 rounded-full">Most Popular</span>
-                </div>
-                <div class="mb-6 mt-4">
-                    <h3 class="text-2xl font-bold text-on-background mb-2">Deluxe Wash</h3>
-                    <p class="text-sm text-slate-500">Enhanced protection and shine.</p>
-                </div>
-                <div class="mb-8">
-                    <span id="price-deluxe" class="text-4xl md:text-5xl font-black font-sans tracking-tight text-on-background tech-data price-display" 
-                                  data-sedan="${fmtDlxSedan}đ" data-suv="${fmtDlxSuv}đ">${fmtDlxSedan}đ</span>
-                    <span class="text-xs font-sans font-bold text-slate-400 ml-1">/wash</span>
-                </div>
+                    <div class="service-card sedan-card flex flex-col relative bg-[var(--surface-card)] mt-8 p-8
+                         ${fn:containsIgnoreCase(service.serviceName, 'Deluxe') 
+                           ? 'border-2 border-primary transform md:-translate-y-4 shadow-lg' 
+                           : 'border border-surface-border shadow-sm'}">
 
-                <ul class="space-y-4 mb-8 flex-grow">
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="layers"></i>
-                        <span class="text-sm text-primary font-semibold">Includes Express wash features</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="disc"></i>
-                        <span class="text-sm text-on-background font-medium">Wheel & rim deep clean</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="sparkles"></i>
-                        <span class="text-sm text-on-background font-medium">Tire shine & dressing</span>
-                    </li>
-                </ul>
-                <a id="link-deluxe" href="${pageContext.request.contextPath}/MainController?action=login&serviceId=${dlxSedanId}" 
-                   data-sedan-id="${dlxSedanId}" data-suv-id="${dlxSuvId}" class="btn-primary w-full text-center">
-                    Book Deluxe
-                </a>
-            </div>
+                        <c:if test="${fn:containsIgnoreCase(service.serviceName, 'Deluxe')}">
+                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                <span class="bg-primary text-on-primary text-[10px] font-bold uppercase tracking-wider px-4 py-1 rounded-full">
+                                    Most Popular
+                                </span>
+                            </div>
+                        </c:if>
 
-            <div class="service-card flex flex-col relative bg-[var(--surface-card)] mt-8 p-8 border border-surface-border shadow-sm">
-                <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-on-background mb-2">Ultimate Wash</h3>
-                    <p class="text-sm text-slate-500">The absolute best care available.</p>
-                </div>
-                <div class="mb-8">
-                    <span id="price-ultimate" class="text-4xl md:text-5xl font-black font-sans tracking-tight text-on-background tech-data price-display" 
-                                  data-sedan="${fmtUltSedan}đ" data-suv="${fmtUltSuv}đ">${fmtUltSedan}đ</span>
-                    <span class="text-xs font-sans font-bold text-slate-400 ml-1">/wash</span>
-                </div>
+                        <div class="mb-6 ${fn:containsIgnoreCase(service.serviceName, 'Deluxe') ? 'mt-4' : ''}">
+                            <h3 class="text-2xl font-bold text-on-background mb-2">
+                                ${displayName}
+                            </h3>
 
-                <ul class="space-y-4 mb-8 flex-grow">
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="layers"></i>
-                        <span class="text-sm text-primary font-semibold">Includes Deluxe wash features</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="gem"></i>
-                        <span class="text-sm text-on-background font-medium">Ceramic wax coating</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="w-5 h-5 text-primary shrink-0 mt-0.5" data-lucide="smile"></i>
-                        <span class="text-sm text-on-background font-medium">Cabin deodorization & freshener</span>
-                    </li>
-                </ul>
-                <a id="link-ultimate" href="${pageContext.request.contextPath}/MainController?action=login&serviceId=${ultSedanId}" 
-                   data-sedan-id="${ultSedanId}" data-suv-id="${ultSuvId}" class="btn-secondary w-full text-center">
-                    Book Ultimate
-                </a>
-            </div>
+                            <p class="text-sm text-slate-500">
+                                <c:choose>
+                                    <c:when test="${fn:containsIgnoreCase(service.serviceName, 'Express')}">
+                                        Quick and efficient everyday clean.
+                                    </c:when>
+                                    <c:when test="${fn:containsIgnoreCase(service.serviceName, 'Deluxe')}">
+                                        Enhanced protection and shine.
+                                    </c:when>
+                                    <c:otherwise>
+                                        The absolute best care available.
+                                    </c:otherwise>
+                                </c:choose>
+                            </p>
+                        </div>
+
+                        <div class="mb-8">
+                            <span class="text-4xl md:text-5xl font-black font-sans tracking-tight text-on-background tech-data">
+                                <fmt:formatNumber value="${service.price}" pattern="#,###"/>đ
+                            </span>
+                            <span class="text-xs font-sans font-bold text-slate-400 ml-1">/wash</span>
+                        </div>
+
+                        <ul class="space-y-2.5 mb-6 flex-grow text-sm">
+
+                            <c:forEach var="feature" items="${fn:split(service.description, ',')}">
+
+                                <c:set var="featureText" value="${fn:trim(feature)}" />
+                                <c:set var="featureText" value="${fn:replace(featureText, ' for Sedan', '')}" />
+                                <c:set var="featureText" value="${fn:replace(featureText, ' for SUV/Truck', '')}" />
+                                <c:set var="featureLower" value="${fn:toLowerCase(featureText)}" />
+
+                                <c:choose>
+                                    <%-- Dòng kiểu: Express wash features, Deluxe wash features --%>
+                                    <c:when test="${fn:contains(featureLower, 'features')}">
+                                        <c:set var="featureIcon" value="layers" />
+                                    </c:when>
+
+                                    <%-- Rửa áp lực, express wash, heavy-duty --%>
+                                    <c:when test="${fn:contains(featureLower, 'heavy-duty') 
+                                                    || fn:contains(featureLower, 'pressure') 
+                                                    || fn:contains(featureLower, 'express wash')}">
+                                        <c:set var="featureIcon" value="droplets" />
+                                    </c:when>
+
+                                    <%-- Bọt tuyết / conditioner --%>
+                                    <c:when test="${fn:contains(featureLower, 'foam') 
+                                                    || fn:contains(featureLower, 'conditioner')}">
+                                        <c:set var="featureIcon" value="cloud-rain" />
+                                    </c:when>
+
+                                    <%-- Sấy khô --%>
+                                    <c:when test="${fn:contains(featureLower, 'dry') 
+                                                    || fn:contains(featureLower, 'blow')}">
+                                        <c:set var="featureIcon" value="wind" />
+                                    </c:when>
+
+                                    <%-- Gầm xe / xịt rửa gầm --%>
+                                    <c:when test="${fn:contains(featureLower, 'underbody') 
+                                                    || fn:contains(featureLower, 'rinse')}">
+                                        <c:set var="featureIcon" value="waves" />
+                                    </c:when>
+
+                                    <%-- Xe cao, khung gầm SUV/Truck --%>
+                                    <c:when test="${fn:contains(featureLower, 'clearance') 
+                                                    || fn:contains(featureLower, 'frame')}">
+                                        <c:set var="featureIcon" value="truck" />
+                                    </c:when>
+
+                                    <%-- Mâm, bánh xe, wheel hub, rim --%>
+                                    <c:when test="${fn:contains(featureLower, 'rim') 
+                                                    || fn:contains(featureLower, 'wheel') 
+                                                    || fn:contains(featureLower, 'de-ironing') 
+                                                    || fn:contains(featureLower, 'hub')}">
+                                        <c:set var="featureIcon" value="disc" />
+                                    </c:when>
+
+                                    <%-- Lốp, làm bóng lốp --%>
+                                    <c:when test="${fn:contains(featureLower, 'tire') 
+                                                    || fn:contains(featureLower, 'shine') 
+                                                    || fn:contains(featureLower, 'dressing')}">
+                                        <c:set var="featureIcon" value="sparkles" />
+                                    </c:when>
+
+                                    <%-- Wax, ceramic, sơn, lớp bảo vệ --%>
+                                    <c:when test="${fn:contains(featureLower, 'wax') 
+                                                    || fn:contains(featureLower, 'ceramic') 
+                                                    || fn:contains(featureLower, 'protective') 
+                                                    || fn:contains(featureLower, 'paint')}">
+                                        <c:set var="featureIcon" value="gem" />
+                                    </c:when>
+
+                                    <%-- Hydro shield, surface coat --%>
+                                    <c:when test="${fn:contains(featureLower, 'hydro') 
+                                                    || fn:contains(featureLower, 'shield') 
+                                                    || fn:contains(featureLower, 'surface coat')}">
+                                        <c:set var="featureIcon" value="shield" />
+                                    </c:when>
+
+                                    <%-- Cabin, khử mùi, làm thơm nội thất --%>
+                                    <c:when test="${fn:contains(featureLower, 'cabin') 
+                                                    || fn:contains(featureLower, 'freshener') 
+                                                    || fn:contains(featureLower, 'deodorization')}">
+                                        <c:set var="featureIcon" value="smile" />
+                                    </c:when>
+
+                                    <%-- Mặc định --%>
+                                    <c:otherwise>
+                                        <c:set var="featureIcon" value="check-circle" />
+                                    </c:otherwise>
+                                </c:choose>
+
+                                <li class="flex items-center gap-3 min-h-[28px]">
+                                    <span class="w-6 h-6 flex items-center justify-center shrink-0 text-primary">
+                                        <i class="w-5 h-5" data-lucide="${featureIcon}"></i>
+                                    </span>
+
+                                    <span class="text-sm text-on-background font-medium leading-5">
+                                        ${featureText}
+                                    </span>
+                                </li>
+
+                            </c:forEach>
+
+                            <li class="flex items-center gap-3 min-h-[28px] pt-1">
+                                <span class="w-6 h-6 flex items-center justify-center shrink-0 text-primary">
+                                    <i class="w-5 h-5" data-lucide="clock-3"></i>
+                                </span>
+
+                                <span class="text-sm text-on-background font-semibold leading-5">
+                                    Duration: ${service.durationMinutes} minutes
+                                </span>
+                            </li>
+
+                        </ul>
+
+                        <a href="${pageContext.request.contextPath}/MainController?action=login&serviceId=${service.serviceId}"
+                           class="${fn:containsIgnoreCase(service.serviceName, 'Deluxe') ? 'btn-primary' : 'btn-secondary'} w-full text-center">
+                            Book ${displayName}
+                        </a>
+                    </div>
+
+                </c:if>
+            </c:forEach>
+
+
+            <!-- ==================== SUV / TRUCK SERVICES ==================== -->
+            <c:forEach var="service" items="${SERVICES_LIST}">
+                <c:if test="${fn:containsIgnoreCase(service.serviceName, 'SUV') || fn:containsIgnoreCase(service.serviceName, 'Truck')}">
+
+                    <c:set var="displayName" value="${fn:replace(service.serviceName, ' (SUV/Truck)', '')}" />
+
+                    <div class="service-card suv-card hidden flex-col relative bg-[var(--surface-card)] mt-8 p-8
+                         ${fn:containsIgnoreCase(service.serviceName, 'Deluxe') 
+                           ? 'border-2 border-primary transform md:-translate-y-4 shadow-lg' 
+                           : 'border border-surface-border shadow-sm'}">
+
+                        <c:if test="${fn:containsIgnoreCase(service.serviceName, 'Deluxe')}">
+                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                <span class="bg-primary text-on-primary text-[10px] font-bold uppercase tracking-wider px-4 py-1 rounded-full">
+                                    Most Popular
+                                </span>
+                            </div>
+                        </c:if>
+
+                        <div class="mb-6 ${fn:containsIgnoreCase(service.serviceName, 'Deluxe') ? 'mt-4' : ''}">
+                            <h3 class="text-2xl font-bold text-on-background mb-2">
+                                ${displayName}
+                            </h3>
+
+                            <p class="text-sm text-slate-500">
+                                <c:choose>
+                                    <c:when test="${fn:containsIgnoreCase(service.serviceName, 'Express')}">
+                                        Quick and efficient everyday clean.
+                                    </c:when>
+                                    <c:when test="${fn:containsIgnoreCase(service.serviceName, 'Deluxe')}">
+                                        Enhanced protection and shine.
+                                    </c:when>
+                                    <c:otherwise>
+                                        The absolute best care available.
+                                    </c:otherwise>
+                                </c:choose>
+                            </p>
+                        </div>
+
+                        <div class="mb-8">
+                            <span class="text-4xl md:text-5xl font-black font-sans tracking-tight text-on-background tech-data">
+                                <fmt:formatNumber value="${service.price}" pattern="#,###"/>đ
+                            </span>
+                            <span class="text-xs font-sans font-bold text-slate-400 ml-1">/wash</span>
+                        </div>
+
+                        <ul class="space-y-2.5 mb-6 flex-grow text-sm">
+
+                            <c:forEach var="feature" items="${fn:split(service.description, ',')}">
+
+                                <c:set var="featureText" value="${fn:trim(feature)}" />
+                                <c:set var="featureText" value="${fn:replace(featureText, ' for Sedan', '')}" />
+                                <c:set var="featureText" value="${fn:replace(featureText, ' for SUV/Truck', '')}" />
+                                <c:set var="featureLower" value="${fn:toLowerCase(featureText)}" />
+
+                                <c:choose>
+                                    <%-- Dòng kiểu: Express wash features, Deluxe wash features --%>
+                                    <c:when test="${fn:contains(featureLower, 'features')}">
+                                        <c:set var="featureIcon" value="layers" />
+                                    </c:when>
+
+                                    <%-- Rửa áp lực, express wash, heavy-duty --%>
+                                    <c:when test="${fn:contains(featureLower, 'heavy-duty') 
+                                                    || fn:contains(featureLower, 'pressure') 
+                                                    || fn:contains(featureLower, 'express wash')}">
+                                        <c:set var="featureIcon" value="droplets" />
+                                    </c:when>
+
+                                    <%-- Bọt tuyết / conditioner --%>
+                                    <c:when test="${fn:contains(featureLower, 'foam') 
+                                                    || fn:contains(featureLower, 'conditioner')}">
+                                        <c:set var="featureIcon" value="cloud-rain" />
+                                    </c:when>
+
+                                    <%-- Sấy khô --%>
+                                    <c:when test="${fn:contains(featureLower, 'dry') 
+                                                    || fn:contains(featureLower, 'blow')}">
+                                        <c:set var="featureIcon" value="wind" />
+                                    </c:when>
+
+                                    <%-- Gầm xe / xịt rửa gầm --%>
+                                    <c:when test="${fn:contains(featureLower, 'underbody') 
+                                                    || fn:contains(featureLower, 'rinse')}">
+                                        <c:set var="featureIcon" value="waves" />
+                                    </c:when>
+
+                                    <%-- Xe cao, khung gầm SUV/Truck --%>
+                                    <c:when test="${fn:contains(featureLower, 'clearance') 
+                                                    || fn:contains(featureLower, 'frame')}">
+                                        <c:set var="featureIcon" value="truck" />
+                                    </c:when>
+
+                                    <%-- Mâm, bánh xe, wheel hub, rim --%>
+                                    <c:when test="${fn:contains(featureLower, 'rim') 
+                                                    || fn:contains(featureLower, 'wheel') 
+                                                    || fn:contains(featureLower, 'de-ironing') 
+                                                    || fn:contains(featureLower, 'hub')}">
+                                        <c:set var="featureIcon" value="disc" />
+                                    </c:when>
+
+                                    <%-- Lốp, làm bóng lốp --%>
+                                    <c:when test="${fn:contains(featureLower, 'tire') 
+                                                    || fn:contains(featureLower, 'shine') 
+                                                    || fn:contains(featureLower, 'dressing')}">
+                                        <c:set var="featureIcon" value="sparkles" />
+                                    </c:when>
+
+                                    <%-- Wax, ceramic, sơn, lớp bảo vệ --%>
+                                    <c:when test="${fn:contains(featureLower, 'wax') 
+                                                    || fn:contains(featureLower, 'ceramic') 
+                                                    || fn:contains(featureLower, 'protective') 
+                                                    || fn:contains(featureLower, 'paint')}">
+                                        <c:set var="featureIcon" value="gem" />
+                                    </c:when>
+
+                                    <%-- Hydro shield, surface coat --%>
+                                    <c:when test="${fn:contains(featureLower, 'hydro') 
+                                                    || fn:contains(featureLower, 'shield') 
+                                                    || fn:contains(featureLower, 'surface coat')}">
+                                        <c:set var="featureIcon" value="shield" />
+                                    </c:when>
+
+                                    <%-- Cabin, khử mùi, làm thơm nội thất --%>
+                                    <c:when test="${fn:contains(featureLower, 'cabin') 
+                                                    || fn:contains(featureLower, 'freshener') 
+                                                    || fn:contains(featureLower, 'deodorization')}">
+                                        <c:set var="featureIcon" value="smile" />
+                                    </c:when>
+
+                                    <%-- Mặc định --%>
+                                    <c:otherwise>
+                                        <c:set var="featureIcon" value="check-circle" />
+                                    </c:otherwise>
+                                </c:choose>
+
+                                <li class="flex items-center gap-3 min-h-[28px]">
+                                    <span class="w-6 h-6 flex items-center justify-center shrink-0 text-primary">
+                                        <i class="w-5 h-5" data-lucide="${featureIcon}"></i>
+                                    </span>
+
+                                    <span class="text-sm text-on-background font-medium leading-5">
+                                        ${featureText}
+                                    </span>
+                                </li>
+
+                            </c:forEach>
+
+                            <li class="flex items-center gap-3 min-h-[28px] pt-1">
+                                <span class="w-6 h-6 flex items-center justify-center shrink-0 text-primary">
+                                    <i class="w-5 h-5" data-lucide="clock-3"></i>
+                                </span>
+
+                                <span class="text-sm text-on-background font-semibold leading-5">
+                                    Duration: ${service.durationMinutes} minutes
+                                </span>
+                            </li>
+
+                        </ul>
+
+                        <a href="${pageContext.request.contextPath}/MainController?action=login&serviceId=${service.serviceId}"
+                           class="${fn:containsIgnoreCase(service.serviceName, 'Deluxe') ? 'btn-primary' : 'btn-secondary'} w-full text-center">
+                            Book ${displayName}
+                        </a>
+                    </div>
+
+                </c:if>
+            </c:forEach>
+
         </div>
 
         <!-- Sơ đồ quy trình 5 bước Robotic Flow giữ nguyên bên dưới... -->
@@ -278,44 +486,59 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Vẽ icon hệ thống ban đầu
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
 
         const btnSedan = document.getElementById('btn-sedan');
         const btnSuv = document.getElementById('btn-suv');
-        const priceDisplays = document.querySelectorAll('.price-display');
 
-        const linkExpress = document.getElementById('link-express');
-        const linkDeluxe = document.getElementById('link-deluxe');
-        const linkUltimate = document.getElementById('link-ultimate');
+        const sedanCards = document.querySelectorAll('.sedan-card');
+        const suvCards = document.querySelectorAll('.suv-card');
 
-        function updatePricing(type) {
-            // 1. Thay đổi giá hiển thị khi click mượt mà
-            priceDisplays.forEach(display => {
-                const targetPrice = display.getAttribute('data-' + type);
-                display.textContent = targetPrice;
-            });
-
-            // 2. Cập nhật chính xác link Href tương ứng ServiceId (ĐÃ SỬA LỖI CHUỖI KHÔNG CÒN CRASH)
-            const contextPath = "${pageContext.request.contextPath}";
-            linkExpress.href = contextPath + "/MainController?action=login&serviceId=" + linkExpress.getAttribute('data-' + type + '-id');
-            linkDeluxe.href = contextPath + "/MainController?action=login&serviceId=" + linkDeluxe.getAttribute('data-' + type + '-id');
-            linkUltimate.href = contextPath + "/MainController?action=login&serviceId=" + linkUltimate.getAttribute('data-' + type + '-id');
-
-            // 3. Thay đổi màu class active của tab button
+        function showServices(type) {
             if (type === 'sedan') {
+                sedanCards.forEach(card => {
+                    card.classList.remove('hidden');
+                    card.classList.add('flex');
+                });
+
+                suvCards.forEach(card => {
+                    card.classList.add('hidden');
+                    card.classList.remove('flex');
+                });
+
                 btnSedan.className = "px-6 py-2 rounded-full font-semibold text-sm transition-all duration-300 bg-primary text-on-primary shadow-sm focus:outline-none";
                 btnSuv.className = "px-6 py-2 rounded-full font-semibold text-sm transition-all duration-300 text-slate-500 hover:text-on-background focus:outline-none";
             } else {
+                suvCards.forEach(card => {
+                    card.classList.remove('hidden');
+                    card.classList.add('flex');
+                });
+
+                sedanCards.forEach(card => {
+                    card.classList.add('hidden');
+                    card.classList.remove('flex');
+                });
+
                 btnSuv.className = "px-6 py-2 rounded-full font-semibold text-sm transition-all duration-300 bg-primary text-on-primary shadow-sm focus:outline-none";
                 btnSedan.className = "px-6 py-2 rounded-full font-semibold text-sm transition-all duration-300 text-slate-500 hover:text-on-background focus:outline-none";
             }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
 
-        btnSedan.addEventListener('click', () => updatePricing('sedan'));
-        btnSuv.addEventListener('click', () => updatePricing('suv'));
+        btnSedan.addEventListener('click', function () {
+            showServices('sedan');
+        });
+
+        btnSuv.addEventListener('click', function () {
+            showServices('suv');
+        });
+
+        showServices('sedan');
     });
 </script>
 
