@@ -28,6 +28,9 @@ CREATE TABLE Tiers (
 CREATE TABLE Promotion (
     promotion_id INT PRIMARY KEY IDENTITY(1,1),
     code NVARCHAR(50) UNIQUE NOT NULL,
+    title NVARCHAR(100) NOT NULL,          -- MỚI: Tiêu đề Voucher hiển thị Carousel
+    description NVARCHAR(MAX),             -- MỚI: Mô tả chi tiết khuyến mãi
+    image_url NVARCHAR(500) NULL,          -- MỚI: Đường dẫn ảnh banner voucher (nếu có)
     discount_type NVARCHAR(20),
     discount_value BIGINT,
     min_order_amount BIGINT,
@@ -281,9 +284,30 @@ INSERT INTO Tiers (tier_id, tier_name, min_washes, min_spent, point_multiplier, 
 (3, N'Gold',     15, 6000000,  1.20, 10.00, 12, N'Thành viên Vàng'),
 (4, N'Platinum', 30, 15000000, 1.30, 15.00, 14, N'Thành viên Bạch Kim');
 
-INSERT INTO Promotion (code, discount_type, discount_value, min_order_amount, usage_limit, start_date, end_date, is_active, target_tier_id) VALUES
-(N'WELCOME50',   N'fixed',   50000, 0,      100, '2026-01-01', '2026-12-31', 1, NULL),
-(N'GOLDPREMIUM', N'percent', 15,    100000, 50,  '2026-01-01', '2026-12-31', 1, 3);
+INSERT INTO Promotion (
+    code, 
+    title, 
+    description, 
+    image_url, 
+    discount_type, 
+    discount_value, 
+    min_order_amount, 
+    usage_limit, 
+    start_date, 
+    end_date, 
+    is_active, 
+    target_tier_id
+) VALUES
+-- Your original 2 vouchers updated with the new structural columns
+(N'WELCOME50', N'Welcome New Member', N'Get an instant 50,000 VND discount for your first booking on our system.', N'/assets/images/promotions/welcome50.jpg', N'fixed', 50000, 0, 100, '2026-01-01', '2026-12-31', 1, NULL),
+(N'GOLDPREMIUM', N'Gold Tier Reward', N'Exclusive for Gold members - Get 15% off your total booking bill.', N'/assets/images/promotions/gold.jpg', N'percent', 15, 100000, 50, '2026-01-01', '2026-12-31', 1, 3),
+
+-- 5 Diverse new promotional vouchers
+(N'SAVINGS30', N'Happy Hour Special', N'Save 30,000 VND on any car care service invoice.', N'/assets/images/promotions/tietkiem30.jpg', N'fixed', 30000, 50000, 200, '2026-06-01', '2026-08-31', 1, NULL),
+(N'MEGA10', N'10% Mega Discount', N'Enjoy 10% off your entire booking. Keep your ride fresh and shiny.', N'/assets/images/promotions/sieuviet10.jpg', N'percent', 10, 150000, 150, '2026-06-01', '2026-12-31', 1, NULL),
+(N'DIAMONDMAX', N'Diamond Privilege', N'Massive 25% discount exclusively tailored for Diamond tier members.', N'/assets/images/promotions/diamond.jpg', N'percent', 25, 200000, 30, '2026-01-01', '2026-12-31', 1, 4), 
+(N'CARCARE100', N'Grand Car Care Feast', N'Flat 100,000 VND off for premium service packages with a minimum order of 300,000 VND.', N'/assets/images/promotions/chamsocxe.jpg', N'fixed', 100000, 300000, 80, '2026-06-15', '2026-07-15', 1, NULL),
+(N'SILVERSTART', N'Silver Tier Kickoff', N'Get 5% off to celebrate your rank up to Silver tier membership.', N'/assets/images/promotions/silver.jpg', N'percent', 5, 80000, 120, '2026-01-01', '2026-12-31', 1, 2);
 
 -- FIX: Bỏ capacity_per_hour
 INSERT INTO Bay (bay_name, status) VALUES
