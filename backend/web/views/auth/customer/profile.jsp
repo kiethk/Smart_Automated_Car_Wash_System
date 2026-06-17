@@ -11,6 +11,7 @@
 <%@page import="java.util.List"%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.Date" %>
+
 <%// Lúc này file JSP chỉ làm duy nhất 1 nhiệm vụ: Lấy các Attribute đã được Servlet tính sẵn ra để dùng
     User loginedUser = (User) session.getAttribute("USER");
     Customer loginedCustomer = (Customer) request.getAttribute("customerData");
