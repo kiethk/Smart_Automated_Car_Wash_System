@@ -16,7 +16,7 @@ public class BookingDAO {
     // =========================================================================
     // THỜI ĐIỂM 1: TRANSACTION TẠO BOOKING, PAYMENT & CỘNG ĐIỂM LIỀN NẾU TRẢ VÍ
     // =========================================================================
-    public boolean insertBookingWithPayment(Booking booking, String paymentMethod, int redeemPoints) {
+    public boolean insertBookingWithPayment(Booking booking, String paymentMethod, int redeemPoints, int serviceId) {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -27,6 +27,11 @@ public class BookingDAO {
 
         String sqlPayment = "INSERT INTO Payment (payment_method, payment_status, amount, paid_at, transaction_id, booking_id) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
+
+        String sqlGetServicePrice = "SELECT price FROM Service WHERE service_id = ? AND is_active = 1";
+
+        String sqlInsertBookingService = "INSERT INTO BookingService (quantity, price, booking_id, service_id) "
+                + "VALUES (?, ?, ?, ?)";
 
         String sqlUpdateWallet
                 = "UPDATE Wallet SET balance = balance - ? WHERE customer_id = ? AND balance >= ?";
@@ -126,6 +131,30 @@ public class BookingDAO {
                     throw new Exception("Inserting booking failed, no ID obtained.");
                 }
             }
+            ps.close();
+
+            // 3.1. Lấy giá service từ DB và lưu vào BookingService
+            long servicePrice = 0;
+
+            ps = conn.prepareStatement(sqlGetServicePrice);
+            ps.setInt(1, serviceId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                servicePrice = rs.getLong("price");
+            } else {
+                throw new Exception("Invalid or inactive service selected.");
+            }
+
+            rs.close();
+            ps.close();
+
+            ps = conn.prepareStatement(sqlInsertBookingService);
+            ps.setInt(1, 1); // quantity
+            ps.setLong(2, servicePrice);
+            ps.setInt(3, generatedBookingId);
+            ps.setInt(4, serviceId);
+            ps.executeUpdate();
             ps.close();
 
             // 3.1. Nếu khách có dùng promotion -> ghi nhận vào PromotionUsage
