@@ -18,9 +18,9 @@ public class PromotionDAO {
                 Promotion p = new Promotion();
                 p.setPromotionId(rs.getInt("promotion_id"));
                 p.setCode(rs.getString("code"));
-                p.setTitle(rs.getString("title"));             // MỚI
-                p.setDescription(rs.getString("description")); // MỚI
-                p.setImageUrl(rs.getString("image_url"));       // MỚI
+                p.setTitle(rs.getString("title"));             
+                p.setDescription(rs.getString("description")); 
+                p.setImageUrl(rs.getString("image_url"));       
                 p.setDiscountType(rs.getString("discount_type"));
                 p.setDiscountValue(rs.getLong("discount_value"));
                 p.setMinOrderAmount(rs.getLong("min_order_amount"));
@@ -289,4 +289,5 @@ public class PromotionDAO {
 
         return false;
     }
+}
 }
