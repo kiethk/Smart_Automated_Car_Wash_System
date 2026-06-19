@@ -311,9 +311,9 @@ INSERT INTO Promotion (
 
 -- FIX: Bỏ capacity_per_hour
 INSERT INTO Bay (bay_name, status) VALUES
-(N'Bay Tự Động 01', N'available'),
-(N'Bay Tự Động 02', N'available'),
-(N'Bay Tự Động 03', N'maintenance');
+(N'Automated Bay 01', N'available'),
+(N'Automated Bay 02', N'available'),
+(N'Automated Bay 03', N'maintenance');
 
 INSERT INTO Service (service_name, description, price, duration_minutes, is_active) VALUES
 (N'Express Wash (Sedan)',        N'High-pressure express wash, Triple foam conditioner, Heated air blow dry for Sedan',            50000,  5,  1),
