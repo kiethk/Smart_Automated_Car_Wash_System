@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.HashMap;
+import java.util.Map;
 import utils.DBUtils;
 
 /**
@@ -511,5 +513,43 @@ public class BookingDAO {
             }
         }
         return false;
+    }
+    
+    /**
+     * Lấy 1 lịch hẹn gần nhất đang sắp diễn ra của khách hàng (Pending hoặc Accepted)
+     * Kết hợp View VehicleDetail để lấy chuẩn xác thông tin xe tự nhập (Other)
+     */
+    public Map<String, Object> getUpcomingAppointmentByCustomerId(int customerId) {
+        Map<String, Object> appointment = null;
+        
+        // Truy vấn bốc lịch hẹn gần nhất, trạng thái chưa hủy/hoàn thành, ngày hẹn từ hôm nay trở đi
+        String sql = "SELECT TOP 1 b.booking_date, b.status, s.time_value, vd.plate_number, vd.brand_display, vd.model_display, bay.bay_name "
+                   + "FROM Booking b "
+                   + "JOIN Slot s ON b.slot_id = s.slot_id "
+                   + "JOIN VehicleDetail vd ON b.vehicle_id = vd.vehicle_id "
+                   + "LEFT JOIN Bay bay ON b.bay_id = bay.bay_id "
+                   + "WHERE b.customer_id = ? AND b.status IN (N'pending', N'accepted') AND b.booking_date >= CAST(GETDATE() AS DATE) "
+                   + "ORDER BY b.booking_date ASC, s.start_time ASC";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    appointment = new HashMap<>();
+                    appointment.put("bookingDate", rs.getDate("booking_date").toString());
+                    appointment.put("status", rs.getString("status"));
+                    appointment.put("timeValue", rs.getString("time_value"));
+                    appointment.put("plateNumber", rs.getString("plate_number"));
+                    appointment.put("brandDisplay", rs.getString("brand_display"));
+                    appointment.put("modelDisplay", rs.getString("model_display"));
+                    appointment.put("bayName", rs.getString("bay_name"));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error at getUpcomingAppointmentByCustomerId: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return appointment;
     }
 }
