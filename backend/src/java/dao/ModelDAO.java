@@ -15,9 +15,15 @@ public class ModelDAO {
     public List<Model> getModelsByBrandId(int brandId) {
         List<Model> list = new ArrayList<>();
         String sql = "SELECT model_id, model_name, brand_id FROM Model WHERE brand_id = ? ORDER BY model_name ASC";
+        
+        System.out.println("=== ModelDAO: Getting models for brandId=" + brandId);
+        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+            
             ps.setInt(1, brandId);
+            System.out.println("=== ModelDAO: Executing SQL with brandId=" + brandId);
+            
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Model model = new Model();
@@ -25,15 +31,24 @@ public class ModelDAO {
                     model.setModelName(rs.getString("model_name"));
                     model.setBrandId(rs.getInt("brand_id"));
                     list.add(model);
+                    System.out.println("=== ModelDAO: Loaded model: " + model.getModelName());
                 }
             }
+        } catch (ClassNotFoundException e) {
+            System.out.println("=== ModelDAO ERROR: Driver not found - " + e.getMessage());
+            e.printStackTrace();
+        } catch (SQLException e) {
+            System.out.println("=== ModelDAO ERROR: SQL Error - " + e.getMessage());
+            e.printStackTrace();
         } catch (Exception e) {
+            System.out.println("=== ModelDAO ERROR: " + e.getMessage());
             e.printStackTrace();
         }
+        
+        System.out.println("=== ModelDAO: Total models for brandId=" + brandId + " = " + list.size());
         return list;
     }
     
-    // Thêm model mới cho brand có sẵn
     public int addModel(String modelName, int brandId) {
         String sql = "INSERT INTO Model (model_name, brand_id) VALUES (?, ?)";
         
@@ -57,12 +72,12 @@ public class ModelDAO {
                 }
             }
         } catch (Exception e) {
+            System.out.println("addModel ERROR: " + e.getMessage());
             e.printStackTrace();
         }
         return -1;
     }
     
-    // Thêm cả brand mới và model mới (trả về model_id)
     public int addBrandAndModel(String brandName, String modelName) {
         Connection conn = null;
         PreparedStatement psCheck = null;
@@ -75,7 +90,6 @@ public class ModelDAO {
             conn.setAutoCommit(false);
             System.out.println("addBrandAndModel: Starting with brand=" + brandName + ", model=" + modelName);
             
-            // 1. Kiểm tra brand đã tồn tại chưa
             String checkSql = "SELECT brand_id FROM Brand WHERE brand_name = ?";
             psCheck = conn.prepareStatement(checkSql);
             psCheck.setString(1, brandName);
@@ -86,7 +100,6 @@ public class ModelDAO {
                 brandId = rs.getInt("brand_id");
                 System.out.println("addBrandAndModel: Found existing brand ID = " + brandId);
             } else {
-                // 2. Tạo brand mới
                 rs.close();
                 psCheck.close();
                 
@@ -108,12 +121,10 @@ public class ModelDAO {
                 }
             }
             
-            // Đóng ResultSet cũ
             if (rs != null) {
                 rs.close();
             }
             
-            // 3. Tạo model mới
             String modelSql = "INSERT INTO Model (model_name, brand_id) VALUES (?, ?)";
             psModel = conn.prepareStatement(modelSql, Statement.RETURN_GENERATED_KEYS);
             psModel.setString(1, modelName);
@@ -143,7 +154,6 @@ public class ModelDAO {
             try {
                 if (conn != null) {
                     conn.rollback();
-                    System.out.println("addBrandAndModel: Transaction rolled back");
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();

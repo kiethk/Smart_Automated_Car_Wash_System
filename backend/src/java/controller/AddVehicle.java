@@ -1,13 +1,17 @@
 package controller;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 
 import dao.CustomerDAO;
 import dao.VehicleDAO;
@@ -20,10 +24,14 @@ import dto.User;
 import dto.Vehicle;
 
 @WebServlet("/addVehicle")
+@MultipartConfig(
+    maxFileSize = 1024 * 1024 * 5,      // 5MB
+    maxRequestSize = 1024 * 1024 * 10,  // 10MB
+    fileSizeThreshold = 1024 * 1024
+)
 public class AddVehicle extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-
     private VehicleDAO vehicleDAO;
     private CustomerDAO customerDAO;
     private BrandDAO brandDAO;
@@ -47,20 +55,19 @@ public class AddVehicle extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/MainController?action=home");
             return;
         }
-        
+
         // Lấy danh sách brand
         List<Brand> brands = brandDAO.getAllBrands();
         request.setAttribute("brands", brands);
-        
-        // Load tất cả models theo từng brand và lưu vào request
+
+        // Load models cho từng brand
         if (brands != null) {
             for (Brand brand : brands) {
                 List<Model> models = modelDAO.getModelsByBrandId(brand.getBrandId());
                 request.setAttribute("models_" + brand.getBrandId(), models);
-                System.out.println("Loaded " + models.size() + " models for brand: " + brand.getBrandName());
             }
         }
-        
+
         request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
     }
 
@@ -76,18 +83,45 @@ public class AddVehicle extends HttpServlet {
             return;
         }
 
+        // Lấy tham số
         String plateNumber = request.getParameter("plateNumber");
         String brandSelect = request.getParameter("brandSelect");
         String modelSelect = request.getParameter("modelSelect");
         String vehicleType = request.getParameter("vehicleType");
         String color = request.getParameter("color");
         String manufactureYearStr = request.getParameter("manufactureYear");
-        
+        String brandIdStr = request.getParameter("brandId");
+        String modelIdStr = request.getParameter("modelId");
+        String newBrandName = request.getParameter("newBrandName");
+        String newModelName = request.getParameter("newModelName");
+
+        // Xử lý upload ảnh
+        String imageUrl = null;
+        Part filePart = request.getPart("vehicleImage");
+        if (filePart != null && filePart.getSize() > 0) {
+            String uploadPath = getServletContext().getRealPath("/") + "uploads" + File.separator;
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+            String fileName = "vehicle_" + plateNumber.trim().replaceAll("[-\\s]", "_") + "_" + System.currentTimeMillis() + ".jpg";
+            String filePath = uploadPath + fileName;
+            filePart.write(filePath);
+            imageUrl = request.getContextPath() + "/uploads/" + fileName;
+        }
+
+        // Nếu không có ảnh, dùng default
+        if (imageUrl == null) {
+            imageUrl = request.getContextPath() + "/assets/images/default-car.png";
+        }
+
+        // Khởi tạo vehicle và validation
         Vehicle vehicle = new Vehicle();
         vehicle.setPlateNumber(plateNumber);
         vehicle.setVehicleType(vehicleType);
         vehicle.setColor(color);
-        
+        vehicle.setVehicleImageUrl(imageUrl);
+
         int manufactureYear = 0;
         String errorMsg = null;
 
@@ -111,46 +145,33 @@ public class AddVehicle extends HttpServlet {
         }
 
         if (errorMsg != null) {
+            // Reload data và forward
+            reloadData(request);
             request.setAttribute("ERROR", errorMsg);
             request.setAttribute("vehicle", vehicle);
             request.setAttribute("manufactureYear", manufactureYearStr);
-            
-            // Reload brands và models
-            List<Brand> brands = brandDAO.getAllBrands();
-            request.setAttribute("brands", brands);
-            if (brands != null) {
-                for (Brand brand : brands) {
-                    List<Model> models = modelDAO.getModelsByBrandId(brand.getBrandId());
-                    request.setAttribute("models_" + brand.getBrandId(), models);
-                }
-            }
-            
             request.setAttribute("brandSelect", brandSelect);
             request.setAttribute("modelSelect", modelSelect);
             request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
             return;
         }
 
+        // Xử lý brand/model
         User currentUser = (User) session.getAttribute("USER");
         Customer customer = customerDAO.getCustomerByUserId(currentUser.getUserId());
-        
+
         Integer modelId = null;
         String customBrandName = null;
         String customModelName = null;
-        
+
         try {
             if ("existing".equals(brandSelect) && "existing".equals(modelSelect)) {
-                String modelIdStr = request.getParameter("modelId");
                 if (modelIdStr != null && !modelIdStr.trim().isEmpty()) {
                     modelId = Integer.parseInt(modelIdStr);
                 } else {
                     errorMsg = "Please select a model";
                 }
-            } 
-            else if ("new".equals(brandSelect) && "new".equals(modelSelect)) {
-                String newBrandName = request.getParameter("newBrandName");
-                String newModelName = request.getParameter("newModelName");
-                
+            } else if ("new".equals(brandSelect) && "new".equals(modelSelect)) {
                 if (newBrandName == null || newBrandName.trim().isEmpty()) {
                     errorMsg = "Please enter new brand name";
                 } else if (newModelName == null || newModelName.trim().isEmpty()) {
@@ -159,16 +180,11 @@ public class AddVehicle extends HttpServlet {
                     customBrandName = newBrandName.trim();
                     customModelName = newModelName.trim();
                     modelId = modelDAO.addBrandAndModel(customBrandName, customModelName);
-                    System.out.println("modelId from DAO: " + modelId);
                     if (modelId == -1) {
                         errorMsg = "Failed to create new brand/model";
                     }
                 }
-            } 
-            else if ("existing".equals(brandSelect) && "new".equals(modelSelect)) {
-                String brandIdStr = request.getParameter("brandId");
-                String newModelName = request.getParameter("newModelName");
-                
+            } else if ("existing".equals(brandSelect) && "new".equals(modelSelect)) {
                 if (brandIdStr == null || brandIdStr.trim().isEmpty()) {
                     errorMsg = "Please select a brand";
                 } else if (newModelName == null || newModelName.trim().isEmpty()) {
@@ -181,8 +197,7 @@ public class AddVehicle extends HttpServlet {
                         errorMsg = "Failed to create new model for selected brand";
                     }
                 }
-            } 
-            else {
+            } else {
                 errorMsg = "Invalid brand/model selection";
             }
         } catch (NumberFormatException e) {
@@ -194,26 +209,17 @@ public class AddVehicle extends HttpServlet {
         }
 
         if (errorMsg != null) {
+            reloadData(request);
             request.setAttribute("ERROR", errorMsg);
             request.setAttribute("vehicle", vehicle);
             request.setAttribute("manufactureYear", manufactureYearStr);
-            
-            // Reload brands và models
-            List<Brand> brands = brandDAO.getAllBrands();
-            request.setAttribute("brands", brands);
-            if (brands != null) {
-                for (Brand brand : brands) {
-                    List<Model> models = modelDAO.getModelsByBrandId(brand.getBrandId());
-                    request.setAttribute("models_" + brand.getBrandId(), models);
-                }
-            }
-            
             request.setAttribute("brandSelect", brandSelect);
             request.setAttribute("modelSelect", modelSelect);
             request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
             return;
         }
 
+        // Lưu vehicle
         vehicle.setPlateNumber(plateNumber.trim().toUpperCase());
         vehicle.setManufactureYear(manufactureYear);
         vehicle.setCustomerId(customer.getCustomerId());
@@ -225,19 +231,21 @@ public class AddVehicle extends HttpServlet {
             session.setAttribute("SUCCESS", "Vehicle added successfully!");
             response.sendRedirect(request.getContextPath() + "/MainController?action=profile");
         } else {
-            request.setAttribute("ERROR", "System error: Could not add vehicle.");
+            reloadData(request);
+            request.setAttribute("ERROR", "Database error, please try again");
             request.setAttribute("vehicle", vehicle);
-            
-            List<Brand> brands = brandDAO.getAllBrands();
-            request.setAttribute("brands", brands);
-            if (brands != null) {
-                for (Brand brand : brands) {
-                    List<Model> models = modelDAO.getModelsByBrandId(brand.getBrandId());
-                    request.setAttribute("models_" + brand.getBrandId(), models);
-                }
-            }
-            
             request.getRequestDispatcher("views/auth/vehicle/AddVehicle.jsp").forward(request, response);
+        }
+    }
+
+    private void reloadData(HttpServletRequest request) {
+        List<Brand> brands = brandDAO.getAllBrands();
+        request.setAttribute("brands", brands);
+        if (brands != null) {
+            for (Brand brand : brands) {
+                List<Model> models = modelDAO.getModelsByBrandId(brand.getBrandId());
+                request.setAttribute("models_" + brand.getBrandId(), models);
+            }
         }
     }
 }

@@ -26,10 +26,10 @@ public class VehicleDAO {
         }
     }
 
-    // INSERT thêm custom_brand_name, custom_model_name
+    // INSERT đã bao gồm vehicle_image_url, custom_brand_name, custom_model_name
     public boolean addVehicle(Vehicle vehicle) {
-        String sql = "INSERT INTO Vehicle (plate_number, model_id, vehicle_type, color, manufacture_year, customer_id, is_active, custom_brand_name, custom_model_name) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)";
+        String sql = "INSERT INTO Vehicle (plate_number, model_id, vehicle_type, color, manufacture_year, customer_id, is_active, custom_brand_name, custom_model_name, vehicle_image_url) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, vehicle.getPlateNumber());
@@ -38,8 +38,9 @@ public class VehicleDAO {
             ps.setString(4, vehicle.getColor());
             ps.setInt(5, vehicle.getManufactureYear());
             ps.setInt(6, vehicle.getCustomerId());
-            ps.setString(7, vehicle.getCustomBrandName()); // null nếu chọn từ danh sách
-            ps.setString(8, vehicle.getCustomModelName()); // null nếu chọn từ danh sách
+            ps.setString(7, vehicle.getCustomBrandName());
+            ps.setString(8, vehicle.getCustomModelName());
+            ps.setString(9, vehicle.getVehicleImageUrl());
             return ps.executeUpdate() > 0;
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
@@ -47,7 +48,7 @@ public class VehicleDAO {
         }
     }
 
-    // Dùng VIEW VehicleDetail thay vì JOIN thủ công để lấy brand_display, model_display
+    // Lấy danh sách xe của khách hàng (sử dụng VIEW VehicleDetail)
     public List<Vehicle> getVehiclesByCustomerId(int customerId) {
         List<Vehicle> vehicles = new ArrayList<>();
         String sql = "SELECT vehicle_id, plate_number, model_id, vehicle_type, color, "
@@ -88,10 +89,10 @@ public class VehicleDAO {
         return null;
     }
 
-    // UPDATE thêm custom_brand_name, custom_model_name
+    // UPDATE đã bao gồm vehicle_image_url
     public boolean updateVehicle(Vehicle vehicle) {
         String sql = "UPDATE Vehicle SET plate_number = ?, model_id = ?, vehicle_type = ?, "
-                   + "color = ?, manufacture_year = ?, custom_brand_name = ?, custom_model_name = ? "
+                   + "color = ?, manufacture_year = ?, custom_brand_name = ?, custom_model_name = ?, vehicle_image_url = ? "
                    + "WHERE vehicle_id = ? AND customer_id = ?";
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -102,8 +103,9 @@ public class VehicleDAO {
             ps.setInt(5, vehicle.getManufactureYear());
             ps.setString(6, vehicle.getCustomBrandName());
             ps.setString(7, vehicle.getCustomModelName());
-            ps.setInt(8, vehicle.getVehicleId());
-            ps.setInt(9, vehicle.getCustomerId());
+            ps.setString(8, vehicle.getVehicleImageUrl());
+            ps.setInt(9, vehicle.getVehicleId());
+            ps.setInt(10, vehicle.getCustomerId());
             return ps.executeUpdate() > 0;
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
@@ -141,7 +143,7 @@ public class VehicleDAO {
         }
     }
 
-    // Helper tránh lặp code map ResultSet -> Vehicle
+    // Helper map ResultSet -> Vehicle
     private Vehicle mapRow(ResultSet rs) throws SQLException {
         Vehicle v = new Vehicle();
         v.setVehicleId(rs.getInt("vehicle_id"));
