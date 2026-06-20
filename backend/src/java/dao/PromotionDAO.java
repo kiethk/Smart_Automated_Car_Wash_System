@@ -290,4 +290,3 @@ public class PromotionDAO {
         return false;
     }
 }
-
