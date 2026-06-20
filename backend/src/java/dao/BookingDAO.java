@@ -1,3 +1,4 @@
+
 package dao;
 
 import dto.Booking;
@@ -582,3 +583,4 @@ public class BookingDAO {
         return appointment;
     }
 }
+
