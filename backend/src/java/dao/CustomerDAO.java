@@ -45,6 +45,40 @@ public class CustomerDAO {
         }
         return null;
     }
+    
+    /**
+     * Lấy thông tin Customer trực tiếp bằng CustomerId phục vụ đồng bộ Dashboard
+     *
+     * @param customerId ID của Customer
+     * @return Customer object hoặc null nếu không tìm thấy
+     */
+    public Customer getCustomerById(int customerId) {
+        String sql = "SELECT * FROM Customer WHERE customer_id = ?";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Customer customer = new Customer();
+                    customer.setCustomerId(rs.getInt("customer_id"));
+                    customer.setAddress(rs.getString("address"));
+                    customer.setTotalPoints(rs.getInt("total_points"));
+                    customer.setTotalSpent(rs.getLong("total_spent"));
+                    customer.setTotalWashes(rs.getInt("total_washes"));
+                    customer.setJoinDate(rs.getDate("join_date"));
+                    customer.setDateOfBirth(rs.getDate("date_of_birth"));
+                    customer.setUserId(rs.getInt("user_id"));
+                    customer.setTierId(rs.getInt("tier_id"));
+                    customer.setLastReviewDate(rs.getDate("last_review_date"));
+                    return customer;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public int createNewCustomer(Customer c) {
 

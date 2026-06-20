@@ -9,6 +9,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import utils.DBUtils;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -53,4 +55,38 @@ public class TiersDAO {
         }
         return tiers;
     }
+
+    public List<Tiers> getAllTiers() {
+        List<Tiers> list = new ArrayList<>();
+
+        String sql = "SELECT tier_id, tier_name, min_washes, min_spent, point_multiplier, "
+                + "discount_percent, booking_window_days, description "
+                + "FROM Tiers "
+                + "ORDER BY tier_id ASC";
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Tiers tier = new Tiers(
+                        rs.getInt("tier_id"),
+                        rs.getString("tier_name"),
+                        rs.getInt("min_washes"),
+                        rs.getLong("min_spent"),
+                        rs.getDouble("point_multiplier"),
+                        rs.getDouble("discount_percent"),
+                        rs.getInt("booking_window_days"),
+                        rs.getString("description")
+                );
+
+                list.add(tier);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error at TiersDAO.getAllTiers(): " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }
+

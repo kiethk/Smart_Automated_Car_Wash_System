@@ -29,8 +29,6 @@ public class Login extends HttpServlet {
         CustomerDAO customerDAO = new CustomerDAO();
         WalletDAO walletDAO = new WalletDAO();
 
-
-
         try {
             String hashedInputPassword = utils.PasswordUtils.hashSHA256(password);
             User user = userDAO.getUserByEmailAndPassword(email, hashedInputPassword);
@@ -41,15 +39,22 @@ public class Login extends HttpServlet {
 
                 // QUAN TRỌNG: Lấy thông tin Customer và lưu vào Session
                 Customer customer = customerDAO.getCustomerByUserId(user.getUserId());
+
                 if (customer != null) {
                     session.setAttribute("CUSTOMER", customer);
+
+                    Wallet wallet = walletDAO.getWalletByCustomerId(customer.getCustomerId());
+                    session.setAttribute("WALLET", wallet);
+                } else {
+                    session.removeAttribute("CUSTOMER");
+                    session.removeAttribute("WALLET");
                 }
 
-                // Khi User login thành công
-                Wallet wallet = walletDAO.getWalletByCustomerId(customer.getCustomerId());
-                session.setAttribute("WALLET", wallet);
-
-                response.sendRedirect(request.getContextPath() + "/MainController?action=dashboard");
+                if (user.getRoleId() == 1) {
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/MainController?action=dashboard");
+                }
             } else {
                 request.setAttribute("ERROR_MSG", "Invalid email or password.");
                 request.getRequestDispatcher("views/auth/login.jsp").forward(request, response);

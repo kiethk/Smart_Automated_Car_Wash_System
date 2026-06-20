@@ -25,6 +25,8 @@ public class Profile extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
 
         // 1. Kiểm tra đăng nhập bảo mật chuẩn MVC2: Nếu chưa log-in, bắt quay về MainController để xử lý trang chủ/login
@@ -35,7 +37,7 @@ public class Profile extends HttpServlet {
 
         // Lấy dữ liệu thật từ Session đã lưu lúc Login thành công
         User loginedUser = (User) session.getAttribute("USER");
-        
+
         CustomerDAO cd = new CustomerDAO();
         TiersDAO td = new TiersDAO();
         WalletDAO wd = new WalletDAO();
@@ -47,9 +49,13 @@ public class Profile extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/MainController?action=home");
                 return;
             }
-            
+
             Tiers loginedTiers = td.getTierById(loginedCustomer.getTierId());
             Wallet loginedWallet = wd.getWalletByCustomerId(loginedCustomer.getCustomerId());
+
+            session.setAttribute("CUSTOMER", loginedCustomer);
+            session.setAttribute("WALLET", loginedWallet);
+
             List<Vehicle> vehicleList = vd.getVehiclesByCustomerId(loginedCustomer.getCustomerId());
 
             // ================= LOGIC TÍNH TOÁN TIẾN TRÌNH LÊN HẠNG KẾ TIẾP =================
@@ -68,14 +74,18 @@ public class Profile extends HttpServlet {
 
                 if (targetWashes > 0) {
                     washesPercent = (int) ((double) loginedCustomer.getTotalWashes() / targetWashes * 100);
-                    if (washesPercent > 100) washesPercent = 100;
+                    if (washesPercent > 100) {
+                        washesPercent = 100;
+                    }
                 } else {
                     washesPercent = 0;
                 }
 
                 if (targetSpent > 0) {
                     spentPercent = (int) ((double) loginedCustomer.getTotalSpent() / targetSpent * 100);
-                    if (spentPercent > 100) spentPercent = 100;
+                    if (spentPercent > 100) {
+                        spentPercent = 100;
+                    }
                 } else {
                     spentPercent = 0;
                 }
@@ -92,13 +102,14 @@ public class Profile extends HttpServlet {
             request.setAttribute("washesPercent", washesPercent);
             request.setAttribute("spentPercent", spentPercent);
 
-            
             request.getRequestDispatcher("views/auth/customer/profile.jsp").forward(request, response);
-            
+
         } catch (Exception e) {
             log("Error at ProfileController: " + e.getMessage());
-            request.setAttribute("ERROR_MSG", "System error while loading profile: " + e.getMessage());
-            request.getRequestDispatcher("views/error.jsp").forward(request, response);
+            if (!response.isCommitted()) {
+                request.setAttribute("ERROR_MSG", "System error while loading profile: " + e.getMessage());
+                request.getRequestDispatcher("views/error.jsp").forward(request, response);
+            }
         }
     }
 
@@ -108,3 +119,4 @@ public class Profile extends HttpServlet {
         doGet(request, response);
     }
 }
+

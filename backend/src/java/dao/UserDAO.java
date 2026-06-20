@@ -155,4 +155,27 @@ public class UserDAO {
         }
         return false;
     }
+
+    public boolean updateAdminProfile(int userId, String fullName, String phone, String avatarUrl) {
+        String sql = "UPDATE [User] "
+                + "SET full_name = ?, phone = ?, avatar_url = ? "
+                + "WHERE user_id = ? AND role_id = 1";
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setString(3, avatarUrl);
+            ps.setInt(4, userId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            System.out.println("Error at UserDAO.updateAdminProfile(): " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
 }
