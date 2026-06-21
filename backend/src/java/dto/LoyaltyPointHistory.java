@@ -45,4 +45,16 @@ public class LoyaltyPointHistory {
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public int getCustomerId() { return customerId; }
     public void setCustomerId(int customerId) { this.customerId = customerId; }
+
+@Override
+    public String toString() {
+        return "LoyaltyPointHistory{" +
+                "pointHistoryId=" + pointHistoryId +
+                ", pointsEarned=" + pointsEarned +
+                ", pointsUsed=" + pointsUsed +
+                ", transactionType='" + transactionType + '\'' +
+                ", description='" + description + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

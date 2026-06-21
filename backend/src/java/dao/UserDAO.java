@@ -98,6 +98,38 @@ public class UserDAO {
     }
 
     // ===================================================
+    // GET USER BY ID (THÊM MỚI)
+    // ===================================================
+    public User getUserById(int userId) {
+        String sql = "SELECT user_id, full_name, email, phone, password, is_active, created_at, role_id, avatar_url "
+                + "FROM [User] WHERE user_id = ? AND is_active = 1";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new User(
+                            rs.getInt("user_id"),
+                            rs.getString("full_name"),
+                            rs.getString("email"),
+                            rs.getString("phone"),
+                            rs.getString("password"),
+                            rs.getInt("is_active"),
+                            rs.getDate("created_at"),
+                            rs.getInt("role_id"),
+                            rs.getString("avatar_url")
+                    );
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // ===================================================
     // CÁC HÀM KHÁC (CREATE, UPDATE...) GIỮ NGUYÊN KHÔNG ĐỔI
     // ===================================================
     public int createNewUser(User u) {

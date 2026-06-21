@@ -143,6 +143,36 @@ public class VehicleDAO {
         }
     }
 
+    /**
+     * Xóa mềm vehicle (set is_active = 0)
+     */
+    public boolean softDeleteVehicle(int vehicleId) {
+        String sql = "UPDATE Vehicle SET is_active = 0 WHERE vehicle_id = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, vehicleId);
+            return ps.executeUpdate() > 0;
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Khôi phục vehicle (set is_active = 1)
+     */
+    public boolean restoreVehicle(int vehicleId) {
+        String sql = "UPDATE Vehicle SET is_active = 1 WHERE vehicle_id = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, vehicleId);
+            return ps.executeUpdate() > 0;
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // Helper map ResultSet -> Vehicle
     private Vehicle mapRow(ResultSet rs) throws SQLException {
         Vehicle v = new Vehicle();
