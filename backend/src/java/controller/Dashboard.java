@@ -82,15 +82,19 @@ public class Dashboard extends HttpServlet {
                     request.setAttribute("IS_MAX_TIER", true);
                 }
 
-                // SỬA LẠI: Lấy quảng cáo được lọc riêng theo đúng Hạng thành viên của khách hàng đó trong DB
+                // Lấy quảng cáo được lọc riêng theo đúng Hạng thành viên của khách hàng đó trong DB
                 List<Promotion> activePromos = promotionDAO.getAvailablePromotionsForCustomer(customer.getCustomerId(), customer.getTierId());
 
+                // ===================================================================================
+                // ĐÃ SỬA: Đổi tên thuộc tính từ "BANNER" thành "PROMOTIONS_LIST" để khớp với Component dùng chung
+                // ===================================================================================
                 if (activePromos != null && !activePromos.isEmpty()) {
-                    request.setAttribute("BANNER", activePromos.get(0)); // Lấy mã phù hợp nhất sắp hết hạn hiển thị lên trước
+                    request.setAttribute("PROMOTIONS_LIST", activePromos);
                     request.setAttribute("HAS_BANNER", true);
                 } else {
                     request.setAttribute("HAS_BANNER", false);
                 }
+                // ===================================================================================
 
                 // LỊCH HẸN SẮP TỚI ĐỘNG
                 Map<String, Object> upcomingAppointment = bookingDAO.getUpcomingAppointmentByCustomerId(customer.getCustomerId());
@@ -117,4 +121,3 @@ public class Dashboard extends HttpServlet {
         doGet(request, response);
     }
 }
-

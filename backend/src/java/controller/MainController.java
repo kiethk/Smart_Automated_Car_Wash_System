@@ -58,17 +58,24 @@ public class MainController extends HttpServlet {
                     // XỬ LÝ DỮ LIỆU ĐỘNG CHO TRANG CHỦ
                     // ========================================================
                     try {
-                    // 1. Khởi tạo lớp xử lý dữ liệu ServiceDAO của bạn
+                    // 1. Khởi tạo lớp xử lý dữ liệu ServiceDAO và nạp dịch vụ
                     ServiceDAO serviceDAO = new ServiceDAO();
-
-                    // 2. Gọi hàm lấy danh sách dịch vụ đang hoạt động
                     List<Service> servicesList = serviceDAO.getActiveServices();
-
-                    // 3. Đóng gói danh sách vào request dưới tên biến SERVICES_LIST
                     request.setAttribute("SERVICES_LIST", servicesList);
+
+                    // 2. MỚI: Nạp thêm danh sách chiến dịch ưu đãi đang hoạt động lên Trang chủ
+                    dao.PromotionDAO promotionDAO = new dao.PromotionDAO();
+                    List<dto.Promotion> activePromos = promotionDAO.getAllActivePromotions();
+
+                    if (activePromos != null && !activePromos.isEmpty()) {
+                        request.setAttribute("PROMOTIONS_LIST", activePromos);
+                        request.setAttribute("HAS_BANNER", true);
+                    } else {
+                        request.setAttribute("HAS_BANNER", false);
+                    }
                 } catch (Exception e) {
                     // Log lỗi cục bộ để nếu lỗi DB thì trang chủ vẫn không bị sập (vẫn hiển thị giao diện trống)
-                    System.out.println("Error loading services at MainController: " + e.getMessage());
+                    System.out.println("Error loading home page data at MainController: " + e.getMessage());
                 }
 
                 url = "index.jsp";
@@ -137,4 +144,3 @@ public class MainController extends HttpServlet {
         return "Main Controller handling routing and context initialization";
     }
 }
-
