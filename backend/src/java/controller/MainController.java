@@ -114,6 +114,10 @@ public class MainController extends HttpServlet {
                 case "bookingSubmit":
                     url = "bookingSubmit";
                     break;
+                    
+                case "loyaltyRewards":
+                    url = "loyalty-rewards";
+                    break;
 
                 default:
                     request.setAttribute("ERROR_MESSAGE", "Your action can not be handled now.");
