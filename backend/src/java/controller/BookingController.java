@@ -38,7 +38,7 @@ public class BookingController extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/MainController?action=home");
+            response.sendRedirect(request.getContextPath() + "/MainController?action=login");
             return;
         }
 
@@ -66,10 +66,22 @@ public class BookingController extends HttpServlet {
             session.setAttribute("CUSTOMER", loginedCustomer);
             session.setAttribute("WALLET", wallet);
 
+            LocalDate minBookingDate = LocalDate.now().plusDays(1);
+
             String selectedDate = request.getParameter("date");
 
             if (selectedDate == null || selectedDate.trim().isEmpty()) {
-                selectedDate = LocalDate.now().toString();
+                selectedDate = minBookingDate.toString();
+            } else {
+                try {
+                    LocalDate selectedLocalDate = LocalDate.parse(selectedDate);
+
+                    if (selectedLocalDate.isBefore(minBookingDate)) {
+                        selectedDate = minBookingDate.toString();
+                    }
+                } catch (Exception e) {
+                    selectedDate = minBookingDate.toString();
+                }
             }
 
             String selectedServiceId = request.getParameter("serviceId");
@@ -133,8 +145,33 @@ public class BookingController extends HttpServlet {
 
             // 1. Đọc các tham số cơ bản từ Form gửi lên
             String bookingDate = request.getParameter("bookingDate");
+
+            if (bookingDate == null || bookingDate.trim().isEmpty()) {
+                request.setAttribute("ERROR_MSG", "Please select a booking date.");
+                request.getRequestDispatcher("/views/error.jsp").forward(request, response);
+                return;
+            }
+
+            LocalDate minBookingDate = LocalDate.now().plusDays(1);
+            LocalDate selectedBookingDate;
+
+            try {
+                selectedBookingDate = LocalDate.parse(bookingDate);
+            } catch (Exception e) {
+                request.setAttribute("ERROR_MSG", "Invalid booking date format.");
+                request.getRequestDispatcher("/views/error.jsp").forward(request, response);
+                return;
+            }
+
+            if (selectedBookingDate.isBefore(minBookingDate)) {
+                request.setAttribute("ERROR_MSG", "Same-day booking is not allowed. Please book from tomorrow onward.");
+                request.getRequestDispatcher("/views/error.jsp").forward(request, response);
+                return;
+            }
+
             int slotId = Integer.parseInt(request.getParameter("slotId"));
             int vehicleId = Integer.parseInt(request.getParameter("vehicleId"));
+            int serviceId = Integer.parseInt(request.getParameter("serviceId"));
             String notes = request.getParameter("notes");
 
             // 2. Đọc các tham số tính toán tài chính & phương thức thanh toán
@@ -223,7 +260,7 @@ public class BookingController extends HttpServlet {
             }
 
             // 5. Gọi hàm xử lý Transaction nạp DB
-            boolean isSuccess = bd.insertBookingWithPayment(newBooking, paymentMethod, redeemPoints);
+            boolean isSuccess = bd.insertBookingWithPayment(newBooking, paymentMethod, redeemPoints, serviceId);
 
             if (isSuccess) {
                 Customer refreshedCustomer = cd.getCustomerByUserId(loginedUser.getUserId());

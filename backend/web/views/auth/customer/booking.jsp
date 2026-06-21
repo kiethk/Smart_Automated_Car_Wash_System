@@ -230,7 +230,21 @@
                     <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Calendar</label>
                     <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
                         <div class="flex justify-between items-center mb-3">
-                            <span id="calendarMonthYear" class="text-sm font-bold text-slate-800">Month Year</span>
+                            <button type="button"
+                                    onclick="changeCalendarMonth(-1)"
+                                    class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 transition-all">
+                                ←
+                            </button>
+
+                            <span id="calendarMonthYear" class="text-sm font-bold text-slate-800">
+                                Month Year
+                            </span>
+
+                            <button type="button"
+                                    onclick="changeCalendarMonth(1)"
+                                    class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 transition-all">
+                                →
+                            </button>
                         </div>
                         <%-- Khung lưới hiển thị các ô ngày đặt lịch --%>
                         <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold mb-1 text-slate-400">
@@ -526,7 +540,7 @@
     const userTierId = Number(<%= tierId%>) || 0;
     const bookingWindowDays = Number(<%= maxBookingDays%>) || 0;
     const preselectedServiceId = "<%= selectedServiceId != null ? selectedServiceId.trim() : ""%>";
-
+    let currentCalendarMonth = new Date(document.getElementById("bookingDate").value);
     // --- MẢNG DỮ LIỆU PROMOTION ---
     const promoDatabase = [
     <%
@@ -552,6 +566,25 @@
     let appliedPromotionDiscount = 0;
     let appliedPointsValue = 0;
     let finalPayCalculated = 0;
+
+    function changeCalendarMonth(offset) {
+        const nextMonth = new Date(currentCalendarMonth);
+        nextMonth.setMonth(nextMonth.getMonth() + offset);
+        nextMonth.setDate(1);
+        nextMonth.setHours(0, 0, 0, 0);
+
+        const currentMonthStart = new Date();
+        currentMonthStart.setDate(1);
+        currentMonthStart.setHours(0, 0, 0, 0);
+
+        // Không cho lùi về tháng trước tháng hiện tại
+        if (nextMonth < currentMonthStart) {
+            return;
+        }
+
+        currentCalendarMonth = nextMonth;
+        renderCustomCalendar();
+    }
 
     // --- FILTER SERVICE THEO LOẠI XE ĐƯỢC CHỌN ---
     function filterServicesByVehicleType(vehicleType, preferredServiceId = null) {
@@ -688,62 +721,80 @@
 
     // --- CALENDAR RENDER ---
     function renderCustomCalendar() {
-        const grid = document.getElementById('calendarDaysGrid');
-        const title = document.getElementById('calendarMonthYear');
-        if (!grid || !title)
+        const calendarDaysGrid = document.getElementById("calendarDaysGrid");
+        const calendarMonthYear = document.getElementById("calendarMonthYear");
+        const bookingDateInput = document.getElementById("bookingDate");
+
+        if (!calendarDaysGrid || !calendarMonthYear || !bookingDateInput) {
             return;
-
-        grid.innerHTML = '';
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth();
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"];
-        title.innerText = monthNames[currentMonth] + " " + currentYear;
-
-        const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-        const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        for (let i = 0; i < firstDayIndex; i++) {
-            grid.appendChild(document.createElement('div'));
         }
 
-        const selectedDateStr = document.getElementById('bookingDate').value;
-        for (let day = 1; day <= totalDaysInMonth; day++) {
-            const cellDate = new Date(currentYear, currentMonth, day);
-            const dateStr = cellDate.getFullYear() + '-'
-                    + String(cellDate.getMonth() + 1).padStart(2, '0') + '-'
-                    + String(cellDate.getDate()).padStart(2, '0');
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.innerText = day;
-            btn.className = "p-2 text-xs font-semibold font-mono rounded-lg transition-all flex items-center justify-center w-full";
+        calendarDaysGrid.innerHTML = "";
 
-            const diffTime = cellDate - new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-            if (diffDays >= 0 && diffDays < bookingWindowDays) {
-                if (dateStr === selectedDateStr) {
-                    btn.className += " bg-indigo-950 text-white font-bold";
-                } else {
-                    btn.className += " bg-white border border-slate-100 text-slate-800 hover:border-indigo-900";
-                }
-                btn.onclick = function () {
-                    document.getElementById('bookingDate').value = dateStr;
-                    document.querySelectorAll('#calendarDaysGrid button').forEach(b => {
-                        b.classList.remove('bg-indigo-950', 'text-white', 'font-bold');
-                        b.classList.add('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
-                    });
-                    this.classList.remove('bg-white', 'border', 'border-slate-100', 'text-slate-800', 'hover:border-indigo-900');
-                    this.classList.add('bg-indigo-950', 'text-white', 'font-bold');
-                    fetchAndRenderSlots(dateStr);
+        const year = currentCalendarMonth.getFullYear();
+        const month = currentCalendarMonth.getMonth();
+
+        calendarMonthYear.innerText = currentCalendarMonth.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric"
+        });
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+
+        const startDay = firstDayOfMonth.getDay();
+        const totalDays = lastDayOfMonth.getDate();
+
+        for (let i = 0; i < startDay; i++) {
+            const emptyCell = document.createElement("div");
+            calendarDaysGrid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const dateObj = new Date(year, month, day);
+            dateObj.setHours(0, 0, 0, 0);
+
+            const diffDays = Math.floor((dateObj - today) / (1000 * 60 * 60 * 24));
+            const dateStr = formatDateToYYYYMMDD(dateObj);
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.innerText = day;
+
+            const selectedDate = bookingDateInput.value;
+            const isSelected = selectedDate === dateStr;
+
+            if (diffDays >= 1 && diffDays <= bookingWindowDays) {
+                button.className = isSelected
+                        ? "h-9 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm"
+                        : "h-9 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all";
+
+                button.onclick = function () {
+                    bookingDateInput.value = dateStr;
+                    renderCustomCalendar();
+
+                    if (typeof fetchAndRenderSlots === "function") {
+                        fetchAndRenderSlots(dateStr);
+                    }
                 };
             } else {
-                btn.className += " bg-slate-100 text-slate-300 cursor-not-allowed opacity-40";
-                btn.disabled = true;
+                button.className = "h-9 rounded-lg text-xs font-bold bg-slate-100 text-slate-300 cursor-not-allowed";
+                button.disabled = true;
             }
-            grid.appendChild(btn);
+
+            calendarDaysGrid.appendChild(button);
         }
+    }
+
+    function formatDateToYYYYMMDD(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return year + "-" + month + "-" + day;
     }
 
     // --- LOGIC TÍNH TIỀN CHÍNH (ORDER SUMMARY) ---
@@ -811,9 +862,9 @@
             if (finalPayCalculated > userWalletBalance) {
                 if (warningEl) {
                     warningEl.classList.remove('hidden');
-                    warningEl.innerText = 'Ví của bạn không đủ số dư! Thiếu: '
+                    warningEl.innerText = 'Insufficient wallet balance! Missing: '
                             + (finalPayCalculated - userWalletBalance).toLocaleString('vi-VN')
-                            + ' VND. Vui lòng nạp thêm tiền hoặc chọn hình thức thanh toán khác.';
+                            + ' VND. Please top up your wallet or choose another payment method.';
                 }
                 if (confirmBtn)
                     confirmBtn.disabled = true;
@@ -859,7 +910,9 @@
 
         // Kiểm tra điều kiện đơn hàng tối thiểu
         if (currentPackagePrice < minOrder) {
-            alert("Đơn hàng chưa đạt giá trị tối thiểu " + minOrder.toLocaleString('vi-VN') + " VND để áp dụng mã này!");
+            alert("Minimum order value required: "
+                    + minOrder.toLocaleString('vi-VN')
+                    + " VND. This promotion cannot be applied.");
             selectEl.value = "";
             appliedPromotionDiscount = 0;
             document.getElementById('promotionIdInput').value = "";

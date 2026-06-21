@@ -1,6 +1,6 @@
+
 package dao;
 
-import controller.BookingHistory;
 import dto.Booking;
 import dto.BookingHistoryDTO;
 import java.sql.Connection;
@@ -9,7 +9,9 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import utils.DBUtils;
 
 /**
@@ -20,7 +22,7 @@ public class BookingDAO {
     // =========================================================================
     // THỜI ĐIỂM 1: TRANSACTION TẠO BOOKING, PAYMENT & CỘNG ĐIỂM LIỀN NẾU TRẢ VÍ
     // =========================================================================
-    public boolean insertBookingWithPayment(Booking booking, String paymentMethod, int redeemPoints) {
+    public boolean insertBookingWithPayment(Booking booking, String paymentMethod, int redeemPoints, int serviceId) {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -31,6 +33,11 @@ public class BookingDAO {
 
         String sqlPayment = "INSERT INTO Payment (payment_method, payment_status, amount, paid_at, transaction_id, booking_id) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
+
+        String sqlGetServicePrice = "SELECT price FROM Service WHERE service_id = ? AND is_active = 1";
+
+        String sqlInsertBookingService = "INSERT INTO BookingService (quantity, price, booking_id, service_id) "
+                + "VALUES (?, ?, ?, ?)";
 
         String sqlUpdateWallet
                 = "UPDATE Wallet SET balance = balance - ? WHERE customer_id = ? AND balance >= ?";
@@ -130,6 +137,30 @@ public class BookingDAO {
                     throw new Exception("Inserting booking failed, no ID obtained.");
                 }
             }
+            ps.close();
+
+            // 3.1. Lấy giá service từ DB và lưu vào BookingService
+            long servicePrice = 0;
+
+            ps = conn.prepareStatement(sqlGetServicePrice);
+            ps.setInt(1, serviceId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                servicePrice = rs.getLong("price");
+            } else {
+                throw new Exception("Invalid or inactive service selected.");
+            }
+
+            rs.close();
+            ps.close();
+
+            ps = conn.prepareStatement(sqlInsertBookingService);
+            ps.setInt(1, 1); // quantity
+            ps.setLong(2, servicePrice);
+            ps.setInt(3, generatedBookingId);
+            ps.setInt(4, serviceId);
+            ps.executeUpdate();
             ps.close();
 
             // 3.1. Nếu khách có dùng promotion -> ghi nhận vào PromotionUsage
@@ -516,7 +547,45 @@ public class BookingDAO {
         }
         return false;
     }
-// =========================================================================
+    
+    /**
+     * Lấy 1 lịch hẹn gần nhất đang sắp diễn ra của khách hàng (Pending hoặc Accepted)
+     * Kết hợp View VehicleDetail để lấy chuẩn xác thông tin xe tự nhập (Other)
+     */
+    public Map<String, Object> getUpcomingAppointmentByCustomerId(int customerId) {
+        Map<String, Object> appointment = null;
+        
+        // Truy vấn bốc lịch hẹn gần nhất, trạng thái chưa hủy/hoàn thành, ngày hẹn từ hôm nay trở đi
+        String sql = "SELECT TOP 1 b.booking_date, b.status, s.time_value, vd.plate_number, vd.brand_display, vd.model_display, bay.bay_name "
+                   + "FROM Booking b "
+                   + "JOIN Slot s ON b.slot_id = s.slot_id "
+                   + "JOIN VehicleDetail vd ON b.vehicle_id = vd.vehicle_id "
+                   + "LEFT JOIN Bay bay ON b.bay_id = bay.bay_id "
+                   + "WHERE b.customer_id = ? AND b.status IN (N'pending', N'accepted') AND b.booking_date >= CAST(GETDATE() AS DATE) "
+                   + "ORDER BY b.booking_date ASC, s.start_time ASC";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    appointment = new HashMap<>();
+                    appointment.put("bookingDate", rs.getDate("booking_date").toString());
+                    appointment.put("status", rs.getString("status"));
+                    appointment.put("timeValue", rs.getString("time_value"));
+                    appointment.put("plateNumber", rs.getString("plate_number"));
+                    appointment.put("brandDisplay", rs.getString("brand_display"));
+                    appointment.put("modelDisplay", rs.getString("model_display"));
+                    appointment.put("bayName", rs.getString("bay_name"));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error at getUpcomingAppointmentByCustomerId: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return appointment;
+    }
+    // =========================================================================
 // LẤY LỊCH SỬ BOOKING THEO CUSTOMER ID (CÓ LỌC STATUS)
 // Trả về List<BookingHistoryDTO> thay vì List<Booking>,
 // vì kết quả này JOIN nhiều bảng, không còn map 1-1 với bảng Booking nữa.
@@ -611,3 +680,4 @@ public boolean cancelBooking(int bookingId, int customerId) {
     }
 }
 }
+

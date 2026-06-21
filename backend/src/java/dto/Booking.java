@@ -1,3 +1,4 @@
+   
 package dto;
 
 import java.sql.Date;
@@ -19,9 +20,7 @@ private int bookingId;
 
     private Integer bayId;
     private Integer promotionId;
-    
 
-    
     public Booking() {
     }
 
@@ -40,9 +39,6 @@ private int bookingId;
         this.bayId = bayId;
         this.promotionId = promotionId;
     }
-    
-
-    
 
     public int getBookingId() {
         return bookingId;
@@ -147,6 +143,4 @@ private int bookingId;
     public void setPromotionId(Integer promotionId) {
         this.promotionId = promotionId;
     }
-    
-    
 }
