@@ -82,14 +82,13 @@ public class Dashboard extends HttpServlet {
                     request.setAttribute("IS_MAX_TIER", true);
                 }
 
-                // Lấy quảng cáo được lọc riêng theo đúng Hạng thành viên của khách hàng đó trong DB
-                List<Promotion> activePromos = promotionDAO.getAvailablePromotionsForCustomer(customer.getCustomerId(), customer.getTierId());
+                // ===================================================================================
+                // ĐÃ SỬA: Bỏ hàm lọc theo Tier, chuyển sang lấy TẤT CẢ ưu đãi đang hoạt động giống trang index
+                // ===================================================================================
+                List<Promotion> activePromos = promotionDAO.getAllActivePromotions();
 
-                // ===================================================================================
-                // ĐÃ SỬA: Đổi tên thuộc tính từ "BANNER" thành "PROMOTIONS_LIST" để khớp với Component dùng chung
-                // ===================================================================================
                 if (activePromos != null && !activePromos.isEmpty()) {
-                    request.setAttribute("PROMOTIONS_LIST", activePromos);
+                    request.setAttribute("PROMOTIONS_LIST", activePromos); 
                     request.setAttribute("HAS_BANNER", true);
                 } else {
                     request.setAttribute("HAS_BANNER", false);
