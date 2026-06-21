@@ -55,14 +55,18 @@ public class LoyaltyRewardsServlet extends HttpServlet {
                 return;
             }
 
-            // Lấy fullName từ User
+            // ===== FIX: Lấy fullName từ User và gán vào customer =====
             User user = userDAO.getUserById(loginedUser.getUserId());
             if (user != null) {
-                request.setAttribute("fullName", user.getFullName());
+                customer.setFullName(user.getFullName());
             }
 
             // Lấy Tier hiện tại
             Tiers currentTier = tiersDAO.getTierById(customer.getTierId());
+            if (currentTier != null) {
+                customer.setTierName(currentTier.getTierName());
+                customer.setPointMultiplier(currentTier.getPointMultiplier());
+            }
 
             // Lấy tất cả Tiers
             List<Tiers> allTiers = tiersDAO.getAllTiers();
