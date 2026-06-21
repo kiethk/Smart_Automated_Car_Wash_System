@@ -7,31 +7,18 @@
 
     <c:choose>
         <c:when test="${requestScope.HAS_BANNER}">
-            <c:set var="bgImage" value="${not empty requestScope.BANNER.imageUrl ? requestScope.BANNER.imageUrl : '/assets/images/car-background.jpg'}" />
-            
-            <div class="relative overflow-hidden rounded-2xl p-6 md:p-8 shadow-md text-left text-white bg-cover bg-center w-full min-h-[250px] flex flex-col justify-center transition-all duration-300"
-                 style="background-image: linear-gradient(to right, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.4)), url('${pageContext.request.contextPath}${bgImage}');">
-                
-                <div class="relative z-10 space-y-2 max-w-2xl">
-                    <h2 class="text-xl md:text-2xl font-bold tracking-tight text-white leading-tight">
-                        ${requestScope.BANNER.title}
-                    </h2>
-                    
-                    <p class="text-slate-200 text-sm md:text-base font-medium opacity-95 max-w-xl">
-                        ${requestScope.BANNER.description}
-                    </p>
-                    
-                    <div class="pt-3">
-                        <a href="${pageContext.request.contextPath}/booking?code=${requestScope.BANNER.code}" 
-                           class="inline-block bg-gradient-to-r from-blue-950 via-blue-900 to-blue-600 hover:from-blue-900 hover:to-blue-500 text-white text-xs font-bold px-6 py-2.5 rounded-xl transition duration-200 shadow-sm">
-                            Book Now
-                        </a>
-                    </div>
+            <div class="text-left w-full animate-fade-in">
+                <div class="flex items-center gap-2.5 pl-1 mb-7">
+                    <div class="w-1 h-4 bg-gradient-to-b from-blue-950 to-blue-600 rounded-full"></div>
+                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider">
+                        Available Special Offers
+                    </h3>
                 </div>
+                <jsp:include page="/components/promotions-carousel.jsp" />
             </div>
         </c:when>
         <c:otherwise>
-            <div class="relative overflow-hidden rounded-2xl p-6 md:p-8 shadow-md text-left text-white bg-gradient-to-r from-blue-950 to-slate-900 w-full min-h-[160px] flex flex-col justify-center">
+            <div class="relative overflow-hidden rounded-2xl p-6 md:p-8 shadow-md text-left text-white bg-gradient-to-r from-blue-950 to-slate-900 w-full min-h-[160px] flex flex-col justify-center mb-4">
                 <div class="relative z-10 space-y-1">
                     <h2 class="text-xl md:text-2xl font-bold tracking-tight text-white">Welcome back to AutoWash Pro Ecosystem!</h2>
                     <p class="text-slate-300 text-sm">Experience frictionless, high-trust automated automotive care with absolute precision.</p>
@@ -98,20 +85,10 @@
                 </div>
             </div>
 
-            <a href="${pageContext.request.contextPath}/booking" 
-               class="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 hover:border-indigo-400 bg-white hover:bg-indigo-50/30 text-indigo-950 p-8 rounded-2xl transition group shadow-sm focus:outline-none">
-                <div class="bg-indigo-50 text-indigo-600 p-4 rounded-full mb-3 transition group-hover:scale-110 group-hover:bg-indigo-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
-                    </svg>
-                </div>
-                <span class="text-base font-bold tracking-tight">Book a New Wash Slot</span>
-            </a>
-
         </div>
 
         <div class="w-full">
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between min-h-[480px]">
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between min-h-[300px]">
                 <div>
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-slate-900 tracking-tight">Upcoming Appointment</h3>
@@ -133,6 +110,7 @@
 
                     <div class="space-y-5">
                         <c:choose>
+                            <%-- TRƯỜNG HỢP 1: CÓ LỊCH HẸN THẬT SỰ ➡️ HIỂN THỊ CHI TIẾT (ĐÃ XÓA 2 NÚT BẤM DƯỚI ĐÁY CỦA BẠN) --%>
                             <c:when test="${requestScope.HAS_APPOINTMENT}">
                                 <div class="flex items-start gap-3.5">
                                     <div class="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl border border-indigo-100 mt-0.5">
@@ -176,25 +154,25 @@
                                     </div>
                                 </div>
                             </c:when>
+
+                            <%-- TRƯỜNG HỢP 2: KHÔNG CÓ LỊCH HẸN NÀO ➡️ HIỂN THỊ THÔNG BÁO VÀ NÚT ĐẶT LỊCH GỌN GÀNG --%>
                             <c:otherwise>
-                                <div class="text-center py-12 text-slate-400">
-                                    <p class="text-sm font-medium">You don't have any upcoming appointments.</p>
-                                    <p class="text-xs mt-1">Book a slot now to experience our smart care ecosystem!</p>
+                                <div class="text-center py-10 flex flex-col items-center justify-center space-y-3 animate-fade-in">
+                                    <span class="text-3xl">📭</span>
+                                    <p class="text-sm font-bold text-slate-700">No Slot Booked</p>
+                                    <p class="text-xs text-slate-400 max-w-[220px] leading-relaxed mx-auto">
+                                        You don't have any upcoming appointments. Book a slot now to experience our care ecosystem!
+                                    </p>
+                                    <div class="pt-4 w-full">
+                                        <a href="${pageContext.request.contextPath}/booking" 
+                                           class="inline-block bg-gradient-to-r from-blue-950 via-blue-900 to-blue-600 hover:from-blue-900 hover:to-blue-500 text-white text-xs font-bold py-2.5 px-6 rounded-xl transition text-center shadow-sm w-full">
+                                            Book A Slot Now
+                                        </a>
+                                    </div>
                                 </div>
                             </c:otherwise>
                         </c:choose>
                     </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 pt-8 mt-6 border-t border-slate-100">
-                    <a href="${pageContext.request.contextPath}/MainController?action=reschedule" 
-                       class="border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold py-2.5 rounded-xl text-center transition ${!requestScope.HAS_APPOINTMENT ? 'pointer-events-none opacity-50' : ''}">
-                        Reschedule
-                    </a>
-                    <a href="${pageContext.request.contextPath}/MainController?action=viewAppointment" 
-                       class="bg-indigo-950 hover:bg-indigo-900 text-white text-xs font-bold py-2.5 rounded-xl text-center transition shadow-sm ${!requestScope.HAS_APPOINTMENT ? 'pointer-events-none opacity-50' : ''}">
-                        View Details
-                    </a>
                 </div>
             </div>
         </div>
