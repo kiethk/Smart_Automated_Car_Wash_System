@@ -66,7 +66,7 @@
                         Booking History
                     </a>
 
-                    <a href="${pageContext.request.contextPath}/MainController?action=loyaltyPoint"
+                    <a href="${pageContext.request.contextPath}/MainController?action=loyaltyRewards"
                        class="relative text-sm font-semibold transition-all duration-200 after:content-[''] after:absolute after:left-0 after:-bottom-1.5 after:h-0.5 after:bg-primary after:rounded-full after:transition-all after:duration-200 <%= loyaltyPointClass%>">
                         Loyalty Point
                     </a>

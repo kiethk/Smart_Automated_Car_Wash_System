@@ -115,6 +115,10 @@ public class MainController extends HttpServlet {
                     url = "bookingSubmit";
                     break;
                     
+                case "bookingHistory":
+                    url = "BookingHistory";
+                    break;
+                    
                 case "loyaltyRewards":
                     url = "loyalty-rewards";
                     break;
