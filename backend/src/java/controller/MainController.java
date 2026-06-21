@@ -16,10 +16,10 @@ public class MainController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        request.setCharacterEncoding("UTF-8");
+        request.setCharacterEncoding("UTF-8"); // Đảm bảo không lỗi font tiếng Việt khi submit form
 
         try {
-            String url = "views/error.jsp";
+            String url = "views/error.jsp"; // File báo lỗi hệ thống chung
             String ac = request.getParameter("action");
 
             if (ac == null || ac.isEmpty()) {
@@ -41,8 +41,7 @@ public class MainController extends HttpServlet {
                         || "bookingSubmit".equals(ac)
                         || "profile".equals(ac)
                         || "addVehicle".equals(ac)
-                        || "updateVehicle".equals(ac)
-                        || "loyaltyPoint".equals(ac)) {  // <-- THÊM loyaltyPoint VÀO ĐÂY
+                        || "updateVehicle".equals(ac)) {
 
                     if ("profile".equals(ac)) {
                         response.sendRedirect(request.getContextPath() + "/admin/profile");
@@ -55,15 +54,32 @@ public class MainController extends HttpServlet {
 
             switch (ac) {
                 case "home":
+                    // ========================================================
+                    // XỬ LÝ DỮ LIỆU ĐỘNG CHO TRANG CHỦ
+                    // ========================================================
                     try {
-                        ServiceDAO serviceDAO = new ServiceDAO();
-                        List<Service> servicesList = serviceDAO.getActiveServices();
-                        request.setAttribute("SERVICES_LIST", servicesList);
-                    } catch (Exception e) {
-                        System.out.println("Error loading services at MainController: " + e.getMessage());
+                    // 1. Khởi tạo lớp xử lý dữ liệu ServiceDAO và nạp dịch vụ
+                    ServiceDAO serviceDAO = new ServiceDAO();
+                    List<Service> servicesList = serviceDAO.getActiveServices();
+                    request.setAttribute("SERVICES_LIST", servicesList);
+
+                    // 2. MỚI: Nạp thêm danh sách chiến dịch ưu đãi đang hoạt động lên Trang chủ
+                    dao.PromotionDAO promotionDAO = new dao.PromotionDAO();
+                    List<dto.Promotion> activePromos = promotionDAO.getAllActivePromotions();
+
+                    if (activePromos != null && !activePromos.isEmpty()) {
+                        request.setAttribute("PROMOTIONS_LIST", activePromos);
+                        request.setAttribute("HAS_BANNER", true);
+                    } else {
+                        request.setAttribute("HAS_BANNER", false);
                     }
-                    url = "index.jsp";
-                    break;
+                } catch (Exception e) {
+                    // Log lỗi cục bộ để nếu lỗi DB thì trang chủ vẫn không bị sập (vẫn hiển thị giao diện trống)
+                    System.out.println("Error loading home page data at MainController: " + e.getMessage());
+                }
+
+                url = "index.jsp";
+                break;
 
                 case "login":
                     url = "login";
@@ -84,6 +100,9 @@ public class MainController extends HttpServlet {
                     url = "updateVehicle";
                     break;
 
+                // ========================================================
+                // 2. CÁC ROUTE MỚI CHO WORKSHOP 2 (Nhiệm vụ JIRA-01 của bạn)
+                // ========================================================
                 case "dashboard":
                     url = "dashboard";
                     break;
@@ -95,14 +114,6 @@ public class MainController extends HttpServlet {
                 case "bookingSubmit":
                     url = "bookingSubmit";
                     break;
-
-                // ========================================================
-                // THÊM CASE LOYALTYPOINT
-                // ========================================================
-                case "loyaltyPoint":
-                    // Chuyển hướng đến LoyaltyRewardsServlet
-                    response.sendRedirect(request.getContextPath() + "/loyalty-rewards");
-                    return;  // Không forward, dùng redirect
 
                 default:
                     request.setAttribute("ERROR_MESSAGE", "Your action can not be handled now.");

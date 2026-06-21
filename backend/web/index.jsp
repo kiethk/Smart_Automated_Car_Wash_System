@@ -64,10 +64,20 @@
     </div>
 </main>
 
-<!-- ==================== SERVICES CATALOGUE SECTION (DYNAMIC WORD SPLIT) ==================== -->
-<section id="services-catalogue" class="w-full border-t border-surface-border pt-7 pb-20 bg-white flex justify-center">
+<section id="services-catalogue" class="w-full border-t border-surface-border pt-8 pb-20 bg-white flex justify-center">
     <div class="w-full max-w-[1280px] mx-auto px-4 md:px-16 text-center">
 
+        <c:if test="${requestScope.HAS_BANNER}">
+            <div class="text-left w-full animate-fade-in mb-8">
+                <div class="flex items-center gap-2.5 pl-1 mb-8">
+                    <div class="w-1 h-4 bg-gradient-to-b from-blue-950 to-blue-600 rounded-full"></div>
+                    <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider">
+                        Special Active Offers
+                    </h3>
+                </div>
+                <jsp:include page="/components/promotions-carousel.jsp" />
+            </div>
+        </c:if>
         <div class="flex flex-col items-center mb-10">
             <h2 class="text-3xl md:text-4xl font-bold text-on-background mb-8">Select Your Service Level</h2>
             <div class="flex items-center p-1 bg-slate-100 rounded-full border border-surface-border">
@@ -82,7 +92,6 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24 text-left items-stretch">
 
-            <!-- ==================== SEDAN SERVICES ==================== -->
             <c:forEach var="service" items="${SERVICES_LIST}">
                 <c:if test="${fn:containsIgnoreCase(service.serviceName, 'Sedan')}">
 
@@ -251,7 +260,6 @@
             </c:forEach>
 
 
-            <!-- ==================== SUV / TRUCK SERVICES ==================== -->
             <c:forEach var="service" items="${SERVICES_LIST}">
                 <c:if test="${fn:containsIgnoreCase(service.serviceName, 'SUV') || fn:containsIgnoreCase(service.serviceName, 'Truck')}">
 
@@ -259,7 +267,7 @@
 
                     <div class="service-card suv-card hidden flex-col relative bg-[var(--surface-card)] mt-8 p-8
                          ${fn:containsIgnoreCase(service.serviceName, 'Deluxe') 
-                           ? 'border-2 border-primary transform md:-translate-y-4 shadow-lg' 
+                          ? 'border-2 border-primary transform md:-translate-y-4 shadow-lg' 
                            : 'border border-surface-border shadow-sm'}">
 
                         <c:if test="${fn:containsIgnoreCase(service.serviceName, 'Deluxe')}">
@@ -307,43 +315,36 @@
                                 <c:set var="featureLower" value="${fn:toLowerCase(featureText)}" />
 
                                 <c:choose>
-                                    <%-- Dòng kiểu: Express wash features, Deluxe wash features --%>
                                     <c:when test="${fn:contains(featureLower, 'features')}">
                                         <c:set var="featureIcon" value="layers" />
                                     </c:when>
 
-                                    <%-- Rửa áp lực, express wash, heavy-duty --%>
                                     <c:when test="${fn:contains(featureLower, 'heavy-duty') 
                                                     || fn:contains(featureLower, 'pressure') 
                                                     || fn:contains(featureLower, 'express wash')}">
                                         <c:set var="featureIcon" value="droplets" />
                                     </c:when>
 
-                                    <%-- Bọt tuyết / conditioner --%>
                                     <c:when test="${fn:contains(featureLower, 'foam') 
                                                     || fn:contains(featureLower, 'conditioner')}">
                                         <c:set var="featureIcon" value="cloud-rain" />
                                     </c:when>
 
-                                    <%-- Sấy khô --%>
                                     <c:when test="${fn:contains(featureLower, 'dry') 
                                                     || fn:contains(featureLower, 'blow')}">
                                         <c:set var="featureIcon" value="wind" />
                                     </c:when>
 
-                                    <%-- Gầm xe / xịt rửa gầm --%>
                                     <c:when test="${fn:contains(featureLower, 'underbody') 
                                                     || fn:contains(featureLower, 'rinse')}">
                                         <c:set var="featureIcon" value="waves" />
                                     </c:when>
 
-                                    <%-- Xe cao, khung gầm SUV/Truck --%>
                                     <c:when test="${fn:contains(featureLower, 'clearance') 
                                                     || fn:contains(featureLower, 'frame')}">
                                         <c:set var="featureIcon" value="truck" />
                                     </c:when>
 
-                                    <%-- Mâm, bánh xe, wheel hub, rim --%>
                                     <c:when test="${fn:contains(featureLower, 'rim') 
                                                     || fn:contains(featureLower, 'wheel') 
                                                     || fn:contains(featureLower, 'de-ironing') 
@@ -351,14 +352,12 @@
                                         <c:set var="featureIcon" value="disc" />
                                     </c:when>
 
-                                    <%-- Lốp, làm bóng lốp --%>
                                     <c:when test="${fn:contains(featureLower, 'tire') 
                                                     || fn:contains(featureLower, 'shine') 
                                                     || fn:contains(featureLower, 'dressing')}">
                                         <c:set var="featureIcon" value="sparkles" />
                                     </c:when>
 
-                                    <%-- Wax, ceramic, sơn, lớp bảo vệ --%>
                                     <c:when test="${fn:contains(featureLower, 'wax') 
                                                     || fn:contains(featureLower, 'ceramic') 
                                                     || fn:contains(featureLower, 'protective') 
@@ -366,21 +365,18 @@
                                         <c:set var="featureIcon" value="gem" />
                                     </c:when>
 
-                                    <%-- Hydro shield, surface coat --%>
                                     <c:when test="${fn:contains(featureLower, 'hydro') 
                                                     || fn:contains(featureLower, 'shield') 
                                                     || fn:contains(featureLower, 'surface coat')}">
                                         <c:set var="featureIcon" value="shield" />
                                     </c:when>
 
-                                    <%-- Cabin, khử mùi, làm thơm nội thất --%>
                                     <c:when test="${fn:contains(featureLower, 'cabin') 
                                                     || fn:contains(featureLower, 'freshener') 
                                                     || fn:contains(featureLower, 'deodorization')}">
                                         <c:set var="featureIcon" value="smile" />
                                     </c:when>
 
-                                    <%-- Mặc định --%>
                                     <c:otherwise>
                                         <c:set var="featureIcon" value="check-circle" />
                                     </c:otherwise>
@@ -420,8 +416,6 @@
             </c:forEach>
 
         </div>
-
-        <!-- Sơ đồ quy trình 5 bước Robotic Flow giữ nguyên bên dưới... -->
 
         <div class="bg-slate-50 border border-surface-border rounded-2xl p-8 md:p-12">
             <div class="text-center mb-12">
