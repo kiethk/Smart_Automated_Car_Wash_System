@@ -267,6 +267,7 @@ public class BookingDAO {
             ps.executeUpdate();
             ps.close();
 
+//            COMMIT TRANSACTION
             conn.commit();
             return true;
 

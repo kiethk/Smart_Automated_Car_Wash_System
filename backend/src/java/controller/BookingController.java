@@ -271,8 +271,8 @@ public class BookingController extends HttpServlet {
                 session.setAttribute("CUSTOMER", refreshedCustomer);
                 session.setAttribute("WALLET", refreshedWallet);
 
-                response.sendRedirect(request.getContextPath() + "/view-booking?msg=Booking success!");
-                return;
+                response.sendRedirect(request.getContextPath() + "/MainController?action=bookingHistory&msg=Booking success!");
+                return; 
             } else {
                 request.setAttribute("ERROR_MSG", "Failed to create your booking request. Database processing error.");
                 request.getRequestDispatcher("/views/error.jsp").forward(request, response);
