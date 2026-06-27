@@ -1,4 +1,3 @@
-
 package dao;
 
 import dto.Booking;
@@ -45,8 +44,8 @@ public class BookingDAO {
         String sqlGetWalletId
                 = "SELECT wallet_id FROM Wallet WHERE customer_id = ?";
 
-        String sqlWalletLog = "INSERT INTO WalletTransaction (wallet_id, amount, type, description, created_at, booking_id) "
-                + "VALUES (?, ?, N'payment', ?, GETDATE(), ?)";
+        String sqlWalletLog = "INSERT INTO WalletTransaction (wallet_id, amount, type, description, booking_id) "
+                + "VALUES ((SELECT wallet_id FROM Wallet WHERE customer_id = ?), ?, N'payment', ?, ?)";
 
         String sqlInsertPromotionUsage = "INSERT INTO PromotionUsage (promotion_id, booking_id, used_at) "
                 + "VALUES (?, ?, GETDATE())";
@@ -204,10 +203,10 @@ public class BookingDAO {
 
                 // Log giao dịch ví
                 ps = conn.prepareStatement(sqlWalletLog);
-                ps.setInt(1, walletId);
+                ps.setInt(1, booking.getCustomerId());
                 ps.setLong(2, booking.getTotalAmount());
-                ps.setString(3, "Pay for Booking #" + generatedBookingId);
-                ps.setInt(4, generatedBookingId);
+                ps.setString(3, "Payment for Booking #" + generatedBookingId);
+                ps.setInt(4, generatedBookingId); // thêm booking_id
                 ps.executeUpdate();
                 ps.close();
 
@@ -232,19 +231,25 @@ public class BookingDAO {
             }
 
             // 5. TRỪ ĐIỂM THƯỞNG CŨ NẾU KHÁCH CÓ ĐỔI ĐIỂM ĐỂ GIẢM GIÁ
+            // Thêm check trước khi trừ
             if (redeemPoints > 0) {
+                // Validate server-side
+                String sqlCheckPoints = "SELECT total_points FROM Customer WHERE customer_id = ?";
+                ps = conn.prepareStatement(sqlCheckPoints);
+                ps.setInt(1, booking.getCustomerId());
+                ResultSet rsPoints = ps.executeQuery();
+                if (rsPoints.next()) {
+                    int availablePoints = rsPoints.getInt("total_points");
+                    if (redeemPoints > availablePoints) {
+                        throw new Exception("Insufficient points: requested " + redeemPoints + " but only " + availablePoints + " available.");
+                    }
+                }
+                rsPoints.close();
+                ps.close();
+
                 ps = conn.prepareStatement(sqlDeductPoints);
                 ps.setInt(1, redeemPoints);
                 ps.setInt(2, booking.getCustomerId());
-                ps.executeUpdate();
-                ps.close();
-
-                ps = conn.prepareStatement(sqlInsertPointHistory);
-                ps.setInt(1, 0);
-                ps.setInt(2, redeemPoints);
-                ps.setString(3, "use");
-                ps.setString(4, "Use points for Booking #" + generatedBookingId);
-                ps.setInt(5, booking.getCustomerId());
                 ps.executeUpdate();
                 ps.close();
             }
@@ -548,27 +553,28 @@ public class BookingDAO {
         }
         return false;
     }
-    
+
     /**
-     * Lấy 1 lịch hẹn gần nhất đang sắp diễn ra của khách hàng (Pending hoặc Accepted)
-     * Kết hợp View VehicleDetail để lấy chuẩn xác thông tin xe tự nhập (Other)
+     * Lấy 1 lịch hẹn gần nhất đang sắp diễn ra của khách hàng (Pending hoặc
+     * Accepted) Kết hợp View VehicleDetail để lấy chuẩn xác thông tin xe tự
+     * nhập (Other)
      */
     public Map<String, Object> getUpcomingAppointmentByCustomerId(int customerId) {
         Map<String, Object> appointment = null;
-        
+
         // Truy vấn bốc lịch hẹn gần nhất, trạng thái chưa hủy/hoàn thành, ngày hẹn từ hôm nay trở đi
         String sql = "SELECT TOP 1 b.booking_date, b.status, s.time_value, vd.plate_number, vd.brand_display, vd.model_display, bay.bay_name "
-                   + "FROM Booking b "
-                   + "JOIN Slot s ON b.slot_id = s.slot_id "
-                   + "JOIN VehicleDetail vd ON b.vehicle_id = vd.vehicle_id "
-                   + "LEFT JOIN Bay bay ON b.bay_id = bay.bay_id "
-                   + "WHERE b.customer_id = ? AND b.status IN (N'pending', N'accepted') AND b.booking_date >= CAST(GETDATE() AS DATE) "
-                   + "ORDER BY b.booking_date ASC, s.start_time ASC";
+                + "FROM Booking b "
+                + "JOIN Slot s ON b.slot_id = s.slot_id "
+                + "JOIN VehicleDetail vd ON b.vehicle_id = vd.vehicle_id "
+                + "LEFT JOIN Bay bay ON b.bay_id = bay.bay_id "
+                + "WHERE b.customer_id = ? AND b.status IN (N'pending', N'accepted') AND b.booking_date >= CAST(GETDATE() AS DATE) "
+                + "ORDER BY b.booking_date ASC, s.start_time ASC";
 
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, customerId);
-            
-            try (ResultSet rs = ps.executeQuery()) {
+
+            try ( ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     appointment = new HashMap<>();
                     appointment.put("bookingDate", rs.getDate("booking_date").toString());
@@ -591,94 +597,93 @@ public class BookingDAO {
 // Trả về List<BookingHistoryDTO> thay vì List<Booking>,
 // vì kết quả này JOIN nhiều bảng, không còn map 1-1 với bảng Booking nữa.
 // =========================================================================
-public List<BookingHistoryDTO> getBookingHistoryByCustomerId(int customerId, String status) {
-    List<BookingHistoryDTO> list = new ArrayList<>();
 
-    String sql = "SELECT b.booking_id, b.booking_date, b.created_at, b.customer_id, b.status, "
-               + "u.full_name, u.phone, u.email, "
-               + "p.payment_method, "
-               + "p.checkin_image_url, p.checkout_image_url, "
-               + "v.plate_number, "
-               + "m.model_name "
-               + "FROM Booking b "
-               + "JOIN Customer c ON b.customer_id = c.customer_id "
-               + "JOIN [User] u ON c.user_id = u.user_id "
-               + "LEFT JOIN Payment p ON b.booking_id = p.booking_id "
-               + "LEFT JOIN Vehicle v ON b.vehicle_id = v.vehicle_id "
-               + "LEFT JOIN Model m ON v.model_id = m.model_id "
-               + "WHERE b.customer_id = ? ";
+    public List<BookingHistoryDTO> getBookingHistoryByCustomerId(int customerId, String status) {
+        List<BookingHistoryDTO> list = new ArrayList<>();
 
-    if (status != null && !status.isEmpty()) {
-        sql += "AND b.status = ? ";
-    }
+        String sql = "SELECT b.booking_id, b.booking_date, b.created_at, b.customer_id, b.status, "
+                + "u.full_name, u.phone, u.email, "
+                + "p.payment_method, "
+                + "p.checkin_image_url, p.checkout_image_url, "
+                + "v.plate_number, "
+                + "m.model_name "
+                + "FROM Booking b "
+                + "JOIN Customer c ON b.customer_id = c.customer_id "
+                + "JOIN [User] u ON c.user_id = u.user_id "
+                + "LEFT JOIN Payment p ON b.booking_id = p.booking_id "
+                + "LEFT JOIN Vehicle v ON b.vehicle_id = v.vehicle_id "
+                + "LEFT JOIN Model m ON v.model_id = m.model_id "
+                + "WHERE b.customer_id = ? ";
 
-    sql += "ORDER BY b.booking_date DESC, b.created_at DESC";
-
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-
-        ps.setInt(1, customerId);
         if (status != null && !status.isEmpty()) {
-            ps.setString(2, status);
+            sql += "AND b.status = ? ";
         }
 
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                BookingHistoryDTO b = new BookingHistoryDTO();
+        sql += "ORDER BY b.booking_date DESC, b.created_at DESC";
 
-                // Các field gốc
-                b.setBookingId(rs.getInt("booking_id"));
-                b.setBookingDate(rs.getDate("booking_date") != null ? rs.getDate("booking_date").toString() : null);
-                b.setCreatedAt(rs.getTimestamp("created_at"));
-                b.setCustomerId(rs.getInt("customer_id"));
-                b.setStatus(rs.getString("status"));
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                // Thông tin khách hàng (từ User)
-                b.setCustomerFullName(rs.getString("full_name"));
-                b.setCustomerPhone(rs.getString("phone"));
-                b.setCustomerEmail(rs.getString("email"));
-
-                // Payment method (từ Payment)
-                b.setPaymentMethod(rs.getString("payment_method"));
-
-                // Vehicle info (từ Vehicle + Model)
-                b.setPlateNumber(rs.getString("plate_number"));
-                b.setModelName(rs.getString("model_name"));
-
-                // Checkin/Checkout images (từ Payment)
-                b.setCheckinImageUrl(rs.getString("checkin_image_url"));
-                b.setCheckoutImageUrl(rs.getString("checkout_image_url"));
-
-                list.add(b);
+            ps.setInt(1, customerId);
+            if (status != null && !status.isEmpty()) {
+                ps.setString(2, status);
             }
+
+            try ( ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    BookingHistoryDTO b = new BookingHistoryDTO();
+
+                    // Các field gốc
+                    b.setBookingId(rs.getInt("booking_id"));
+                    b.setBookingDate(rs.getDate("booking_date") != null ? rs.getDate("booking_date").toString() : null);
+                    b.setCreatedAt(rs.getTimestamp("created_at"));
+                    b.setCustomerId(rs.getInt("customer_id"));
+                    b.setStatus(rs.getString("status"));
+
+                    // Thông tin khách hàng (từ User)
+                    b.setCustomerFullName(rs.getString("full_name"));
+                    b.setCustomerPhone(rs.getString("phone"));
+                    b.setCustomerEmail(rs.getString("email"));
+
+                    // Payment method (từ Payment)
+                    b.setPaymentMethod(rs.getString("payment_method"));
+
+                    // Vehicle info (từ Vehicle + Model)
+                    b.setPlateNumber(rs.getString("plate_number"));
+                    b.setModelName(rs.getString("model_name"));
+
+                    // Checkin/Checkout images (từ Payment)
+                    b.setCheckinImageUrl(rs.getString("checkin_image_url"));
+                    b.setCheckoutImageUrl(rs.getString("checkout_image_url"));
+
+                    list.add(b);
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error at BookingDAO.getBookingHistoryByCustomerId(): " + e.getMessage());
+            e.printStackTrace();
         }
 
-    } catch (Exception e) {
-        System.out.println("Error at BookingDAO.getBookingHistoryByCustomerId(): " + e.getMessage());
-        e.printStackTrace();
+        return list;
     }
-
-    return list;
-}
 // hủy booking và cập nhật lại trạng thái
-public boolean cancelBooking(int bookingId, int customerId) {
-    String sql = "UPDATE Booking SET status = N'cancelled' "
-               + "WHERE booking_id = ? AND customer_id = ? AND status = N'pending'";
 
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+    public boolean cancelBooking(int bookingId, int customerId) {
+        String sql = "UPDATE Booking SET status = N'cancelled' "
+                + "WHERE booking_id = ? AND customer_id = ? AND status = N'pending'";
 
-        ps.setInt(1, bookingId);
-        ps.setInt(2, customerId);
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        int rowsAffected = ps.executeUpdate();
-        return rowsAffected > 0;
+            ps.setInt(1, bookingId);
+            ps.setInt(2, customerId);
 
-    } catch (Exception e) {
-        System.out.println("Error at BookingDAO.cancelBooking(): " + e.getMessage());
-        e.printStackTrace();
-        return false;
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            System.out.println("Error at BookingDAO.cancelBooking(): " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }
-}
-

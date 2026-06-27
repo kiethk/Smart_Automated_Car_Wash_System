@@ -399,8 +399,8 @@ INSERT INTO BookingService (quantity, price, booking_id, service_id) VALUES
 (1, 120000, 3, 3);
 
 INSERT INTO Payment (payment_method, payment_status, amount, paid_at, transaction_id, booking_id, checkin_image_url, checkout_image_url) VALUES
-(N'cash',   N'completed', 50000,  '2026-05-24 08:38:00', N'TXN-001', 1, N'/assets/images/mock/checkin_01.jpg', N'/assets/images/mock/checkout_01.jpg'),
-(N'wallet', N'completed', 100000, '2026-05-25 10:13:00', N'TXN-002', 2, N'/assets/images/mock/checkin_02.jpg', N'/assets/images/mock/checkout_02.jpg');
+(N'cash',   N'paid', 50000,  '2026-05-24 08:38:00', N'TXN-001', 1, N'/assets/images/mock/checkin_01.jpg', N'/assets/images/mock/checkout_01.jpg'),
+(N'wallet', N'paid', 100000, '2026-05-25 10:13:00', N'TXN-002', 2, N'/assets/images/mock/checkin_02.jpg', N'/assets/images/mock/checkout_02.jpg');
 GO
 
 -- ========================================================

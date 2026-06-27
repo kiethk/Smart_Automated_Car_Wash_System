@@ -15,7 +15,7 @@
             <span class="inline-block bg-white/10 text-white text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full border border-white/10">
                 Next-Gen Car Care Ecosystem
             </span>
-
+            <p>Hello, World!</p>
             <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
                 Smart Automated <br/>
                 <span class="bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-sm">
