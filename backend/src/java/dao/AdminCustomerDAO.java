@@ -1,6 +1,7 @@
 package dao;
 
 import dto.AdminCustomerView;
+import dto.Tiers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -138,6 +139,16 @@ public class AdminCustomerDAO {
     public boolean updateCustomerAdminFields(int customerId, int tierId, long totalSpent,
             int totalWashes, int totalPoints, long walletBalance) {
 
+        Tiers targetTier = new TiersDAO().getApplicableTierByStats(totalSpent, totalWashes);
+        int resolvedTierId = targetTier != null ? targetTier.getTierId() : tierId;
+
+        String sqlSkipLoyaltyTrigger = "EXEC sp_set_session_context @key=N'SkipLoyaltyStats', @value=?";
+
+        String sqlResetCurrentMonthStats = "DELETE FROM CustomerMonthlyStats "
+                + "WHERE customer_id = ? "
+                + "AND stat_year = YEAR(GETDATE()) "
+                + "AND stat_month = MONTH(GETDATE())";
+
         String sqlUpdateCustomer = "UPDATE Customer "
                 + "SET tier_id = ?, total_spent = ?, total_washes = ?, total_points = ? "
                 + "WHERE customer_id = ?";
@@ -154,8 +165,18 @@ public class AdminCustomerDAO {
             conn = DBUtils.getConnection();
             conn.setAutoCommit(false);
 
+            try ( PreparedStatement ps = conn.prepareStatement(sqlSkipLoyaltyTrigger)) {
+                ps.setInt(1, 1);
+                ps.executeUpdate();
+            }
+
+            try ( PreparedStatement ps = conn.prepareStatement(sqlResetCurrentMonthStats)) {
+                ps.setInt(1, customerId);
+                ps.executeUpdate();
+            }
+
             try ( PreparedStatement ps = conn.prepareStatement(sqlUpdateCustomer)) {
-                ps.setInt(1, tierId);
+                ps.setInt(1, resolvedTierId);
                 ps.setLong(2, totalSpent);
                 ps.setInt(3, totalWashes);
                 ps.setInt(4, totalPoints);

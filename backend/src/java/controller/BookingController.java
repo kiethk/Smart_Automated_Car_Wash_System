@@ -6,6 +6,7 @@ import dao.CustomerDAO;
 import dao.PromotionDAO;
 import dao.ServiceDAO;
 import dao.SlotDAO;
+import dao.TiersDAO;
 import dao.VehicleDAO;
 import dao.WalletDAO;
 import dto.Booking;
@@ -13,6 +14,7 @@ import dto.Customer;
 import dto.Promotion;
 import dto.Service;
 import dto.Slot;
+import dto.Tiers;
 import dto.User;
 import dto.Vehicle;
 import java.io.IOException;
@@ -96,7 +98,14 @@ public class BookingController extends HttpServlet {
                     loginedCustomer.getTierId()
             );
 
+            TiersDAO tiersDAO = new TiersDAO();
+            Tiers currentTier = tiersDAO.getTierById(loginedCustomer.getTierId());
+            if (currentTier == null) {
+                currentTier = new Tiers(1, "Member", 0, 0, 1.0, 0.0, 7, null);
+            }
+
             request.setAttribute("CUSTOMER", loginedCustomer);
+            request.setAttribute("TIER", currentTier);
             request.setAttribute("WALLET", wallet);
             request.setAttribute("VEHICLES", vehicleList);
             request.setAttribute("SERVICES", serviceList);
