@@ -88,5 +88,29 @@ public class TiersDAO {
 
         return list;
     }
+
+    public Tiers getApplicableTierByStats(long totalSpent, int totalWashes) {
+        List<Tiers> tiers = getAllTiers();
+
+        if (tiers.isEmpty()) {
+            return null;
+        }
+
+        tiers.sort((left, right) -> {
+            int spentCompare = Long.compare(right.getMinSpent(), left.getMinSpent());
+            if (spentCompare != 0) {
+                return spentCompare;
+            }
+            return Integer.compare(right.getMinWashes(), left.getMinWashes());
+        });
+
+        for (Tiers tier : tiers) {
+            if (totalSpent >= tier.getMinSpent() || totalWashes >= tier.getMinWashes()) {
+                return tier;
+            }
+        }
+
+        return tiers.get(tiers.size() - 1);
+    }
 }
 

@@ -15,7 +15,6 @@
             <span class="inline-block bg-white/10 text-white text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full border border-white/10">
                 Next-Gen Car Care Ecosystem
             </span>
-
             <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
                 Smart Automated <br/>
                 <span class="bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-sm">
@@ -147,68 +146,80 @@
                                 <c:set var="featureLower" value="${fn:toLowerCase(featureText)}" />
 
                                 <c:choose>
+                                    <%-- Dòng kiểu: Express wash features, Deluxe wash features --%>
                                     <c:when test="${fn:contains(featureLower, 'features')}">
                                         <c:set var="featureIcon" value="layers" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'heavy-duty') 
-                                                    || fn:contains(featureLower, 'pressure') 
+                                    <%-- Rửa áp lực, express wash, heavy-duty --%>
+                                    <c:when test="${fn:contains(featureLower, 'heavy-duty')
+                                                    || fn:contains(featureLower, 'pressure')
                                                     || fn:contains(featureLower, 'express wash')}">
                                         <c:set var="featureIcon" value="droplets" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'foam') 
+                                    <%-- Bọt tuyết / conditioner --%>
+                                    <c:when test="${fn:contains(featureLower, 'foam')
                                                     || fn:contains(featureLower, 'conditioner')}">
                                         <c:set var="featureIcon" value="cloud-rain" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'dry') 
+                                    <%-- Sấy khô --%>
+                                    <c:when test="${fn:contains(featureLower, 'dry')
                                                     || fn:contains(featureLower, 'blow')}">
                                         <c:set var="featureIcon" value="wind" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'underbody') 
+                                    <%-- Gầm xe / xịt rửa gầm --%>
+                                    <c:when test="${fn:contains(featureLower, 'underbody')
                                                     || fn:contains(featureLower, 'rinse')}">
                                         <c:set var="featureIcon" value="waves" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'clearance') 
+                                    <%-- Xe cao, khung gầm SUV/Truck --%>
+                                    <c:when test="${fn:contains(featureLower, 'clearance')
                                                     || fn:contains(featureLower, 'frame')}">
                                         <c:set var="featureIcon" value="truck" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'rim') 
-                                                    || fn:contains(featureLower, 'wheel') 
-                                                    || fn:contains(featureLower, 'de-ironing') 
+                                    <%-- Mâm, bánh xe, wheel hub, rim --%>
+                                    <c:when test="${fn:contains(featureLower, 'rim')
+                                                    || fn:contains(featureLower, 'wheel')
+                                                    || fn:contains(featureLower, 'de-ironing')
                                                     || fn:contains(featureLower, 'hub')}">
                                         <c:set var="featureIcon" value="disc" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'tire') 
-                                                    || fn:contains(featureLower, 'shine') 
+                                    <%-- Lốp, làm bóng lốp --%>
+                                    <c:when test="${fn:contains(featureLower, 'tire')
+                                                    || fn:contains(featureLower, 'shine')
                                                     || fn:contains(featureLower, 'dressing')}">
                                         <c:set var="featureIcon" value="sparkles" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'wax') 
-                                                    || fn:contains(featureLower, 'ceramic') 
-                                                    || fn:contains(featureLower, 'protective') 
+                                    <%-- Wax, ceramic, sơn, lớp bảo vệ --%>
+                                    <c:when test="${fn:contains(featureLower, 'wax')
+                                                    || fn:contains(featureLower, 'ceramic')
+                                                    || fn:contains(featureLower, 'protective')
                                                     || fn:contains(featureLower, 'paint')}">
                                         <c:set var="featureIcon" value="gem" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'hydro') 
-                                                    || fn:contains(featureLower, 'shield') 
+                                    <%-- Hydro shield, surface coat --%>
+                                    <c:when test="${fn:contains(featureLower, 'hydro')
+                                                    || fn:contains(featureLower, 'shield')
                                                     || fn:contains(featureLower, 'surface coat')}">
                                         <c:set var="featureIcon" value="shield" />
                                     </c:when>
 
-                                    <c:when test="${fn:contains(featureLower, 'cabin') 
-                                                    || fn:contains(featureLower, 'freshener') 
+                                    <%-- Cabin, khử mùi, làm thơm nội thất --%>
+                                    <c:when test="${fn:contains(featureLower, 'cabin')
+                                                    || fn:contains(featureLower, 'freshener')
                                                     || fn:contains(featureLower, 'deodorization')}">
                                         <c:set var="featureIcon" value="smile" />
                                     </c:when>
 
+                                    <%-- Mặc định --%>
                                     <c:otherwise>
                                         <c:set var="featureIcon" value="check-circle" />
                                     </c:otherwise>
@@ -254,8 +265,8 @@
                     <c:set var="displayName" value="${fn:replace(service.serviceName, ' (SUV/Truck)', '')}" />
 
                     <div class="service-card suv-card hidden flex-col relative bg-[var(--surface-card)] mt-8 p-8
-                         ${fn:containsIgnoreCase(service.serviceName, 'Deluxe') 
-                           ? 'border-2 border-primary transform md:-translate-y-4 shadow-lg' 
+                         ${fn:containsIgnoreCase(service.serviceName, 'Deluxe')
+                           ? 'border-2 border-primary transform md:-translate-y-4 shadow-lg'
                            : 'border border-surface-border shadow-sm'}">
 
                         <c:if test="${fn:containsIgnoreCase(service.serviceName, 'Deluxe')}">

@@ -70,7 +70,8 @@
                 <div>
                     <p class="text-sm opacity-75 font-medium">MEMBERSHIP CARD</p>
                     <h2 class="text-2xl font-bold mt-1"><%= customer != null ? customer.getTierName() : "Member" %></h2>
-                    <p class="text-sm opacity-75 mt-1">
+                    <p class="text-sm opacity-75 
+                       mt-1">
                         <%= customer != null && customer.getFullName() != null ? customer.getFullName() : "Customer" %>
                     </p>
                     <div class="flex items-center gap-4 mt-3">
