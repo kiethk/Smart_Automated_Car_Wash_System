@@ -1,6 +1,7 @@
 <%@page import="dto.Promotion"%>
 <%@page import="dto.Customer"%>
 <%@page import="dto.Wallet"%>
+<%@page import="dto.Tiers"%>
 <%@page import="dto.User"%>
 <%@page import="dto.Slot"%>
 <%@page import="dto.Service"%>
@@ -39,30 +40,15 @@
     User user = (User) session.getAttribute("USER");
     Wallet wallet = (Wallet) session.getAttribute("WALLET");
     Customer customer = (Customer) session.getAttribute("CUSTOMER");
+    Tiers tier = (Tiers) request.getAttribute("TIER");
 
     String fullName = (user != null) ? user.getFullName() : "Customer";
     double walletBalance = (wallet != null) ? wallet.getBalance() : 0;
     int availablePoints = (customer != null) ? customer.getTotalPoints() : 0;
-    int tierId = (customer != null) ? customer.getTierId() : 1;
-
-    // Xác định cấu hình theo Hạng thành viên của nhóm bạn
-    double discountRate = 0.0;
-    String tierName = "Member";
-    int maxBookingDays = 7; // Mặc định Member là 7 ngày
-
-    if (tierId == 2) {
-        discountRate = 0.05;
-        tierName = "Silver";
-        maxBookingDays = 10;
-    } else if (tierId == 3) {
-        discountRate = 0.10;
-        tierName = "Gold";
-        maxBookingDays = 12;
-    } else if (tierId == 4) {
-        discountRate = 0.15;
-        tierName = "Platinum";
-        maxBookingDays = 14;
-    }
+    int tierId = (tier != null) ? tier.getTierId() : ((customer != null) ? customer.getTierId() : 1);
+    String tierName = (tier != null && tier.getTierName() != null) ? tier.getTierName() : "Member";
+    double discountRate = (tier != null) ? tier.getDiscountPercent() : 0.0;
+    int maxBookingDays = (tier != null) ? tier.getBookingWindowDays() : 7;
 %>
 
 <main class="flex-grow pt-[32px] pb-24 px-4 md:px-16 max-w-[1280px] mx-auto w-full flex flex-col md:flex-row gap-6 font-sans">
@@ -379,7 +365,7 @@
                 <div class="flex justify-between items-center text-success font-medium bg-emerald-50/40 px-3 py-2 rounded-xl">
                     <div class="flex items-center gap-1.5">
                         <i data-lucide="award" class="w-4 h-4 stroke-[2]"></i>
-                        <span><%= tierName%> (<%= (int) (discountRate * 100)%>%)</span>
+                        <span><%= tierName%> (<%= (int) (discountRate)%>%)</span>
                     </div>
                     <span id="summaryTierDiscount" class="tech-data">-0 VND</span>
                 </div>
@@ -822,7 +808,7 @@
             }
         }
 
-        appliedTierDiscount = currentPackagePrice * userDiscountRate;
+        appliedTierDiscount = currentPackagePrice * userDiscountRate / 100;
 
         let totalDiscountSystem = appliedTierDiscount + appliedPromotionDiscount;
         if (totalDiscountSystem > currentPackagePrice) {

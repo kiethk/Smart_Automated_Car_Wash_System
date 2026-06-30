@@ -86,6 +86,36 @@ CREATE TABLE Customer (
     FOREIGN KEY (tier_id) REFERENCES Tiers(tier_id)
 );
 
+CREATE TABLE CustomerMonthlyStats (
+    customer_id INT NOT NULL,
+    stat_year INT NOT NULL,
+    stat_month INT NOT NULL,
+    monthly_spent BIGINT NOT NULL DEFAULT 0,
+    monthly_washes INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT PK_CustomerMonthlyStats PRIMARY KEY (customer_id, stat_year, stat_month),
+    CONSTRAINT FK_CustomerMonthlyStats_Customer
+        FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    CONSTRAINT CK_CustomerMonthlyStats_Month CHECK (stat_month BETWEEN 1 AND 12),
+    CONSTRAINT CK_CustomerMonthlyStats_Spent CHECK (monthly_spent >= 0),
+    CONSTRAINT CK_CustomerMonthlyStats_Washes CHECK (monthly_washes >= 0)
+);
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_CustomerMonthlyStats_ReviewPeriod'
+      AND object_id = OBJECT_ID('dbo.CustomerMonthlyStats')
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_CustomerMonthlyStats_ReviewPeriod
+    ON dbo.CustomerMonthlyStats (stat_year, stat_month, customer_id)
+    INCLUDE (monthly_spent, monthly_washes, updated_at);
+END
+GO
+
 CREATE TABLE Brand (
     brand_id INT PRIMARY KEY IDENTITY(1,1),
     brand_name NVARCHAR(50) UNIQUE NOT NULL
@@ -247,6 +277,201 @@ ALTER TABLE Wallet ADD CONSTRAINT CHK_Wallet_Balance CHECK (balance >= 0);
 ALTER TABLE WalletTransaction ADD CONSTRAINT CHK_WT_Type CHECK (type IN (N'deposit', N'payment'));
 GO
 
+
+-- ========================================================
+-- 3. LOYALTY ENGINE: TRIGGER & PROCEDURE (BẢN CHUẨN ĐÃ TÍCH HỢP KHÔI PHỤC HẠNG)
+-- ========================================================
+
+CREATE OR ALTER TRIGGER trg_Customer_ReviewTier_OnStatsChange
+ON Customer
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Admin metric edits are for correction/demo and should not be counted as real monthly activity.
+    IF TRY_CAST(SESSION_CONTEXT(N'SkipLoyaltyStats') AS INT) = 1
+        RETURN;
+
+    -- Chỉ kích hoạt khi có sự thay đổi về tổng chi tiêu hoặc tổng số lần rửa xe trọn đời
+    IF NOT (UPDATE(total_spent) OR UPDATE(total_washes))
+        RETURN;
+
+    DECLARE @reviewYear INT = YEAR(GETDATE());
+    DECLARE @reviewMonth INT = MONTH(GETDATE());
+
+    DECLARE @ChangedCustomers TABLE (
+        customer_id INT PRIMARY KEY,
+        previous_total_spent BIGINT NOT NULL,
+        previous_total_washes INT NOT NULL,
+        delta_spent BIGINT NOT NULL,
+        delta_washes INT NOT NULL
+    );
+
+    -- Bước 1: Tính toán chênh lệch (Delta) từ bảng inserted và deleted
+    INSERT INTO @ChangedCustomers (customer_id, previous_total_spent, previous_total_washes, delta_spent, delta_washes)
+    SELECT
+        i.customer_id,
+        ISNULL(d.total_spent, 0) AS previous_total_spent,
+        ISNULL(d.total_washes, 0) AS previous_total_washes,
+        CASE 
+    WHEN ISNULL(i.total_spent, 0) > ISNULL(d.total_spent, 0)
+    THEN ISNULL(i.total_spent, 0) - ISNULL(d.total_spent, 0)
+        ELSE 0
+    END AS delta_spent,
+
+    CASE 
+        WHEN ISNULL(i.total_washes, 0) > ISNULL(d.total_washes, 0)
+        THEN ISNULL(i.total_washes, 0) - ISNULL(d.total_washes, 0)
+        ELSE 0
+    END AS delta_washes
+    FROM inserted i
+    INNER JOIN deleted d ON i.customer_id = d.customer_id
+    WHERE
+        ISNULL(i.total_spent, 0) <> ISNULL(d.total_spent, 0)
+        OR ISNULL(i.total_washes, 0) <> ISNULL(d.total_washes, 0);
+
+    IF NOT EXISTS (SELECT 1 FROM @ChangedCustomers)
+        RETURN;
+
+    -- Bước 1b: Cập nhật tích lũy cuốn chiếu vào bảng thống kê của tháng hiện tại (CustomerMonthlyStats)
+    MERGE CustomerMonthlyStats AS target
+    USING (
+        SELECT
+            customer_id,
+            @reviewYear AS stat_year,
+            @reviewMonth AS stat_month,
+            delta_spent,
+            delta_washes
+        FROM @ChangedCustomers
+    ) AS src
+    ON target.customer_id = src.customer_id
+       AND target.stat_year = src.stat_year
+       AND target.stat_month = src.stat_month
+    WHEN MATCHED THEN
+        UPDATE SET
+            target.monthly_spent = target.monthly_spent + src.delta_spent,
+            target.monthly_washes = target.monthly_washes + src.delta_washes,
+            target.updated_at = GETDATE()
+    WHEN NOT MATCHED THEN
+        INSERT (customer_id, stat_year, stat_month, monthly_spent, monthly_washes, created_at, updated_at)
+        VALUES (src.customer_id, src.stat_year, src.stat_month, src.delta_spent, src.delta_washes, GETDATE(), GETDATE());
+
+    -- Bước 2: Tự động Thăng hạng (Real-time Upgrade) & Khôi phục hạng (Tier Recovery)
+    ;WITH PerformanceData AS (
+        SELECT
+            cc.customer_id,
+            c.tier_id AS current_tier_id,
+            cc.previous_total_spent,
+            cc.previous_total_washes,
+            c.total_spent,
+            c.total_washes,
+            ISNULL(ms.monthly_spent, 0) AS monthly_spent,
+            ISNULL(ms.monthly_washes, 0) AS monthly_washes
+        FROM @ChangedCustomers cc
+        INNER JOIN Customer c ON c.customer_id = cc.customer_id
+        LEFT JOIN CustomerMonthlyStats ms
+            ON ms.customer_id = cc.customer_id
+           AND ms.stat_year = @reviewYear
+           AND ms.stat_month = @reviewMonth
+    ),
+    TargetTier AS (
+        SELECT
+            pd.customer_id,
+            pd.current_tier_id,
+            COALESCE(lt.max_eligible_tier, pd.current_tier_id) AS target_tier_id
+        FROM PerformanceData pd
+        OUTER APPLY (
+            SELECT TOP 1 t.tier_id AS max_eligible_tier
+            FROM Tiers t
+            WHERE 
+                -- ĐIỀU KIỆN TIÊN QUYẾT: Tổng tích lũy trọn đời phải đạt mốc tối thiểu của Tier đó
+                (pd.total_spent >= t.min_spent OR pd.total_washes >= t.min_washes)
+                AND 
+                (
+                    -- TRƯỜNG HỢP A: THĂNG HẠNG MỚI chỉ khi lần update này vừa vượt mốc tier.
+                    (
+                        t.tier_id > pd.current_tier_id
+                        AND (
+                            (pd.previous_total_spent < t.min_spent AND pd.total_spent >= t.min_spent)
+                            OR (pd.previous_total_washes < t.min_washes AND pd.total_washes >= t.min_washes)
+                        )
+                    )
+                    
+                    -- TRƯỜNG HỢP B: KHÔI PHỤC HẠNG CŨ (Đã đủ mốc trọn đời từ trước, từng bị hạ hạng, 
+                    -- nhưng tháng này cày bù đủ 30% chỉ tiêu tháng của hạng đó -> Trả lại hạng VIP ngay lập tức)
+                    OR pd.monthly_spent >= (t.min_spent * 0.30)
+                    OR pd.monthly_washes >= (t.min_washes * 0.30)
+                )
+            ORDER BY t.tier_id DESC -- Ưu tiên lấy mức hạng cao nhất có thể đạt được
+        ) lt
+    )
+    UPDATE c
+    SET
+        c.tier_id = tt.target_tier_id,
+        c.last_review_date = CAST(GETDATE() AS DATE)
+    FROM Customer c
+    INNER JOIN TargetTier tt ON tt.customer_id = c.customer_id
+    WHERE tt.target_tier_id > c.tier_id; -- Điều kiện chặn: Trigger chỉ đưa hạng đi lên, không bao giờ hạ hạng.
+END
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_ReviewMonthlyTierDowngrade
+    @ReviewYear INT = NULL,
+    @ReviewMonth INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Nếu không truyền tham số, hệ thống tự động quét và duyệt dữ liệu của THÁNG TRƯỚC LIỀN KỀ
+    IF @ReviewYear IS NULL OR @ReviewMonth IS NULL
+    BEGIN
+        DECLARE @PrevMonthDate DATE = DATEADD(MONTH, -1, CAST(GETDATE() AS DATE));
+        SET @ReviewYear = YEAR(@PrevMonthDate);
+        SET @ReviewMonth = MONTH(@PrevMonthDate);
+    END
+
+    ;WITH ReviewScope AS (
+        SELECT
+            c.customer_id,
+            c.tier_id AS current_tier_id,
+            t.min_spent,
+            t.min_washes,
+            ISNULL(ms.monthly_spent, 0) AS monthly_spent,
+            ISNULL(ms.monthly_washes, 0) AS monthly_washes
+        FROM Customer c
+        INNER JOIN Tiers t ON t.tier_id = c.tier_id
+        LEFT JOIN CustomerMonthlyStats ms
+            ON ms.customer_id = c.customer_id
+           AND ms.stat_year = @ReviewYear
+           AND ms.stat_month = @ReviewMonth
+    ),
+    ReviewDecision AS (
+        SELECT
+            rs.customer_id,
+            rs.current_tier_id,
+            CASE
+                -- Nếu tháng trước tiêu đủ 30% tiền HOẶC rửa xe đủ 30% số lần của hạng hiện tại -> ĐẠT chỉ tiêu giữ hạng
+                WHEN rs.monthly_spent >= (rs.min_spent * 0.30)
+                  OR rs.monthly_washes >= (rs.min_washes * 0.30)
+                THEN rs.current_tier_id 
+                -- Nếu KHÔNG ĐẠT chỉ tiêu tháng: Hạ đúng 1 cấp bậc thang (Luật nhân văn kiểu Shopee)
+                ELSE CASE
+                    WHEN rs.current_tier_id > 1 THEN rs.current_tier_id - 1
+                    ELSE 1 -- Hạng 1 (Member) là tầng đáy, không thể thấp hơn
+                END 
+            END AS target_tier_id
+        FROM ReviewScope rs
+    )
+    UPDATE c
+    SET
+        c.tier_id = rd.target_tier_id,
+        c.last_review_date = CAST(GETDATE() AS DATE)
+    FROM Customer c
+    INNER JOIN ReviewDecision rd ON rd.customer_id = c.customer_id;
+END
+GO
+
 -- ========================================================
 -- 3. KỊCH BẢN LÀM SẠCH VÀ CHÈN DỮ LIỆU (DML)
 -- ========================================================
@@ -324,12 +549,12 @@ INSERT INTO Service (service_name, description, price, duration_minutes, is_acti
 (N'Ultimate Wax Wash (SUV/Truck)', N'Deluxe wash features, Premium protective paint wax, Hydro-shield surface coat',              150000, 12,  1);
 
 INSERT INTO [User] (full_name, email, phone, password, is_active, role_id) VALUES
-(N'Nguyễn Admin',      'admin@autowash.com', '0900000001', 'password123', 1, 1),
-(N'Trần Nhân Viên',    'staff@autowash.com', '0900000002', 'password123', 1, 2),
-(N'Nguyễn Minh Hoàng', 'hoang@gmail.com',   '0912345678', 'password123', 1, 3),
-(N'Trần Thị Ngọc',     'ngoc@gmail.com',    '0987654321', 'password123', 1, 3),
-(N'Cao Minh Kỳ',       'ky@gmail.com',      '0905111222', 'password123', 1, 3),
-(N'Lê Hoàng Long',     'long@gmail.com',    '0933444555', 'password123', 1, 3);
+(N'Nguyễn Admin',      'admin@autowash.com', '0900000001', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 1, 1),
+(N'Trần Nhân Viên',    'staff@autowash.com', '0900000002', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 1, 2),
+(N'Nguyễn Minh Hoàng', 'hoang@gmail.com',   '0912345678', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 1, 3),
+(N'Trần Thị Ngọc',     'ngoc@gmail.com',    '0987654321', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 1, 3),
+(N'Cao Minh Kỳ',       'ky@gmail.com',      '0905111222', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 1, 3),
+(N'Lê Hoàng Long',     'long@gmail.com',    '0933444555', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 1, 3);
 
 INSERT INTO Customer (address, total_points, total_spent, total_washes, join_date, date_of_birth, user_id, tier_id, last_review_date) VALUES
 (N'Quận 9, TP. HCM',  3,  150000,   3,  '2026-01-15', '1998-05-20', 3, 1, '2026-05-01'),

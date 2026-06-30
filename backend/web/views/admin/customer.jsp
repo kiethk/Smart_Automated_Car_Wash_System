@@ -44,6 +44,14 @@
                         </div>
 
                         <div class="flex items-center gap-3">
+                            <form action="${pageContext.request.contextPath}/admin/loyalty-review"
+                                  method="post"
+                                  onsubmit="return confirm('Run monthly loyalty tier review now?');">
+                                <button type="submit"
+                                        class="px-4 py-2.5 rounded-2xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-all">
+                                    Run Monthly Review
+                                </button>
+                            </form>
                             <div class="px-4 py-2.5 rounded-2xl bg-white border border-slate-200 text-sm font-bold text-slate-700">
                                 Total: <%= customers != null ? customers.size() : 0%> customers
                             </div>
@@ -53,6 +61,10 @@
                     <% if ("status_updated".equals(msg)) { %>
                     <div class="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">
                         Customer account status updated successfully.
+                    </div>
+                    <% } else if ("loyalty_reviewed".equals(msg)) { %>
+                    <div class="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">
+                        Monthly loyalty tier review completed successfully.
                     </div>
                     <% } else if ("updated".equals(msg)) { %>
                     <div class="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700">
