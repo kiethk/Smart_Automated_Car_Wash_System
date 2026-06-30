@@ -13,5 +13,8 @@
     </head>
     <body>
         <h1>Something wrong happened.</h1>
+        <% if (request.getAttribute("ERROR_MSG") != null) { %>
+        <p><%= request.getAttribute("ERROR_MSG")%></p>
+        <% } %>
     </body>
 </html>
