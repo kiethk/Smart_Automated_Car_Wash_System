@@ -18,20 +18,58 @@
 </footer>
 
 <script>
-    function toggleDropdown() {
-        const dropdown = document.getElementById('user-dropdown');
-        dropdown.classList.toggle('hidden');
-    }
+    function toggleDropdown(event) {
+        if (event) {
+            event.stopPropagation();
+        }
 
-// Đóng dropdown khi click ra ngoài
-    window.onclick = function (event) {
-        if (!event.target.matches('button') && !event.target.closest('button')) {
-            const dropdown = document.getElementById('user-dropdown');
-            if (dropdown && !dropdown.classList.contains('hidden')) {
-                dropdown.classList.add('hidden');
-            }
+        const dropdown = document.getElementById('user-dropdown');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+
+        if (notificationDropdown && !notificationDropdown.classList.contains('hidden')) {
+            notificationDropdown.classList.add('hidden');
+        }
+
+        if (dropdown) {
+            dropdown.classList.toggle('hidden');
         }
     }
+
+    function toggleNotificationDropdown(event) {
+        if (event) {
+            event.stopPropagation();
+        }
+
+        const dropdown = document.getElementById('notification-dropdown');
+        const userDropdown = document.getElementById('user-dropdown');
+
+        if (userDropdown && !userDropdown.classList.contains('hidden')) {
+            userDropdown.classList.add('hidden');
+        }
+
+        if (dropdown) {
+            dropdown.classList.toggle('hidden');
+        }
+    }
+
+    window.onclick = function (event) {
+        const userDropdown = document.getElementById('user-dropdown');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+
+        if (userDropdown
+                && !userDropdown.classList.contains('hidden')
+                && !event.target.closest('#user-dropdown')
+                && !event.target.closest('button')) {
+            userDropdown.classList.add('hidden');
+        }
+
+        if (notificationDropdown
+                && !notificationDropdown.classList.contains('hidden')
+                && !event.target.closest('#notification-dropdown')
+                && !event.target.closest('button')) {
+            notificationDropdown.classList.add('hidden');
+        }
+    };
 </script>
 </body>
 </html>

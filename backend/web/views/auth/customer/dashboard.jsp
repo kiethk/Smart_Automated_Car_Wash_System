@@ -92,7 +92,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-slate-900 tracking-tight">Upcoming Appointment</h3>
-                        
+
                         <c:choose>
                             <c:when test="${requestScope.HAS_APPOINTMENT}">
                                 <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 capitalize">
@@ -110,7 +110,7 @@
 
                     <div class="space-y-5">
                         <c:choose>
-                            <%-- TRƯỜNG HỢP 1: CÓ LỊCH HẸN THẬT SỰ ➡️ HIỂN THỊ CHI TIẾT (ĐÃ XÓA 2 NÚT BẤM DƯỚI ĐÁY CỦA BẠN) --%>
+                            <%-- TRƯỜNG HỢP 1: CÓ LỊCH HẸN THẬT SỰ ➡️ HIỂN THỊ CHI TIẾT --%>
                             <c:when test="${requestScope.HAS_APPOINTMENT}">
                                 <div class="flex items-start gap-3.5">
                                     <div class="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl border border-indigo-100 mt-0.5">
@@ -129,7 +129,9 @@
                                 <div class="flex items-start gap-3.5">
                                     <div class="bg-indigo-50 text-indigo-600 p-2.5 rounded-xl border border-indigo-100 mt-0.5">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.124l-.047-2.437a5.616 5.616 0 0 0-5.12-5.407L15.75 5.25h-3.115c-.422 0-.811.235-1.004.61l-.975 1.95H3.375c-.621 0-1.125.504-1.125 1.125v4.33M3.375 14.25h17.25M2.25 14.25v-.031c0-.122.1-.222.22-.222h19.06c.12 0 .22.1.22.222v.031m-18 0h16.5" />
+
                                         </svg>
                                     </div>
                                     <div>

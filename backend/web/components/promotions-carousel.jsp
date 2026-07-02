@@ -61,11 +61,9 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Tìm TẤT CẢ các khối Carousel trên trang và gán chức năng độc lập cho từng cái
         const carousels = document.querySelectorAll('.carousel-container');
         
         carousels.forEach(container => {
-            // Chống chạy 2 lần nếu có script nạp lại
             if(container.dataset.initialized) return;
             container.dataset.initialized = 'true';
 
@@ -73,29 +71,25 @@
             const dots = container.querySelectorAll('.dot-indicator');
             const prevBtn = container.querySelector('.btn-prev');
             const nextBtn = container.querySelector('.btn-next');
-            let currentIndex = 0;
             const slideCount = dots.length;
+            let currentIndex = 0;
             let autoSlideTimer;
+            let isAnimating = false; // Cờ hiệu ngăn click liên tục gây lỗi
 
             if (!slider || slideCount <= 1) return;
 
-            function goToSlide(index) {
-                currentIndex = index;
-                const slideWidth = slider.clientWidth;
-                slider.scrollLeft = currentIndex * slideWidth;
-                updateIndicators();
-            }
+            // BƯỚC 1: TẠO BẢN SAO (CLONE) CHO SLIDE ĐẦU TIÊN
+            // Thủ thuật "Infinite Loop" bắt đầu từ đây
+            const firstSlide = slider.children[0];
+            const cloneSlide = firstSlide.cloneNode(true);
+            slider.appendChild(cloneSlide);
 
-            function moveSlide(direction) {
-                currentIndex += direction;
-                if (currentIndex >= slideCount) currentIndex = 0;
-                if (currentIndex < 0) currentIndex = slideCount - 1;
-                goToSlide(currentIndex);
-            }
-
-            function updateIndicators() {
+            // Hàm cập nhật chấm sáng Indicator
+            function updateIndicators(index) {
+                // Nếu đang ở slide Ảo (cuối cùng), thắp sáng chấm số 0
+                const activeIndex = index === slideCount ? 0 : index;
                 dots.forEach((dot, idx) => {
-                    if (idx === currentIndex) {
+                    if (idx === activeIndex) {
                         dot.classList.add('bg-white', 'w-5');
                         dot.classList.remove('bg-white/40', 'w-2');
                     } else {
@@ -103,6 +97,53 @@
                         dot.classList.add('bg-white/40', 'w-2');
                     }
                 });
+            }
+
+            // Hàm dịch chuyển màn hình
+            function goToSlide(index, isSmooth = true) {
+                // Bật/tắt cuộn mượt (Tailwind scroll-smooth)
+                if (isSmooth) {
+                    slider.classList.add('scroll-smooth');
+                } else {
+                    slider.classList.remove('scroll-smooth');
+                }
+                const slideWidth = slider.clientWidth;
+                slider.scrollLeft = index * slideWidth;
+                updateIndicators(index);
+            }
+
+            // Hàm xử lý Logic khi qua lại
+            function moveSlide(direction) {
+                if (isAnimating) return;
+                isAnimating = true;
+
+                // TRƯỜNG HỢP 1: Đang ở đầu mà bấm Lùi -> Giật tới Clone cuối rồi cuộn mượt lùi
+                if (currentIndex === 0 && direction === -1) {
+                    goToSlide(slideCount, false); // Nhảy tới bản ảo (không mượt)
+                    currentIndex = slideCount - 1;
+                    setTimeout(() => {
+                        goToSlide(currentIndex, true); // Cuộn mượt về slide cuối thật
+                        setTimeout(() => isAnimating = false, 500);
+                    }, 50);
+                    return;
+                }
+
+                // TRƯỜNG HỢP BÌNH THƯỜNG: Cuộn mượt
+                currentIndex += direction;
+                goToSlide(currentIndex, true);
+
+                // TRƯỜNG HỢP 2: Đã cuộn mượt tới bản Clone ảo ở cuối (Infinite Loop)
+                if (currentIndex === slideCount) {
+                    // Đợi 500ms cho hiệu ứng cuộn mượt hoàn tất...
+                    setTimeout(() => {
+                        // ...sau đó tắt mượt và giật về Slide số 1 THẬT (tại index 0)
+                        goToSlide(0, false); 
+                        currentIndex = 0;
+                        isAnimating = false;
+                    }, 500); 
+                } else {
+                    setTimeout(() => isAnimating = false, 500);
+                }
             }
 
             function startAutoSlide() {
@@ -115,34 +156,43 @@
                 clearInterval(autoSlideTimer);
             }
 
+            // Xử lý khi người dùng kéo/vuốt màn hình bằng tay
             let isScrolling;
             slider.addEventListener('scroll', () => {
                 window.clearTimeout(isScrolling);
                 isScrolling = setTimeout(() => {
+                    if (isAnimating) return; // Bỏ qua nếu đang chạy Auto
                     const slideWidth = slider.clientWidth;
                     if (slideWidth > 0) {
-                        const newIndex = Math.round(slider.scrollLeft / slideWidth);
-                        if (newIndex !== currentIndex && newIndex < slideCount) {
+                        let newIndex = Math.round(slider.scrollLeft / slideWidth);
+                        // Nếu vuốt tay tới trúng slide ảo -> Giật về slide đầu thật
+                        if (newIndex === slideCount) {
+                            goToSlide(0, false);
+                            currentIndex = 0;
+                        } else if (newIndex !== currentIndex) {
                             currentIndex = newIndex;
-                            updateIndicators();
+                            updateIndicators(currentIndex);
                         }
                     }
                 }, 100);
             });
 
+            // Lắng nghe sự kiện Hover chuột và Click
             container.addEventListener('mouseenter', stopAutoSlide);
             container.addEventListener('mouseleave', startAutoSlide);
 
             if(prevBtn) prevBtn.addEventListener('click', () => moveSlide(-1));
             if(nextBtn) nextBtn.addEventListener('click', () => moveSlide(1));
 
-            dots.forEach(dot => {
+            dots.forEach((dot, idx) => {
                 dot.addEventListener('click', function() {
-                    const idx = parseInt(this.getAttribute('data-index'));
-                    goToSlide(idx);
+                    if (isAnimating) return;
+                    currentIndex = idx;
+                    goToSlide(currentIndex, true);
                 });
             });
 
+            // Khởi động chạy tự động
             startAutoSlide();
         });
     });
