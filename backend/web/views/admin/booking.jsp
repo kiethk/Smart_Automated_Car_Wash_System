@@ -2,7 +2,24 @@
 <%@page import="java.util.Locale"%>
 <%@page import="dto.AdminBookingView"%>
 <%@page import="java.util.List"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<%!
+    private String escapeHtml(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toString()
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+%>
 
 <%
     List<AdminBookingView> bookings = (List<AdminBookingView>) request.getAttribute("BOOKINGS");
@@ -93,6 +110,7 @@
                                         <option value="pending">Pending</option>
                                         <option value="paid">Paid</option>
                                         <option value="failed">Failed</option>
+                                        <option value="cancelled">Cancelled</option>
                                     </select>
 
                                     <button type="button"
@@ -160,23 +178,11 @@
                                         </th>
 
                                         <th class="px-5 py-3 text-left font-bold">
-                                            Vehicle
-                                        </th>
-
-                                        <th class="px-5 py-3 text-left font-bold">
                                             <button type="button"
-                                                    onclick="sortBookings('date')"
+                                                    onclick="sortBookings('schedule')"
                                                     class="inline-flex items-center gap-1 hover:text-indigo-600 transition-colors">
-                                                Schedule <span id="sort-date">↕</span>
+                                                Schedule <span id="sort-schedule">↕</span>
                                             </button>
-                                        </th>
-
-                                        <th class="px-5 py-3 text-left font-bold">
-                                            Services
-                                        </th>
-
-                                        <th class="px-5 py-3 text-center font-bold">
-                                            Payment
                                         </th>
 
                                         <th class="px-5 py-3 text-right font-bold">
@@ -200,7 +206,7 @@
                                 <tbody id="bookingTableBody" class="divide-y divide-slate-100">
                                     <% if (bookings == null || bookings.isEmpty()) { %>
                                     <tr>
-                                        <td colspan="9" class="px-5 py-10 text-center text-slate-400">
+                                        <td colspan="6" class="px-5 py-10 text-center text-slate-400">
                                             No bookings found.
                                         </td>
                                     </tr>
@@ -211,15 +217,55 @@
                                             String paymentStatus = b.getPaymentStatus() != null ? b.getPaymentStatus().toLowerCase() : "pending";
                                             String paymentMethod = b.getPaymentMethod() != null ? b.getPaymentMethod() : "N/A";
                                             String bookingDate = b.getBookingDate() != null ? b.getBookingDate().toString() : "";
+                                            String bookingSchedule = bookingDate + (b.getSlotTime() != null ? " " + b.getSlotTime() : "");
+                                            String vehicleName = (b.getVehicleBrand() != null ? b.getVehicleBrand() : "Unknown Brand")
+                                                    + " - "
+                                                    + (b.getVehicleModel() != null ? b.getVehicleModel() : "Unknown Model");
+                                            String serviceDetails = b.getServiceDetails() != null ? b.getServiceDetails() : "";
+                                            String serviceNames = b.getServiceNames() != null ? b.getServiceNames() : "No service";
+                                            String notes = b.getNotes() != null ? b.getNotes() : "";
+                                            String promotionCode = b.getPromotionCode() != null ? b.getPromotionCode() : "";
                                     %>
 
-                                    <tr class="booking-row hover:bg-slate-50 transition-colors"
+                                    <tr class="booking-row cursor-pointer hover:bg-slate-50 transition-colors"
+                                        onclick="openBookingDetailFromRow(this)"
                                         data-booking-status="<%= bookingStatus%>"
                                         data-payment-status="<%= paymentStatus%>"
                                         data-booking-date="<%= bookingDate%>"
+                                        data-schedule-sort="<%= escapeHtml(bookingSchedule)%>"
                                         data-booking-id="<%= b.getBookingId()%>"
                                         data-customer="<%= b.getCustomerName() != null ? b.getCustomerName().toLowerCase() : ""%>"
-                                        data-total="<%= b.getTotalAmount()%>">
+                                        data-total="<%= b.getTotalAmount()%>"
+                                        data-search="<%= escapeHtml((b.getBookingId() + " "
+                                                + (b.getCustomerName() != null ? b.getCustomerName() : "") + " "
+                                                + (b.getCustomerPhone() != null ? b.getCustomerPhone() : "") + " "
+                                                + (b.getCustomerEmail() != null ? b.getCustomerEmail() : "") + " "
+                                                + vehicleName + " "
+                                                + (b.getPlateNumber() != null ? b.getPlateNumber() : "") + " "
+                                                + (b.getVehicleType() != null ? b.getVehicleType() : "") + " "
+                                                + serviceNames + " "
+                                                + serviceDetails + " "
+                                                + bookingSchedule + " "
+                                                + paymentMethod + " "
+                                                + paymentStatus + " "
+                                                + promotionCode + " "
+                                                + notes).toLowerCase())%>"
+                                        data-customer-name="<%= escapeHtml(b.getCustomerName())%>"
+                                        data-customer-phone="<%= escapeHtml(b.getCustomerPhone())%>"
+                                        data-customer-email="<%= escapeHtml(b.getCustomerEmail())%>"
+                                        data-vehicle-name="<%= escapeHtml(vehicleName)%>"
+                                        data-plate-number="<%= escapeHtml(b.getPlateNumber())%>"
+                                        data-vehicle-type="<%= escapeHtml(b.getVehicleType())%>"
+                                        data-service-names="<%= escapeHtml(serviceNames)%>"
+                                        data-service-details="<%= escapeHtml(serviceDetails)%>"
+                                        data-service-total="<%= b.getServiceTotal()%>"
+                                        data-payment-method="<%= escapeHtml(paymentMethod)%>"
+                                        data-payment-amount="<%= b.getTotalAmount()%>"
+                                        data-promotion-code="<%= escapeHtml(promotionCode)%>"
+                                        data-notes="<%= escapeHtml(notes)%>"
+                                        data-created-at="<%= escapeHtml(b.getCreatedAt() != null ? b.getCreatedAt().toString() : "")%>"
+                                        data-payment-status-text="<%= escapeHtml(paymentStatus)%>"
+                                        >
 
                                         <td class="px-5 py-4 min-w-[120px]">
                                             <p class="font-extrabold text-slate-900">
@@ -242,20 +288,6 @@
                                             </p>
                                         </td>
 
-                                        <td class="px-5 py-4 min-w-[220px]">
-                                            <p class="booking-plate font-bold text-slate-900">
-                                                <%= b.getPlateNumber() != null ? b.getPlateNumber() : "No plate"%>
-                                            </p>
-                                            <p class="text-xs text-slate-500 mt-1">
-                                                <%= b.getVehicleBrand() != null ? b.getVehicleBrand() : "Unknown Brand"%>
-                                                -
-                                                <%= b.getVehicleModel() != null ? b.getVehicleModel() : "Unknown Model"%>
-                                            </p>
-                                            <p class="text-xs text-slate-400 mt-1">
-                                                <%= b.getVehicleType() != null ? b.getVehicleType() : "Unknown type"%>
-                                            </p>
-                                        </td>
-
                                         <td class="px-5 py-4 min-w-[160px]">
                                             <p class="font-bold text-slate-900">
                                                 <%= bookingDate%>
@@ -263,39 +295,6 @@
                                             <p class="text-xs text-slate-500 mt-1">
                                                 <%= b.getSlotTime() != null ? b.getSlotTime() : "No slot"%>
                                             </p>
-                                            <p class="text-xs text-slate-400 mt-1">
-                                                Bay: <%= b.getBayName() != null ? b.getBayName() : "N/A"%>
-                                            </p>
-                                        </td>
-
-                                        <td class="px-5 py-4 min-w-[220px]">
-                                            <p class="booking-service font-bold text-slate-900">
-                                                <%= b.getServiceNames() != null ? b.getServiceNames() : "No service"%>
-                                            </p>
-                                            <p class="text-xs text-slate-500 mt-1">
-                                                Service total: <%= currencyFormat.format(b.getServiceTotal())%> VND
-                                            </p>
-                                            <% if (b.getPromotionCode() != null) {%>
-                                            <p class="text-xs text-indigo-500 font-bold mt-1">
-                                                Promo: <%= b.getPromotionCode()%>
-                                            </p>
-                                            <% }%>
-                                        </td>
-
-                                        <td class="px-5 py-4 text-center min-w-[150px]">
-                                            <p class="font-bold text-slate-700 uppercase text-xs">
-                                                <%= paymentMethod%>
-                                            </p>
-
-                                            <% if ("paid".equals(paymentStatus)) { %>
-                                            <span class="inline-flex mt-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold">
-                                                Paid
-                                            </span>
-                                            <% } else { %>
-                                            <span class="inline-flex mt-2 px-3 py-1 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">
-                                                Pending
-                                            </span>
-                                            <% }%>
                                         </td>
 
                                         <td class="px-5 py-4 text-right min-w-[150px]">
@@ -333,69 +332,135 @@
                                             <span class="inline-flex px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">
                                                 <%= bookingStatus%>
                                             </span>
-                                            <% } %>
+                                            <% }%>
                                         </td>
 
-                                        <td class="px-5 py-4 min-w-[260px]">
-                                            <div class="flex items-center justify-end gap-2 flex-wrap">
+                                        <td class="px-5 py-4 text-right relative"
+                                            onclick="event.stopPropagation()">
 
-                                                <% if ("pending".equals(bookingStatus)) {%>
-                                                <form action="${pageContext.request.contextPath}/admin/bookings"
-                                                      method="post"
-                                                      onsubmit="return confirm('Accept this booking?');">
-                                                    <input type="hidden" name="action" value="accept">
-                                                    <input type="hidden" name="bookingId" value="<%= b.getBookingId()%>">
-                                                    <button type="submit"
-                                                            class="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-bold hover:bg-indigo-100 transition-all">
-                                                        Accept
+                                            <div class="relative inline-block">
+
+                                                <button type="button"
+                                                        onclick="event.stopPropagation();
+                                                                toggleBookingDropdown('dropdown-<%= b.getBookingId()%>')"
+                                                        class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
+
+                                                    ⋮
+                                                </button>
+
+                                                <div id="dropdown-<%= b.getBookingId()%>"
+                                                     class="hidden absolute right-0 top-full mt-2
+                                                     w-44 bg-white rounded-xl shadow-lg
+                                                     border border-slate-100 z-50">
+
+                                                    <!-- View Detail -->
+                                                    <button type="button"
+                                                            onclick="event.stopPropagation();
+                                                                    openBookingDetailFromRow(this.closest('tr'))"
+                                                            class="block w-full px-4 py-3 text-left hover:bg-slate-50">
+
+                                                        View Detail
                                                     </button>
-                                                </form>
-                                                <% } %>
 
-                                                <% if ("accepted".equals(bookingStatus) && !"paid".equals(paymentStatus)) {%>
-                                                <form action="${pageContext.request.contextPath}/admin/bookings"
-                                                      method="post"
-                                                      onsubmit="return confirm('Confirm this payment as paid?');">
-                                                    <input type="hidden" name="action" value="confirmPaid">
-                                                    <input type="hidden" name="bookingId" value="<%= b.getBookingId()%>">
-                                                    <button type="submit"
-                                                            class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-xs font-bold hover:bg-emerald-100 transition-all">
-                                                        Confirm Paid
-                                                    </button>
-                                                </form>
-                                                <% } %>
+                                                    <% if ("pending".equalsIgnoreCase(bookingStatus)) {%>
 
-                                                <% if ("accepted".equals(bookingStatus) && "paid".equals(paymentStatus)) {%>
-                                                <form action="${pageContext.request.contextPath}/admin/bookings"
-                                                      method="post"
-                                                      onsubmit="return confirm('Complete this booking? Customer stats and tier may be updated.');">
-                                                    <input type="hidden" name="action" value="complete">
-                                                    <input type="hidden" name="bookingId" value="<%= b.getBookingId()%>">
-                                                    <button type="submit"
-                                                            class="px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-bold hover:bg-blue-100 transition-all">
-                                                        Complete
-                                                    </button>
-                                                </form>
-                                                <% } %>
+                                                    <form action="<%=request.getContextPath()%>/admin/bookings"
+                                                          method="post"
+                                                          onclick="event.stopPropagation()">
 
-                                                <% if ("pending".equals(bookingStatus) || "accepted".equals(bookingStatus)) {%>
-                                                <form action="${pageContext.request.contextPath}/admin/bookings"
-                                                      method="post"
-                                                      onsubmit="return confirm('Cancel this booking?');">
-                                                    <input type="hidden" name="action" value="cancel">
-                                                    <input type="hidden" name="bookingId" value="<%= b.getBookingId()%>">
-                                                    <button type="submit"
-                                                            class="px-3 py-2 rounded-xl bg-red-50 text-red-500 text-xs font-bold hover:bg-red-100 transition-all">
-                                                        Cancel
-                                                    </button>
-                                                </form>
-                                                <% } %>
+                                                        <input type="hidden"
+                                                               name="bookingId"
+                                                               value="<%= b.getBookingId()%>">
 
-                                                <% if ("completed".equals(bookingStatus) || "cancelled".equals(bookingStatus)) { %>
-                                                <span class="px-3 py-2 rounded-xl bg-slate-100 text-slate-400 text-xs font-bold">
-                                                    No Action
-                                                </span>
-                                                <% } %>
+                                                        <input type="hidden"
+                                                               name="action"
+                                                               value="accept">
+
+                                                        <button type="submit"
+                                                                class="block w-full px-4 py-3 text-left text-indigo-600 hover:bg-indigo-50">
+
+                                                            Accept
+                                                        </button>
+
+                                                    </form>
+
+                                                    <form action="<%=request.getContextPath()%>/AdminPaymentController"
+                                                          method="get"
+                                                          onclick="event.stopPropagation()">
+
+                                                        <input type="hidden"
+                                                               name="bookingId"
+                                                               value="<%= b.getBookingId()%>">
+
+                                                        <button type="submit"
+                                                                class="block w-full px-4 py-3 text-left text-emerald-600 hover:bg-emerald-50">
+
+                                                            Complete
+                                                        </button>
+
+                                                    </form>
+
+                                                    <form action="<%=request.getContextPath()%>/admin/bookings"
+                                                          method="post"
+                                                          onclick="event.stopPropagation()">
+
+                                                        <input type="hidden"
+                                                               name="bookingId"
+                                                               value="<%= b.getBookingId()%>">
+
+                                                        <input type="hidden"
+                                                               name="action"
+                                                               value="cancel">
+
+                                                        <button type="submit"
+                                                                class="block w-full px-4 py-3 text-left text-red-600 hover:bg-red-50">
+
+                                                            Cancel
+                                                        </button>
+
+                                                    </form>
+
+                                                    <% } else if ("accepted".equalsIgnoreCase(bookingStatus)) {%>
+
+                                                    <form action="<%=request.getContextPath()%>/admin/bookings"
+                                                          method="post"
+                                                          onclick="event.stopPropagation()">
+
+                                                        <input type="hidden"
+                                                               name="bookingId"
+                                                               value="<%= b.getBookingId()%>">
+
+                                                        <input type="hidden"
+                                                               name="action"
+                                                               value="deny">
+
+                                                        <button type="submit"
+                                                                class="block w-full px-4 py-3 text-left text-amber-600 hover:bg-amber-50">
+
+                                                            Deny
+                                                        </button>
+
+                                                    </form>
+
+                                                    <form action="<%=request.getContextPath()%>/AdminPaymentController"
+                                                          method="get"
+                                                          onclick="event.stopPropagation()">
+
+                                                        <input type="hidden"
+                                                               name="bookingId"
+                                                               value="<%= b.getBookingId()%>">
+
+                                                        <button type="submit"
+                                                                class="block w-full px-4 py-3 text-left text-emerald-600 hover:bg-emerald-50">
+
+                                                            Complete
+                                                        </button>
+
+                                                    </form>
+
+                                                    <% } %>
+
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
@@ -410,6 +475,109 @@
             </div>
         </div>
 
+        <div id="bookingDetailModal"
+             class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+             onclick="closeBookingDetail(event)">
+            <div class="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl"
+                 onclick="event.stopPropagation()">
+                <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Booking Detail</p>
+                        <h3 class="mt-1 text-xl font-extrabold text-slate-900">
+                            Booking #<span id="modalBookingId"></span>
+                        </h3>
+                        <p id="modalBookingMeta" class="mt-1 text-sm text-slate-500"></p>
+                    </div>
+                    <button type="button"
+                            onclick="closeBookingDetail()"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors">
+                        ×
+                    </button>
+                </div>
+
+                <div class="max-h-[calc(90vh-92px)] overflow-y-auto p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Booking</p>
+                            <p id="modalBookingSchedule" class="mt-2 text-sm font-semibold text-slate-900"></p>
+                            <p id="modalBookingStatus" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold"></p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Total</p>
+                            <p id="modalBookingTotal" class="mt-2 text-2xl font-extrabold text-slate-900"></p>
+                            <p id="modalBookingCreatedAt" class="mt-2 text-sm text-slate-500"></p>
+                        </div>
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Payment</p>
+                            <p id="modalPaymentMethod" class="mt-2 text-sm font-semibold text-slate-900 uppercase"></p>
+                            <p id="modalPaymentStatus" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold"></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h4 class="text-sm font-extrabold text-slate-900">Customer Information</h4>
+                            <div class="mt-4 space-y-3 text-sm">
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500">Name</span>
+                                    <span id="modalCustomerName" class="text-right font-semibold text-slate-900"></span>
+                                </div>
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500">Phone</span>
+                                    <span id="modalCustomerPhone" class="text-right font-semibold text-slate-900"></span>
+                                </div>
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500">Email</span>
+                                    <span id="modalCustomerEmail" class="text-right font-semibold text-slate-900"></span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h4 class="text-sm font-extrabold text-slate-900">Vehicle Information</h4>
+                            <div class="mt-4 space-y-3 text-sm">
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500">Vehicle name</span>
+                                    <span id="modalVehicleName" class="text-right font-semibold text-slate-900"></span>
+                                </div>
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500">Plate number</span>
+                                    <span id="modalPlateNumber" class="text-right font-semibold text-slate-900"></span>
+                                </div>
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500">Vehicle type</span>
+                                    <span id="modalVehicleType" class="text-right font-semibold text-slate-900"></span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h4 class="text-sm font-extrabold text-slate-900">Service Information</h4>
+                            <p id="modalServiceSummary" class="mt-3 text-sm text-slate-500"></p>
+                            <ul id="modalServiceList" class="mt-4 space-y-2 text-sm"></ul>
+                            <div class="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm">
+                                <span class="font-semibold text-slate-500">Service total</span>
+                                <span id="modalServiceTotal" class="font-bold text-slate-900"></span>
+                            </div>
+                        </section>
+
+                        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                            <div>
+                                <h4 class="text-sm font-extrabold text-slate-900">Promotion Information</h4>
+                                <p id="modalPromotionCode" class="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700"></p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-extrabold text-slate-900">Notes</h4>
+                                <p id="modalNotes" class="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700"></p>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
             function filterBookings() {
                 const keyword = document.getElementById("bookingSearch").value.toLowerCase();
@@ -421,20 +589,12 @@
                 const rows = document.querySelectorAll(".booking-row");
 
                 rows.forEach(row => {
-                    const customer = row.querySelector(".booking-customer").innerText.toLowerCase();
-                    const phone = row.querySelector(".booking-phone").innerText.toLowerCase();
-                    const plate = row.querySelector(".booking-plate").innerText.toLowerCase();
-                    const service = row.querySelector(".booking-service").innerText.toLowerCase();
-
                     const bookingStatus = row.getAttribute("data-booking-status");
                     const paymentStatus = row.getAttribute("data-payment-status");
                     const bookingDate = row.getAttribute("data-booking-date");
+                    const searchableText = (row.getAttribute("data-search") || "").toLowerCase();
 
-                    const matchesKeyword =
-                            customer.includes(keyword)
-                            || phone.includes(keyword)
-                            || plate.includes(keyword)
-                            || service.includes(keyword);
+                    const matchesKeyword = searchableText.includes(keyword);
 
                     const matchesBookingStatus =
                             bookingStatusFilter === "all"
@@ -514,8 +674,8 @@
                     case "customer":
                         return row.getAttribute("data-customer") || "";
 
-                    case "date":
-                        return row.getAttribute("data-booking-date") || "";
+                    case "schedule":
+                        return row.getAttribute("data-schedule-sort") || row.getAttribute("data-booking-date") || "";
 
                     case "total":
                         return Number(row.getAttribute("data-total")) || 0;
@@ -529,7 +689,7 @@
                 const keys = [
                     "booking-id",
                     "customer",
-                    "date",
+                    "schedule",
                     "total"
                 ];
 
@@ -557,6 +717,266 @@
 
                 filterBookings();
             }
+
+            function toggleBookingMenu(event, bookingId) {
+                event.stopPropagation();
+
+                const menu = document.getElementById("booking-menu-" + bookingId);
+                const icon = document.getElementById("booking-menu-icon-" + bookingId);
+                const isHidden = menu && menu.classList.contains("hidden");
+
+                closeAllBookingMenus();
+
+                if (menu && isHidden) {
+                    menu.classList.remove("hidden");
+                    if (icon) {
+                        icon.classList.add("rotate-180");
+                    }
+                }
+            }
+
+            function closeAllBookingMenus() {
+                document.querySelectorAll(".booking-action-menu").forEach(menu => menu.classList.add("hidden"));
+                document.querySelectorAll("[id^='booking-menu-icon-']").forEach(icon => icon.classList.remove("rotate-180"));
+            }
+
+            function openBookingDetailById(bookingId) {
+                const row = document.querySelector('.booking-row[data-booking-id="' + bookingId + '"]');
+                if (row) {
+                    openBookingDetailFromRow(row);
+                }
+            }
+
+            function openBookingDetailFromRow(row) {
+                closeAllBookingMenus();
+
+                const modal = document.getElementById("bookingDetailModal");
+                if (!modal || !row) {
+                    return;
+                }
+
+                const bookingId = row.getAttribute("data-booking-id") || "";
+                const bookingDate = row.getAttribute("data-booking-date") || "N/A";
+                const createdAt = row.getAttribute("data-created-at") || "N/A";
+                const scheduleSort = row.getAttribute("data-schedule-sort") || bookingDate;
+                const bookingStatus = row.getAttribute("data-booking-status") || "pending";
+                const paymentStatus = row.getAttribute("data-payment-status") || "pending";
+                const paymentMethod = row.getAttribute("data-payment-method") || "N/A";
+                const totalAmount = Number(row.getAttribute("data-payment-amount") || row.getAttribute("data-total") || 0);
+                const serviceTotal = Number(row.getAttribute("data-service-total") || 0);
+                const serviceNames = row.getAttribute("data-service-names") || "No service";
+                const serviceDetails = row.getAttribute("data-service-details") || "";
+                const promotionCode = row.getAttribute("data-promotion-code") || "N/A";
+                const notes = row.getAttribute("data-notes") || "No notes";
+
+                const customerName = row.getAttribute("data-customer-name") || "N/A";
+                const customerPhone = row.getAttribute("data-customer-phone") || "N/A";
+                const customerEmail = row.getAttribute("data-customer-email") || "N/A";
+                const vehicleName = row.getAttribute("data-vehicle-name") || "N/A";
+                const plateNumber = row.getAttribute("data-plate-number") || "N/A";
+                const vehicleType = row.getAttribute("data-vehicle-type") || "N/A";
+
+                document.getElementById("modalBookingId").innerText = bookingId;
+                document.getElementById("modalBookingMeta").innerText = "Created at: " + createdAt;
+                document.getElementById("modalBookingSchedule").innerText = scheduleSort;
+                document.getElementById("modalBookingTotal").innerText = formatCurrency(totalAmount) + " VND";
+                document.getElementById("modalBookingCreatedAt").innerText = "Schedule: " + scheduleSort;
+
+                document.getElementById("modalCustomerName").innerText = customerName;
+                document.getElementById("modalCustomerPhone").innerText = customerPhone;
+                document.getElementById("modalCustomerEmail").innerText = customerEmail;
+
+                document.getElementById("modalVehicleName").innerText = vehicleName;
+                document.getElementById("modalPlateNumber").innerText = plateNumber;
+                document.getElementById("modalVehicleType").innerText = vehicleType;
+
+                document.getElementById("modalServiceSummary").innerText = serviceNames;
+                document.getElementById("modalServiceTotal").innerText = formatCurrency(serviceTotal) + " VND";
+                document.getElementById("modalPromotionCode").innerText = promotionCode && promotionCode !== "N/A" ? promotionCode : "No promotion";
+                document.getElementById("modalNotes").innerText = notes;
+
+                setStatusBadge("modalBookingStatus", bookingStatus, true);
+                setPaymentBadge("modalPaymentStatus", paymentStatus);
+                document.getElementById("modalPaymentMethod").innerText = paymentMethod;
+
+                renderServiceDetails(serviceDetails);
+
+                modal.classList.remove("hidden");
+            }
+
+            function closeBookingDetail(event) {
+                if (event && event.target !== event.currentTarget) {
+                    return;
+                }
+
+                const modal = document.getElementById("bookingDetailModal");
+                if (modal) {
+                    modal.classList.add("hidden");
+                }
+            }
+
+            function renderServiceDetails(serviceDetails) {
+                const list = document.getElementById("modalServiceList");
+                if (!list) {
+                    return;
+                }
+
+                list.innerHTML = "";
+
+                const items = (serviceDetails || "")
+                        .split("||")
+                        .map(item => item.trim())
+                        .filter(Boolean);
+
+                if (!items.length) {
+                    const emptyItem = document.createElement("li");
+                    emptyItem.className = "rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400";
+                    emptyItem.innerText = "No service detail available.";
+                    list.appendChild(emptyItem);
+                    return;
+                }
+
+                items.forEach(item => {
+                    const li = document.createElement("li");
+                    li.className = "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700";
+                    li.innerText = item;
+                    list.appendChild(li);
+                });
+            }
+
+            function setStatusBadge(elementId, status, compact) {
+                const element = document.getElementById(elementId);
+                if (!element) {
+                    return;
+                }
+
+                const normalized = (status || "pending").toLowerCase();
+                element.className = "mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold";
+
+                if (normalized === "pending") {
+                    element.classList.add("bg-amber-50", "text-amber-600");
+                    element.innerText = compact ? "Pending" : "Pending";
+                } else if (normalized === "accepted") {
+                    element.classList.add("bg-indigo-50", "text-indigo-600");
+                    element.innerText = compact ? "Accepted" : "Accepted";
+                } else if (normalized === "completed") {
+                    element.classList.add("bg-emerald-50", "text-emerald-600");
+                    element.innerText = compact ? "Completed" : "Completed";
+                } else if (normalized === "cancelled") {
+                    element.classList.add("bg-red-50", "text-red-500");
+                    element.innerText = compact ? "Cancelled" : "Cancelled";
+                } else {
+                    element.classList.add("bg-slate-100", "text-slate-500");
+                    element.innerText = status || "Unknown";
+                }
+            }
+
+            function setPaymentBadge(elementId, status) {
+                const element = document.getElementById(elementId);
+                if (!element) {
+                    return;
+                }
+
+                const normalized = (status || "pending").toLowerCase();
+                element.className = "mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold";
+
+                if (normalized === "paid") {
+                    element.classList.add("bg-emerald-50", "text-emerald-600");
+                    element.innerText = "Paid";
+                } else if (normalized === "cancelled") {
+                    element.classList.add("bg-red-50", "text-red-500");
+                    element.innerText = "Cancelled";
+                } else {
+                    element.classList.add("bg-amber-50", "text-amber-600");
+                    element.innerText = "Pending";
+                }
+            }
+
+            function formatCurrency(value) {
+                return new Intl.NumberFormat("vi-VN").format(Number(value) || 0);
+            }
+
+            document.addEventListener("click", function () {
+                closeAllBookingMenus();
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeAllBookingMenus();
+                    closeBookingDetail();
+                }
+            });
+
+
+// Add JavaScript to handle dropdown toggle
+            document.addEventListener('DOMContentLoaded', function () {
+                // Get all menu buttons
+                const menuButtons = document.querySelectorAll('[id^="menu-button-"]');
+
+                menuButtons.forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const bookingId = this.id.split('-')[2];
+                        const menu = document.getElementById('menu-' + bookingId);
+
+                        // Close other menus
+                        document.querySelectorAll('[id^="menu-"]').forEach(m => {
+                            if (m.id !== menu.id) {
+                                m.style.display = 'none';
+                            }
+                        });
+
+                        // Toggle current menu
+                        if (menu.style.display === 'none') {
+                            menu.style.display = 'block';
+                        } else {
+                            menu.style.display = 'none';
+                        }
+                    });
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.inline-block')) {
+                        document.querySelectorAll('[id^="menu-"]').forEach(menu => {
+                            menu.style.display = 'none';
+                        });
+                    }
+                });
+            });
+
+            function toggleBookingDropdown(id) {
+
+                event.stopPropagation();
+
+                document.querySelectorAll("[id^='dropdown-']")
+                        .forEach(menu => {
+                            if (menu.id !== id) {
+                                menu.classList.add("hidden");
+                            }
+                        });
+
+                document.getElementById(id)
+                        .classList.toggle("hidden");
+            }
+
+            document.addEventListener("click", function () {
+
+                document.querySelectorAll("[id^='dropdown-']")
+                        .forEach(menu => {
+                            menu.classList.add("hidden");
+                        });
+
+            });
+
+            document.addEventListener("click", function () {
+
+                document.querySelectorAll("[id^='dropdown-']")
+                        .forEach(menu => {
+                            menu.classList.add("hidden");
+                        });
+
+            });
         </script>
     </body>
 </html>

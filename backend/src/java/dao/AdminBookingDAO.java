@@ -1,15 +1,20 @@
 package dao;
 
 import dto.AdminBookingView;
+import dto.User;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import utils.DBUtils;
 
 public class AdminBookingDAO {
+
+    private UserDAO userDAO = new UserDAO();
 
     public List<AdminBookingView> getAllBookingsForAdmin() {
         List<AdminBookingView> list = new ArrayList<>();
@@ -25,6 +30,7 @@ public class AdminBookingDAO {
                 + "bay.bay_name, "
                 + "p.code AS promotion_code, "
                 + "svc.service_names, "
+                + "svc.service_details, "
                 + "ISNULL(svc.service_total, 0) AS service_total, "
                 + "pay.payment_method, pay.payment_status, pay.paid_at "
                 + "FROM Booking b "
@@ -41,6 +47,7 @@ public class AdminBookingDAO {
                 + "    SELECT "
                 + "        bs.booking_id, "
                 + "        STRING_AGG(s.service_name, ', ') AS service_names, "
+                + "        STRING_AGG(CONCAT(s.service_name, ' - ', CONVERT(VARCHAR(50), bs.price), ' VND'), ' || ') AS service_details, "
                 + "        SUM(bs.price * ISNULL(bs.quantity, 1)) AS service_total "
                 + "    FROM BookingService bs "
                 + "    JOIN Service s ON bs.service_id = s.service_id "
@@ -48,7 +55,9 @@ public class AdminBookingDAO {
                 + ") svc ON b.booking_id = svc.booking_id "
                 + "ORDER BY b.created_at DESC, b.booking_id DESC";
 
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 AdminBookingView booking = mapBookingView(rs);
@@ -64,41 +73,39 @@ public class AdminBookingDAO {
     }
 
     public boolean acceptBooking(int bookingId) {
-        String sql = "UPDATE Booking "
+        String sqlUpdateBooking = "UPDATE Booking "
                 + "SET status = N'accepted' "
                 + "WHERE booking_id = ? AND status = N'pending'";
-
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, bookingId);
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            System.out.println("Error at AdminBookingDAO.acceptBooking(): " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-    public boolean markPaymentPaidOnly(int bookingId) {
-        String sql = "UPDATE Payment "
+        String sqlUpdatePayment = "UPDATE Payment "
                 + "SET payment_status = N'paid', "
                 + "    paid_at = CASE WHEN paid_at IS NULL THEN GETDATE() ELSE paid_at END, "
                 + "    transaction_id = CASE "
                 + "        WHEN transaction_id IS NULL THEN CONCAT('ADMIN_PAID_', booking_id, '_', DATEDIFF_BIG(MILLISECOND, '1970-01-01', SYSUTCDATETIME())) "
                 + "        ELSE transaction_id "
                 + "    END "
-                + "WHERE booking_id = ? "
-                + "AND ISNULL(payment_status, N'pending') <> N'paid'";
+                + "WHERE booking_id = ? AND ISNULL(payment_status, N'pending') = N'pending'";
 
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection()) {
+            conn.setAutoCommit(false);
 
-            ps.setInt(1, bookingId);
-            return ps.executeUpdate() > 0;
+            try (PreparedStatement psBooking = conn.prepareStatement(sqlUpdateBooking)) {
+                psBooking.setInt(1, bookingId);
+                if (psBooking.executeUpdate() <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            try (PreparedStatement psPayment = conn.prepareStatement(sqlUpdatePayment)) {
+                psPayment.setInt(1, bookingId);
+                psPayment.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
 
         } catch (Exception e) {
-            System.out.println("Error at AdminBookingDAO.markPaymentPaidOnly(): " + e.getMessage());
+            System.out.println("Error at AdminBookingDAO.acceptBooking(): " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -115,18 +122,74 @@ public class AdminBookingDAO {
     }
 
     public boolean cancelBooking(int bookingId) {
-        String sql = "UPDATE Booking "
+        String sqlUpdateBooking = "UPDATE Booking "
                 + "SET status = N'cancelled' "
                 + "WHERE booking_id = ? "
                 + "AND status IN (N'pending', N'accepted')";
+        String sqlUpdatePayment = "UPDATE Payment "
+                + "SET payment_status = N'cancelled', "
+                + "    paid_at = NULL, "
+                + "    transaction_id = NULL "
+                + "WHERE booking_id = ?";
 
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection()) {
+            conn.setAutoCommit(false);
 
-            ps.setInt(1, bookingId);
-            return ps.executeUpdate() > 0;
+            try (PreparedStatement psBooking = conn.prepareStatement(sqlUpdateBooking)) {
+                psBooking.setInt(1, bookingId);
+                if (psBooking.executeUpdate() <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            try (PreparedStatement psPayment = conn.prepareStatement(sqlUpdatePayment)) {
+                psPayment.setInt(1, bookingId);
+                psPayment.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
 
         } catch (Exception e) {
             System.out.println("Error at AdminBookingDAO.cancelBooking(): " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean denyBooking(int bookingId) {
+        String sqlUpdateBooking = "UPDATE Booking "
+                + "SET status = N'pending' "
+                + "WHERE booking_id = ? AND status = N'accepted'";
+        String sqlUpdatePayment = "UPDATE Payment "
+                + "SET payment_status = N'pending', "
+                + "    paid_at = NULL, "
+                + "    transaction_id = NULL "
+                + "WHERE booking_id = ? AND ISNULL(payment_status, N'pending') = N'paid'";
+
+        try (Connection conn = DBUtils.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement psBooking = conn.prepareStatement(sqlUpdateBooking)) {
+                psBooking.setInt(1, bookingId);
+                if (psBooking.executeUpdate() <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            try (PreparedStatement psPayment = conn.prepareStatement(sqlUpdatePayment)) {
+                psPayment.setInt(1, bookingId);
+                psPayment.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (Exception e) {
+            System.out.println("Error at AdminBookingDAO.denyBooking(): " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -139,11 +202,11 @@ public class AdminBookingDAO {
                 + "LEFT JOIN Payment p ON b.booking_id = p.booking_id "
                 + "WHERE b.booking_id = ?";
 
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, bookingId);
 
-            try ( ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String bookingStatus = rs.getString("status");
                     String paymentStatus = rs.getString("payment_status");
@@ -191,6 +254,7 @@ public class AdminBookingDAO {
         booking.setPromotionCode(rs.getString("promotion_code"));
 
         booking.setServiceNames(rs.getString("service_names"));
+        booking.setServiceDetails(rs.getString("service_details"));
         booking.setServiceTotal(rs.getLong("service_total"));
 
         booking.setPaymentMethod(rs.getString("payment_method"));
@@ -198,5 +262,32 @@ public class AdminBookingDAO {
         booking.setPaidAt(rs.getTimestamp("paid_at"));
 
         return booking;
+    }
+
+    public User getUserByBookingId(int bookingId) throws ClassNotFoundException {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        User user = null;
+
+        try {
+            conn = DBUtils.getConnection();
+            String sql = "SELECT c.user_id "
+                    + "FROM Booking b "
+                    + "JOIN Customer c ON b.customer_id = c.customer_id "
+                    + "WHERE b.booking_id = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, bookingId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int userId = rs.getInt("user_id");
+                user = userDAO.getUserById(userId);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return user;
     }
 }
