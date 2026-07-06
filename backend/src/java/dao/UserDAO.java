@@ -2,7 +2,6 @@ package dao;
 
 import dto.User;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import utils.DBUtils;
@@ -12,9 +11,9 @@ public class UserDAO {
     public User getUserByEmail(String email) {
         String sql = "SELECT user_id, full_name, email, phone, password, is_active, created_at, role_id, avatar_url "
                 + "FROM [User] WHERE email = ? AND is_active = 1";
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
-            try ( ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new User(
                             rs.getInt("user_id"),
@@ -25,8 +24,7 @@ public class UserDAO {
                             rs.getInt("is_active"),
                             rs.getDate("created_at"),
                             rs.getInt("role_id"),
-                            rs.getString("avatar_url")
-                    );
+                            rs.getString("avatar_url"));
                 }
             }
         } catch (Exception e) {
@@ -73,8 +71,7 @@ public class UserDAO {
                             rs.getInt("is_active"),
                             rs.getDate("created_at"),
                             rs.getInt("role_id"),
-                            rs.getString("avatar_url")
-                    );
+                            rs.getString("avatar_url"));
                 }
             }
         } catch (Exception e) {
@@ -103,10 +100,10 @@ public class UserDAO {
     public User getUserById(int userId) {
         String sql = "SELECT user_id, full_name, email, phone, password, is_active, created_at, role_id, avatar_url "
                 + "FROM [User] WHERE user_id = ? AND is_active = 1";
-        
+
         try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -119,8 +116,7 @@ public class UserDAO {
                             rs.getInt("is_active"),
                             rs.getDate("created_at"),
                             rs.getInt("role_id"),
-                            rs.getString("avatar_url")
-                    );
+                            rs.getString("avatar_url"));
                 }
             }
         } catch (Exception e) {
@@ -166,7 +162,7 @@ public class UserDAO {
 
     public boolean updatePhoneById(int userId, String phone) {
         String sql = "UPDATE [User] SET phone = ? WHERE user_id = ?";
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, phone);
             ps.setInt(2, userId);
             return ps.executeUpdate() > 0;
@@ -178,7 +174,7 @@ public class UserDAO {
 
     public boolean updateAvatarById(int userId, String avatarUrl) {
         String sql = "UPDATE [User] SET avatar_url = ? WHERE user_id = ?";
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, avatarUrl);
             ps.setInt(2, userId);
             return ps.executeUpdate() > 0;
@@ -193,7 +189,7 @@ public class UserDAO {
                 + "SET full_name = ?, phone = ?, avatar_url = ? "
                 + "WHERE user_id = ? AND role_id = 1";
 
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, fullName);
             ps.setString(2, phone);

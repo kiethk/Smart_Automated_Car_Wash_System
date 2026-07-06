@@ -1,12 +1,10 @@
-   
 package dto;
 
-import java.sql.Date;
-import java.sql.Time;
 import java.sql.Timestamp;
 
 public class Booking {
-private int bookingId;
+
+    private int bookingId;
     private String bookingDate; // Sử dụng String để dễ dàng đồng bộ định dạng 'YYYY-MM-DD' với Form HTML/JSP
     private int slotId;
     private long discountAmount;

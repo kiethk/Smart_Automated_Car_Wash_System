@@ -1,6 +1,7 @@
 package controller;
 
 import dao.AdminBookingDAO;
+import dao.NotificationDAO;
 import dto.AdminBookingView;
 import dto.User;
 import java.io.IOException;
@@ -17,7 +18,6 @@ public class AdminBookingController extends HttpServlet {
 
     private boolean isAdmin(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("USER") == null) {
@@ -81,15 +81,51 @@ public class AdminBookingController extends HttpServlet {
             if ("accept".equals(action)) {
                 success = bookingDAO.acceptBooking(bookingId);
                 successMsg = "accepted";
-            } else if ("confirmPaid".equals(action)) {
-                success = bookingDAO.markPaymentPaidOnly(bookingId);
-                successMsg = "paid";
-            } else if ("complete".equals(action)) {
-                success = bookingDAO.completeBooking(bookingId);
-                successMsg = "completed";
+
+                if (success) {
+                    User user = bookingDAO.getUserByBookingId(bookingId);
+                    if (user != null) {
+                        NotificationDAO notiDAO = new NotificationDAO();
+                        boolean isNotificationCreated = notiDAO.createNotification(
+                                user.getUserId(),
+                                "Booking Accepted",
+                                "Your booking has been accepted by the admin.",
+                                "Customer",
+                                bookingId);
+
+                        if (!isNotificationCreated) {
+                            System.out.println("Failed to create notification for accepted booking.");
+                        }
+                    } else {
+                        System.out.println("User not found for booking ID: " + bookingId);
+                    }
+                }
+
             } else if ("cancel".equals(action)) {
                 success = bookingDAO.cancelBooking(bookingId);
                 successMsg = "cancelled";
+
+                if (success) {
+                    User user = bookingDAO.getUserByBookingId(bookingId);
+                    if (user != null) {
+                        NotificationDAO notiDAO = new NotificationDAO();
+                        boolean isNotificationCreated = notiDAO.createNotification(
+                                user.getUserId(),
+                                "Booking Canceled",
+                                "Your booking has been canceled by the admin.",
+                                "Customer",
+                                bookingId);
+
+                        if (!isNotificationCreated) {
+                            System.out.println("Failed to create notification for canceled booking.");
+                        }
+                    } else {
+                        System.out.println("User not found for booking ID: " + bookingId);
+                    }
+                }
+            } else if ("deny".equals(action)) {
+                success = bookingDAO.denyBooking(bookingId);
+                successMsg = "denied";
             } else {
                 response.sendRedirect(request.getContextPath() + "/admin/bookings?error=invalid_action");
                 return;

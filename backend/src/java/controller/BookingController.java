@@ -4,6 +4,7 @@ import dao.BayDAO;
 import dao.BookingDAO;
 import dao.CustomerDAO;
 import dao.PromotionDAO;
+import dao.NotificationDAO;
 import dao.ServiceDAO;
 import dao.SlotDAO;
 import dao.TiersDAO;
@@ -95,8 +96,7 @@ public class BookingController extends HttpServlet {
             List<Slot> allSlotList = sld.getAllSlots();
             List<Promotion> promoList = pd.getAvailablePromotionsForCustomer(
                     loginedCustomer.getCustomerId(),
-                    loginedCustomer.getTierId()
-            );
+                    loginedCustomer.getTierId());
 
             TiersDAO tiersDAO = new TiersDAO();
             Tiers currentTier = tiersDAO.getTierById(loginedCustomer.getTierId());
@@ -245,7 +245,8 @@ public class BookingController extends HttpServlet {
                 long currentBalance = (wallet != null) ? wallet.getBalance() : 0;
 
                 if (wallet == null || currentBalance < totalAmount) {
-                    request.setAttribute("ERROR_MSG", "Tài khoản ví của bạn không đủ số dư để thực hiện giao dịch này. Vui lòng nạp thêm tiền!");
+                    request.setAttribute("ERROR_MSG",
+                            "Tài khoản ví của bạn không đủ số dư để thực hiện giao dịch này. Vui lòng nạp thêm tiền!");
 
                     VehicleDAO vd = new VehicleDAO();
                     ServiceDAO sd = new ServiceDAO();
@@ -259,8 +260,7 @@ public class BookingController extends HttpServlet {
                     request.setAttribute("ALLSLOTLIST", sld.getAllSlots());
                     request.setAttribute("PROMOTIONS", pd.getAvailablePromotionsForCustomer(
                             loginedCustomer.getCustomerId(),
-                            loginedCustomer.getTierId()
-                    ));
+                            loginedCustomer.getTierId()));
                     request.setAttribute("SELECTED_DATE", bookingDate);
 
                     request.getRequestDispatcher("/views/auth/customer/booking.jsp").forward(request, response);
@@ -280,8 +280,26 @@ public class BookingController extends HttpServlet {
                 session.setAttribute("CUSTOMER", refreshedCustomer);
                 session.setAttribute("WALLET", refreshedWallet);
 
-                response.sendRedirect(request.getContextPath() + "/MainController?action=bookingHistory&msg=Booking success!");
-                return; 
+                int userId = refreshedCustomer.getUserId();  // Lấy user ID từ customer
+                String title = "";
+                String content = "";
+                String type = "Customer";
+                Integer referenceId = newBooking.getBookingId();  // Booking ID as reference ID
+
+                if ("wallet".equalsIgnoreCase(paymentMethod)) {
+                    content = "Your booking has been accepted and paid via wallet.";
+                    title = "Booking Confirmed";
+                } else {
+                    content = "Your booking is pending. Please wait for admin approval.";
+                    title = "Booking Pending";
+                }
+
+                NotificationDAO notificationDao = new NotificationDAO();
+                notificationDao.createNotification(userId, title, content, type, referenceId);
+
+                response.sendRedirect(
+                        request.getContextPath() + "/MainController?action=bookingHistory&msg=Booking success!");
+                return;
             } else {
                 request.setAttribute("ERROR_MSG", "Failed to create your booking request. Database processing error.");
                 request.getRequestDispatcher("/views/error.jsp").forward(request, response);
