@@ -11,7 +11,7 @@
     String bayActive = currentUri.contains("/admin/bays") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String slotActive = currentUri.contains("/admin/slots") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String notificationActive = currentUri.contains("/admin/notifications") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
-
+    String monthlyStatsActive = currentUri.contains("/admin/monthly-stats") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
 
 %>
 
@@ -42,6 +42,12 @@
                class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= customerActive%>">
                 <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
                 Customers
+            </a>
+
+            <a href="${pageContext.request.contextPath}/admin/monthly-stats"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= monthlyStatsActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Monthly Stats
             </a>
 
             <a href="${pageContext.request.contextPath}/admin/services"
