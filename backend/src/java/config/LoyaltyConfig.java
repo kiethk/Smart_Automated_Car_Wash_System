@@ -13,6 +13,7 @@ public class LoyaltyConfig {
     public static final int MONTHLY_REVIEW_HOUR = 0;
     public static final int MONTHLY_REVIEW_MINUTE = 5;
 
+
     private LoyaltyConfig() {
         // Prevent object creation
     }
