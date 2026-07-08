@@ -12,7 +12,7 @@
     String slotActive = currentUri.contains("/admin/slots") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String notificationActive = currentUri.contains("/admin/notifications") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String monthlyStatsActive = currentUri.contains("/admin/monthly-stats") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
-
+    String tierActive = currentUri.contains("/admin/tiers") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
 %>
 
 <aside class="w-72 min-h-screen bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-0">
@@ -42,6 +42,12 @@
                class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= customerActive%>">
                 <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
                 Customers
+            </a>
+
+            <a href="${pageContext.request.contextPath}/admin/tiers"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= tierActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Tiers
             </a>
 
             <a href="${pageContext.request.contextPath}/admin/monthly-stats"
