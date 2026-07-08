@@ -384,7 +384,7 @@
 
                                                     </form>
 
-                                                    <form action="<%=request.getContextPath()%>/AdminPaymentController"
+                                                               <form action="<%=request.getContextPath()%>/admin/payments"
                                                           method="get"
                                                           onclick="event.stopPropagation()">
 
@@ -414,7 +414,6 @@
 
                                                         <button type="submit"
                                                                 class="block w-full px-4 py-3 text-left text-red-600 hover:bg-red-50">
-
                                                             Cancel
                                                         </button>
 
@@ -442,7 +441,7 @@
 
                                                     </form>
 
-                                                    <form action="<%=request.getContextPath()%>/AdminPaymentController"
+                                                    <form action="<%=request.getContextPath()%>/admin/payments"
                                                           method="get"
                                                           onclick="event.stopPropagation()">
 
