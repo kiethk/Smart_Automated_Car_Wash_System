@@ -21,7 +21,6 @@ public class Login extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding("UTF-8");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
@@ -51,9 +50,28 @@ public class Login extends HttpServlet {
                 }
 
                 if (user.getRoleId() == 1) {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+
+                    response.sendRedirect(
+                            request.getContextPath()
+                            + "/admin/dashboard");
+
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/MainController?action=dashboard");
+
+                    String redirectUrl
+                            = (String) session.getAttribute("REDIRECT_AFTER_LOGIN");
+
+                    if (redirectUrl != null) {
+
+                        session.removeAttribute("REDIRECT_AFTER_LOGIN");
+
+                        response.sendRedirect(redirectUrl);
+
+                    } else {
+
+                        response.sendRedirect(
+                                request.getContextPath()
+                                + "/MainController?action=dashboard");
+                    }
                 }
             } else {
                 request.setAttribute("ERROR_MSG", "Invalid email or password.");
