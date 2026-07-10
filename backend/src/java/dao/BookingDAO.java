@@ -403,7 +403,7 @@ public class BookingDAO {
     public boolean finishBookingAndCheckTier(int bookingId) {
         String sqlInsertPointHistory = "INSERT INTO LoyaltyPointHistory "
                 + "(points_earned, points_used, transaction_type, description, expired_date, created_at, customer_id) "
-                + "VALUES (?, ?, ?, ?, NULL, GETDATE(), ?)";
+                + "VALUES (?, ?, ?, ?, DATEADD(MONTH, " + config.LoyaltyConfig.POINT_EXPIRY_MONTHS + ", CAST(GETDATE() AS DATE)), GETDATE(), ?)";
 
         String sqlGetInfo = "SELECT b.total_amount, b.customer_id, b.status, p.payment_method, p.payment_status, "
                 + "t.point_multiplier "
