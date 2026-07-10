@@ -33,7 +33,6 @@ public class Register extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding("UTF-8");
 
         // ===== GET DATA =====
         String fullname = request.getParameter("fullName");
