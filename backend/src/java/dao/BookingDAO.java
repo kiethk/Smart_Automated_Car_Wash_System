@@ -52,7 +52,7 @@ public class BookingDAO {
 
         String sqlInsertPointHistory = "INSERT INTO LoyaltyPointHistory "
                 + "(points_earned, points_used, transaction_type, description, expired_date, created_at, customer_id) "
-                + "VALUES (?, ?, ?, ?, NULL, GETDATE(), ?)";
+                + "VALUES (?, ?, ?, ?, DATEADD(MONTH, " + config.LoyaltyConfig.POINT_EXPIRY_MONTHS + ", CAST(GETDATE() AS DATE)), GETDATE(), ?)";
 
         String sqlInsertUsedPointHistory = "INSERT INTO LoyaltyPointHistory "
                 + "(points_earned, points_used, transaction_type, description, expired_date, created_at, customer_id) "
