@@ -19,7 +19,6 @@ public class SlotApiServlet extends HttpServlet {
             throws ServletException, IOException {
 
         response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
 
         String date = request.getParameter("date");
         PrintWriter out = response.getWriter();

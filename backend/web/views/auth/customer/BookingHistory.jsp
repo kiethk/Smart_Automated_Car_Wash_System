@@ -1,3 +1,4 @@
+<%@page import="dao.FeedbackDAO"%>
 <%@page import="dto.User"%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
@@ -235,6 +236,25 @@
                         Cancel Booking
                     </button>
                 </div>
+                <% } else if (status.equalsIgnoreCase("completed")) { %>
+                <div class="flex items-center gap-4">
+                    <button onclick="openBookingDetail(<%= bk.getBookingId()%>)"
+                            class="text-sm text-[#0060ac] hover:text-primary font-bold transition-all">
+                        View Details
+                    </button>
+                    <%-- Check đã feedback chưa --%>        
+                    <% FeedbackDAO feedbackDAO = new FeedbackDAO();
+            if (feedbackDAO.hasFeedback(bk.getBookingId())) { %>
+                    <span class="border border-slate-200 text-slate-400 text-xs font-bold py-1.5 px-4 rounded-lg">
+                        Thank You ✓
+                    </span>
+                    <% } else {%>
+                    <button onclick="openFeedbackModal(<%= bk.getBookingId()%>)"
+                            class="border border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-xs font-bold py-1.5 px-4 rounded-lg transition-colors">
+                        Submit Feedback
+                    </button>
+                    <% } %>
+                </div>
                 <% } else { %>
                 <button onclick="openBookingDetail(<%= bk.getBookingId()%>)"
                         class="text-sm text-[#0060ac] hover:text-primary font-bold transition-all">
@@ -328,7 +348,7 @@
                                 <div>
                                     <p class="text-[10px] text-slate-400 mb-1">📸 Check-in</p>
                                     <% if (bk.getCheckinImageUrl() != null && !bk.getCheckinImageUrl().isEmpty()) {%>
-                                    <img src="${pageContext.request.contextPath}/<%= bk.getCheckinImageUrl()%>"
+                                    <img src="<%= bk.getCheckinImageUrl()%>"
                                          alt="Check-in"
                                          class="rounded-lg border w-full h-[100px] object-cover">
                                     <% } else { %>
@@ -340,7 +360,7 @@
                                 <div>
                                     <p class="text-[10px] text-slate-400 mb-1">📸 Check-out</p>
                                     <% if (bk.getCheckoutImageUrl() != null && !bk.getCheckoutImageUrl().isEmpty()) {%>
-                                    <img src="${pageContext.request.contextPath}/<%= bk.getCheckoutImageUrl()%>"
+                                    <img src="<%= bk.getCheckoutImageUrl()%>"
                                          alt="Check-out"
                                          class="rounded-lg border w-full h-[100px] object-cover">
                                     <% } else { %>
@@ -394,6 +414,66 @@
                 Yes, Cancel
             </a>
         </div>
+    </div>
+</div>
+
+<!-- ===== FEEDBACK MODAL ===== -->
+<div id="feedbackModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay bg-black/40">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-xl p-8 w-full max-w-md mx-4">
+
+        <div class="mb-6">
+            <h3 class="text-xl font-extrabold text-slate-900">Submit Feedback</h3>
+            <p class="text-sm text-slate-400 mt-1">Share your experience with us.</p>
+        </div>
+
+        <form id="feedbackForm" action="${pageContext.request.contextPath}/feedback" method="post" class="space-y-5">
+
+            <input type="hidden" name="bookingId" id="feedbackBookingId" value="">
+
+            <!-- Rating -->
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-3">
+                    Rating <span class="text-red-500">*</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    <span class="rating-star text-4xl cursor-pointer text-slate-200 hover:text-amber-400 transition-colors select-none" data-value="1">★</span>
+                    <span class="rating-star text-4xl cursor-pointer text-slate-200 hover:text-amber-400 transition-colors select-none" data-value="2">★</span>
+                    <span class="rating-star text-4xl cursor-pointer text-slate-200 hover:text-amber-400 transition-colors select-none" data-value="3">★</span>
+                    <span class="rating-star text-4xl cursor-pointer text-slate-200 hover:text-amber-400 transition-colors select-none" data-value="4">★</span>
+                    <span class="rating-star text-4xl cursor-pointer text-slate-200 hover:text-amber-400 transition-colors select-none" data-value="5">★</span>
+                </div>
+                <input type="hidden" name="rating" id="ratingInput" value="0">
+                <p class="text-xs text-slate-400 mt-1" id="ratingLabel">Select a rating</p>
+            </div>
+
+            <!-- Comment -->
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Comment</label>
+                <textarea name="comment"
+                          id="feedbackComment"
+                          rows="4"
+                          maxlength="500"
+                          placeholder="Tell us about your experience..."
+                          class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 resize-none"></textarea>
+                <p class="text-xs text-slate-400 mt-1 text-right">
+                    <span id="charCount">0</span>/500
+                </p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex items-center gap-3 pt-2">
+                <button type="button"
+                        onclick="closeFeedbackModal()"
+                        class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors">
+                    Submit
+                </button>
+            </div>
+
+        </form>
     </div>
 </div>
 
@@ -464,4 +544,59 @@
     if (window.lucide) {
         lucide.createIcons();
     }
+
+    // ===== FEEDBACK MODAL =====
+    function openFeedbackModal(bookingId) {
+        document.getElementById("feedbackBookingId").value = bookingId;
+        document.getElementById("feedbackModal").classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeFeedbackModal() {
+        document.getElementById("feedbackModal").classList.add("hidden");
+        document.body.style.overflow = "auto";
+        // Reset form
+        document.getElementById("ratingInput").value = "0";
+        document.getElementById("ratingLabel").textContent = "Select a rating";
+        document.getElementById("feedbackComment").value = "";
+        document.getElementById("charCount").textContent = "0";
+        highlightStars(0);
+    }
+
+    // Star rating
+    const stars = document.querySelectorAll(".rating-star");
+    const ratingInput = document.getElementById("ratingInput");
+    const ratingLabel = document.getElementById("ratingLabel");
+    const labels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+
+    stars.forEach(star => {
+        star.addEventListener("mouseenter", () => highlightStars(star.dataset.value));
+        star.addEventListener("mouseleave", () => highlightStars(ratingInput.value));
+        star.addEventListener("click", () => {
+            ratingInput.value = star.dataset.value;
+            ratingLabel.textContent = labels[star.dataset.value];
+            highlightStars(star.dataset.value);
+        });
+    });
+
+    function highlightStars(count) {
+        stars.forEach(star => {
+            star.classList.toggle("text-amber-400", star.dataset.value <= count);
+            star.classList.toggle("text-slate-200", star.dataset.value > count);
+        });
+    }
+
+    // Đếm ký tự comment
+    document.getElementById("feedbackComment").addEventListener("input", function () {
+        document.getElementById("charCount").textContent = this.value.length;
+    });
+
+    // Validate trước khi submit
+    document.getElementById("feedbackForm").addEventListener("submit", function (e) {
+        if (ratingInput.value === "0") {
+            e.preventDefault();
+            ratingLabel.textContent = "Please select a rating!";
+            ratingLabel.classList.add("text-red-500");
+        }
+    });
 </script>

@@ -15,8 +15,7 @@ public class MainController extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        request.setCharacterEncoding("UTF-8"); // Đảm bảo không lỗi font tiếng Việt khi submit form
+        
 
         try {
             String url = "views/error.jsp"; // File báo lỗi hệ thống chung
@@ -114,11 +113,11 @@ public class MainController extends HttpServlet {
                 case "bookingSubmit":
                     url = "bookingSubmit";
                     break;
-                    
+
                 case "bookingHistory":
                     url = "BookingHistory";
                     break;
-                    
+
                 case "loyaltyRewards":
                     url = "loyalty-rewards";
                     break;

@@ -22,7 +22,7 @@ public class CustomerDAO {
     public Customer getCustomerByUserId(int userId) {
         String sql = "SELECT * FROM Customer WHERE user_id = ?";
 
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
@@ -47,7 +47,7 @@ public class CustomerDAO {
         }
         return null;
     }
-    
+
     /**
      * Lấy thông tin Customer trực tiếp bằng CustomerId phục vụ đồng bộ Dashboard
      *
@@ -102,8 +102,7 @@ public class CustomerDAO {
                         + "last_review_date) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-                PreparedStatement st
-                        = cn.prepareStatement(sql);
+                PreparedStatement st = cn.prepareStatement(sql);
 
                 st.setString(1, c.getAddress());
 
@@ -151,7 +150,7 @@ public class CustomerDAO {
 
     public boolean updateAddressById(int customerId, String address) {
         String sql = "UPDATE Customer SET address = ? WHERE customer_id = ?";
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, address);
             ps.setInt(2, customerId);
@@ -167,7 +166,7 @@ public class CustomerDAO {
     public boolean updateDobById(int customerId, String dob) {
         String sql = "UPDATE Customer SET date_of_birth = ? WHERE customer_id = ?";
 
-        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             java.sql.Date date = java.sql.Date.valueOf(dob);
 

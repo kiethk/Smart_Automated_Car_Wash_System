@@ -182,6 +182,22 @@
             .btn-close-modal:hover {
                 background: #cbd5e1;
             }
+            .tab-btn {
+                padding: 4px 16px;
+                border-radius: 9999px;
+                font-size: 12px;
+                font-weight: 700;
+                border: none;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .tab-btn:hover {
+                opacity: 0.8;
+            }
+            .active-tab {
+                background-color: #10b981 !important;
+                color: white !important;
+            }
             @media (max-width: 640px) {
                 .detail-grid {
                     grid-template-columns: 1fr;
@@ -465,6 +481,43 @@
                 filterLoyalty();
             }
 
+            // ===== SWITCH TAB FUNCTION (gọi từ modal) =====
+            function switchModalTab(tab) {
+                var earnContent = document.getElementById('modalEarnContent');
+                var redeemContent = document.getElementById('modalRedeemContent');
+                var expiredContent = document.getElementById('modalExpiredContent');
+                
+                var earnTab = document.getElementById('modalTabEarn');
+                var redeemTab = document.getElementById('modalTabRedeem');
+                var expiredTab = document.getElementById('modalTabExpired');
+                
+                if (!earnContent || !redeemContent || !expiredContent) {
+                    return;
+                }
+                
+                // Hide all content
+                earnContent.style.display = 'none';
+                redeemContent.style.display = 'none';
+                expiredContent.style.display = 'none';
+                
+                // Reset all tabs
+                earnTab.className = 'tab-btn bg-slate-100 text-slate-500';
+                redeemTab.className = 'tab-btn bg-slate-100 text-slate-500';
+                expiredTab.className = 'tab-btn bg-slate-100 text-slate-500';
+                
+                // Show selected
+                if (tab === 'earn') {
+                    earnContent.style.display = 'block';
+                    earnTab.className = 'tab-btn active-tab bg-emerald-100 text-emerald-700';
+                } else if (tab === 'redeem') {
+                    redeemContent.style.display = 'block';
+                    redeemTab.className = 'tab-btn active-tab bg-red-100 text-red-600';
+                } else if (tab === 'expired') {
+                    expiredContent.style.display = 'block';
+                    expiredTab.className = 'tab-btn active-tab bg-orange-100 text-orange-600';
+                }
+            }
+
             // ===== MODAL FUNCTIONS =====
             function openModal(customerId) {
                 const modal = document.getElementById("customerModal");
@@ -498,6 +551,8 @@
                         if (nameEl) {
                             titleEl.textContent = nameEl.textContent;
                         }
+                        // Set default tab to Earn after loading
+                        switchModalTab('earn');
                     })
                     .catch(error => {
                         console.error('Error:', error);

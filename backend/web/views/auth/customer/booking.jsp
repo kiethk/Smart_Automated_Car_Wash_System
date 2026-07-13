@@ -1,6 +1,7 @@
 <%@page import="dto.Promotion"%>
 <%@page import="dto.Customer"%>
 <%@page import="dto.Wallet"%>
+<%@page import="dto.Tiers"%>
 <%@page import="dto.User"%>
 <%@page import="dto.Slot"%>
 <%@page import="dto.Service"%>
@@ -18,6 +19,8 @@
     List<Slot> slotList = (List<Slot>) request.getAttribute("SLOTS");
     List<Promotion> promoList = (List<Promotion>) request.getAttribute("PROMOTIONS");
     String selectedServiceId = (String) request.getAttribute("SELECTED_SERVICE_ID");
+    String showQR = request.getParameter("showQR");
+    String bookingId = request.getParameter("bookingId");
 
     if (selectedServiceId == null || selectedServiceId.trim().isEmpty()) {
         selectedServiceId = request.getParameter("serviceId");
@@ -39,30 +42,15 @@
     User user = (User) session.getAttribute("USER");
     Wallet wallet = (Wallet) session.getAttribute("WALLET");
     Customer customer = (Customer) session.getAttribute("CUSTOMER");
+    Tiers tier = (Tiers) request.getAttribute("TIER");
 
     String fullName = (user != null) ? user.getFullName() : "Customer";
     double walletBalance = (wallet != null) ? wallet.getBalance() : 0;
     int availablePoints = (customer != null) ? customer.getTotalPoints() : 0;
-    int tierId = (customer != null) ? customer.getTierId() : 1;
-
-    // Xác định cấu hình theo Hạng thành viên của nhóm bạn
-    double discountRate = 0.0;
-    String tierName = "Member";
-    int maxBookingDays = 7; // Mặc định Member là 7 ngày
-
-    if (tierId == 2) {
-        discountRate = 0.05;
-        tierName = "Silver";
-        maxBookingDays = 10;
-    } else if (tierId == 3) {
-        discountRate = 0.10;
-        tierName = "Gold";
-        maxBookingDays = 12;
-    } else if (tierId == 4) {
-        discountRate = 0.15;
-        tierName = "Platinum";
-        maxBookingDays = 14;
-    }
+    int tierId = (tier != null) ? tier.getTierId() : ((customer != null) ? customer.getTierId() : 1);
+    String tierName = (tier != null && tier.getTierName() != null) ? tier.getTierName() : "Member";
+    double discountRate = (tier != null) ? tier.getDiscountPercent() : 0.0;
+    int maxBookingDays = (tier != null) ? tier.getBookingWindowDays() : 7;
 %>
 
 <main class="flex-grow pt-[32px] pb-24 px-4 md:px-16 max-w-[1280px] mx-auto w-full flex flex-col md:flex-row gap-6 font-sans">
@@ -379,7 +367,7 @@
                 <div class="flex justify-between items-center text-success font-medium bg-emerald-50/40 px-3 py-2 rounded-xl">
                     <div class="flex items-center gap-1.5">
                         <i data-lucide="award" class="w-4 h-4 stroke-[2]"></i>
-                        <span><%= tierName%> (<%= (int) (discountRate * 100)%>%)</span>
+                        <span><%= tierName%> (<%= (int) (discountRate)%>%)</span>
                     </div>
                     <span id="summaryTierDiscount" class="tech-data">-0 VND</span>
                 </div>
@@ -510,27 +498,11 @@
             </button>
         </div>
     </div>
+
+    <jsp:include page="/components/qr-modal.jsp"/>
 </main>
 
-<%-- POPUP DIALOG QUÉT MÃ QR CODE --%>
-<div id="qrModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 max-w-sm w-full text-center shadow-xl flex flex-col items-center">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Scan QR Code to Pay</h3>
-        <p class="text-xs text-slate-400 mb-4">Open your Mobile Banking or E-Wallet app to scan</p>
 
-        <div class="w-48 h-48 bg-slate-100 p-2 rounded-xl border border-slate-200 mb-4 flex items-center justify-center">
-            <%-- Dùng API tạo mã QR động hiển thị số tiền thanh toán thực tế --%>
-            <img id="qrImageElement" src="" alt="Payment QR Code" class="w-full h-full object-contain">
-        </div>
-
-        <p id="qrTotalText" class="font-mono font-bold text-indigo-950 mb-5 text-sm">0 VND</p>
-
-        <div class="flex gap-2 w-full">
-            <button type="button" onclick="closeQrModal()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">Cancel</button>
-            <button type="button" onclick="confirmPaidQr()" class="flex-1 py-2 bg-indigo-950 hover:bg-indigo-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm">I have paid on app</button>
-        </div>
-    </div>
-</div>
 
 <script>
     // Ép kiểu an toàn từ Session Java sang biến số JavaScript
@@ -822,7 +794,7 @@
             }
         }
 
-        appliedTierDiscount = currentPackagePrice * userDiscountRate;
+        appliedTierDiscount = currentPackagePrice * userDiscountRate / 100;
 
         let totalDiscountSystem = appliedTierDiscount + appliedPromotionDiscount;
         if (totalDiscountSystem > currentPackagePrice) {
@@ -966,26 +938,41 @@
 
     // --- CHECKOUT SUBMIT CONTROL ---
     function handleBookingCheckout() {
+
         const form = document.getElementById('bookingForm');
-        if (!form || !form.reportValidity())
-            return;
 
-        const hiddenSlot = document.getElementById('hiddenSlotId');
+        if (!form || !form.reportValidity()) {
+            return;
+        }
+
+        const hiddenSlot =
+                document.getElementById('hiddenSlotId');
+
         if (!hiddenSlot || !hiddenSlot.value) {
-            alert('Please select a time slot.');
+            alert("Please select a slot.");
             return;
         }
 
-        const checkedMethod = document.querySelector('input[name="paymentMethod"]:checked');
-        const method = checkedMethod ? checkedMethod.value.toUpperCase() : "CASH";
+        const selectedVehicle =
+                document.querySelector(
+                        'input[name="vehicleId"]:checked'
+                        );
 
-        if (method === 'QRCODE') {
-            document.getElementById('qrTotalText').innerText = finalPayCalculated.toLocaleString('vi-VN') + " VND";
-            document.getElementById('qrImageElement').src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=AutoWashPayment_" + finalPayCalculated;
-            document.getElementById('qrModal').classList.remove('hidden');
-        } else {
-            form.submit();
+        const selectedService =
+                document.querySelector(
+                        'input[name="serviceId"]:checked'
+                        );
+
+        if (!selectedVehicle || !selectedService) {
+            alert("Please select vehicle and service.");
+            return;
         }
+
+        if (!validateServiceVehicleMatch()) {
+            return;
+        }
+
+        form.submit();
     }
 
     function closeQrModal() {
@@ -993,10 +980,15 @@
     }
 
     function confirmPaidQr() {
-        document.getElementById('qrModal').classList.add('hidden');
-        const form = document.getElementById('bookingForm');
-        if (form)
-            form.submit();
+
+        document
+                .getElementById("qrModal")
+                .classList.add("hidden");
+
+        window.location =
+                '<%=request.getContextPath()%>'
+                + '/MainController?action=bookingHistory'
+                + '&msg=Booking created successfully';
     }
 
     function normalizeVehicleType(type) {
@@ -1138,10 +1130,61 @@
         validateServiceVehicleMatch();
         updateOrderSummary();
 
+        const params =
+                new URLSearchParams(
+                        window.location.search
+                        );
+
+        const showQR =
+                params.get("showQR");
+
+        const qrUrl =
+                params.get("qrUrl");
+
+        const amount =
+                params.get("amount");
+
+        if (
+                showQR === "true"
+                && qrUrl
+                ) {
+
+            const qrModal =
+                    document.getElementById(
+                            "qrModal"
+                            );
+
+            const qrImage =
+                    document.getElementById(
+                            "qrImageElement"
+                            );
+
+            const qrTotal =
+                    document.getElementById(
+                            "qrTotalText"
+                            );
+
+            qrImage.src =
+                    decodeURIComponent(
+                            qrUrl
+                            );
+
+            qrTotal.innerText =
+                    Number(amount || 0)
+                    .toLocaleString('vi-VN')
+                    + " VND";
+
+            qrModal.classList.remove(
+                    "hidden"
+                    );
+        }
+
         if (window.lucide) {
             lucide.createIcons();
         }
     });
+
+
 </script>
 
 <jsp:include page="/components/footer.jsp" />

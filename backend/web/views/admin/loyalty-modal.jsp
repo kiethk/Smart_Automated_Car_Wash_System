@@ -1,7 +1,6 @@
 <%@page import="dto.Customer"%>
 <%@page import="dto.LoyaltyPointHistory"%>
 <%@page import="java.util.List"%>
-<%@page import="java.util.List"%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -76,9 +75,9 @@
     <!-- History Tabs -->
     <div>
         <div class="flex gap-2 mb-3">
-            <button onclick="showModalTab('earn')" id="modalTabEarn" class="px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Earn</button>
-            <button onclick="showModalTab('redeem')" id="modalTabRedeem" class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 hover:bg-red-100 hover:text-red-600">Redeem</button>
-            <button onclick="showModalTab('expired')" id="modalTabExpired" class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 hover:bg-orange-100 hover:text-orange-600">Expired</button>
+            <button onclick="switchModalTab('earn')" id="modalTabEarn" class="tab-btn active-tab bg-emerald-100 text-emerald-700">Earn</button>
+            <button onclick="switchModalTab('redeem')" id="modalTabRedeem" class="tab-btn bg-slate-100 text-slate-500">Redeem</button>
+            <button onclick="switchModalTab('expired')" id="modalTabExpired" class="tab-btn bg-slate-100 text-slate-500">Expired</button>
         </div>
 
         <!-- Earn -->
@@ -128,29 +127,3 @@
         <button class="btn-close-modal" onclick="closeModal()">Close</button>
     </div>
 </div>
-
-<script>
-    function showModalTab(tab) {
-        // Hide all
-        document.getElementById('modalEarnContent').style.display = 'none';
-        document.getElementById('modalRedeemContent').style.display = 'none';
-        document.getElementById('modalExpiredContent').style.display = 'none';
-
-        // Reset all tabs
-        document.getElementById('modalTabEarn').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500';
-        document.getElementById('modalTabRedeem').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500';
-        document.getElementById('modalTabExpired').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500';
-
-        // Show selected
-        if (tab === 'earn') {
-            document.getElementById('modalEarnContent').style.display = 'block';
-            document.getElementById('modalTabEarn').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700';
-        } else if (tab === 'redeem') {
-            document.getElementById('modalRedeemContent').style.display = 'block';
-            document.getElementById('modalTabRedeem').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-600';
-        } else if (tab === 'expired') {
-            document.getElementById('modalExpiredContent').style.display = 'block';
-            document.getElementById('modalTabExpired').className = 'px-4 py-1.5 rounded-full text-xs font-bold bg-orange-100 text-orange-600';
-        }
-    }
-</script>
