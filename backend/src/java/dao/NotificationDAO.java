@@ -2,21 +2,22 @@ package dao;
 
 import dto.Notifications;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import utils.DBUtils; // Sử dụng đúng DBUtils theo dự án của bạn
+import utils.DBUtils; // Sử dụng DBUtils chung của dự án để lấy kết nối cơ sở dữ liệu
 
 public class NotificationDAO {
 
-    // 1. Hàm tạo thông báo mới (Để các module khác gọi khi có sự kiện)
+    // 1. Tạo một thông báo mới cho một người dùng cụ thể
     public boolean createNotification(Notifications noti) {
         String sql = "INSERT INTO Notifications (title, content, type, is_read, reference_id, created_at, user_id) "
                    + "VALUES (?, ?, ?, 0, ?, CURRENT_TIMESTAMP, ?)";
-        try (Connection conn = DBUtils.getConnection(); // Sửa thành DBUtils
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection(); // Lấy kết nối cơ sở dữ liệu
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, noti.getTitle());
             ps.setString(2, noti.getContent());
@@ -37,8 +38,7 @@ public class NotificationDAO {
         return false;
     }
 
-    // 2. Lấy danh sách thông báo của một User cụ thể (Hiển thị ở icon chuông)
-    // Helper cho cac module khac goi nhanh khi can gui thong bao.
+    // 2. Hàm hỗ trợ để các module khác gọi nhanh khi cần gửi thông báo
     public boolean createNotification(int userId, String title, String content, String type, Integer referenceId) {
         Notifications noti = new Notifications();
         noti.setUserId(userId);
@@ -49,10 +49,61 @@ public class NotificationDAO {
         return createNotification(noti);
     }
 
+    // 3. Tạo thông báo hàng loạt từ Admin cho một nhóm người nhận
+    public int createNotifications(String title, String content, String recipientGroup) {
+        String userSql = "SELECT user_id FROM [User] WHERE is_active = 1 ";
+        String type = "System";
+
+        if ("customers".equals(recipientGroup)) {
+            userSql += "AND role_id = 3";
+            type = "Customer";
+        } else if ("admins".equals(recipientGroup)) {
+            userSql += "AND role_id = 1";
+            type = "Admin";
+        } else if (!"all".equals(recipientGroup)) {
+            return 0;
+        }
+
+        String insertSql = "INSERT INTO Notifications (title, content, type, is_read, reference_id, created_at, user_id) "
+                + "VALUES (?, ?, ?, 0, NULL, CURRENT_TIMESTAMP, ?)";
+
+        try (Connection conn = DBUtils.getConnection()) {
+
+            conn.setAutoCommit(false);
+            int createdCount = 0;
+
+            try (PreparedStatement userPs = conn.prepareStatement(userSql);
+                 PreparedStatement insertPs = conn.prepareStatement(insertSql);
+                ResultSet rs = userPs.executeQuery()) {
+
+                while (rs.next()) {
+                    insertPs.setString(1, title);
+                    insertPs.setString(2, content);
+                    insertPs.setString(3, type);
+                    insertPs.setInt(4, rs.getInt("user_id"));
+                    insertPs.addBatch();
+                    createdCount++;
+                }
+
+                if (createdCount > 0) {
+                    insertPs.executeBatch();
+                }
+                conn.commit();
+                return createdCount;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public List<Notifications> getNotificationsByUserId(int userId) {
         List<Notifications> list = new ArrayList<>();
         String sql = "SELECT * FROM Notifications WHERE user_id = ? ORDER BY created_at DESC";
-        try (Connection conn = DBUtils.getConnection(); // Sửa thành DBUtils
+        try (Connection conn = DBUtils.getConnection(); // Lấy kết nối cơ sở dữ liệu
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setInt(1, userId);
@@ -67,7 +118,7 @@ public class NotificationDAO {
         return list;
     }
 
-    // 3. Đếm số lượng thông báo CHƯA ĐỌC của User (Phục vụ logic hiển thị CHẤM ĐỎ)
+    // 4. Lấy một số thông báo gần nhất để hiển thị trong dropdown của chuông
     public List<Notifications> getRecentNotificationsByUserId(int userId, int limit) {
         List<Notifications> list = new ArrayList<>();
         int safeLimit = limit > 0 && limit <= 10 ? limit : 5;
@@ -87,9 +138,10 @@ public class NotificationDAO {
         return list;
     }
 
+    // 5. Đếm số lượng thông báo chưa đọc của một người dùng
     public int countUnreadNotifications(int userId) {
         String sql = "SELECT COUNT(*) FROM Notifications WHERE user_id = ? AND is_read = 0";
-        try (Connection conn = DBUtils.getConnection(); // Sửa thành DBUtils
+        try (Connection conn = DBUtils.getConnection(); // Lấy kết nối cơ sở dữ liệu
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setInt(1, userId);
@@ -104,10 +156,10 @@ public class NotificationDAO {
         return 0;
     }
 
-    // 4. Đánh dấu một thông báo cụ thể là ĐÃ ĐỌC (Khi click vào thông báo để mất chấm đỏ)
+    // 6. Đánh dấu một thông báo cụ thể là đã đọc
     public boolean markAsRead(int notificationId, int userId) {
         String sql = "UPDATE Notifications SET is_read = 1 WHERE notification_id = ? AND user_id = ?";
-        try (Connection conn = DBUtils.getConnection(); // Sửa thành DBUtils
+        try (Connection conn = DBUtils.getConnection(); // Lấy kết nối cơ sở dữ liệu
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setInt(1, notificationId);
@@ -119,10 +171,10 @@ public class NotificationDAO {
         return false;
     }
 
-    // 5. Đánh dấu ĐÃ ĐỌC TẤT CẢ thông báo của một User
+    // 7. Đánh dấu tất cả thông báo của một người dùng là đã đọc
     public boolean markAllAsRead(int userId) {
         String sql = "UPDATE Notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0";
-        try (Connection conn = DBUtils.getConnection(); // Sửa thành DBUtils
+        try (Connection conn = DBUtils.getConnection(); // Lấy kết nối cơ sở dữ liệu
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setInt(1, userId);
@@ -133,26 +185,36 @@ public class NotificationDAO {
         return false;
     }
 
-    // 6. Hàm tìm kiếm, lọc và phân trang thông báo (Dành riêng cho trang quản lý của Admin)
+    // 8. Tìm kiếm và lọc thông báo dành riêng cho trang quản lý của Admin
     public List<Notifications> getNotificationsForAdmin(String searchKeyword, String type, Integer isRead) {
+        return getNotificationsForAdmin(searchKeyword, type, isRead, null, null);
+    }
+
+    public List<Notifications> getNotificationsForAdmin(String searchKeyword, String type, Integer isRead, Date fromDate, Date toDate) {
         List<Notifications> list = new ArrayList<>();
         
-        // Base SQL query
+        // Câu SQL nền, các điều kiện lọc sẽ được nối thêm bên dưới
         StringBuilder sql = new StringBuilder("SELECT * FROM Notifications WHERE 1=1 ");
         
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
             sql.append("AND (title LIKE ? OR content LIKE ?) ");
         }
         if (type != null && !type.trim().isEmpty()) {
-            sql.append("AND type = ? ");
+            sql.append("AND LOWER(type) = LOWER(?) ");
         }
         if (isRead != null) {
             sql.append("AND is_read = ? ");
         }
+        if (fromDate != null) {
+            sql.append("AND created_at >= ? ");
+        }
+        if (toDate != null) {
+            sql.append("AND created_at < DATEADD(DAY, 1, ?) ");
+        }
         
         sql.append("ORDER BY created_at DESC");
 
-        try (Connection conn = DBUtils.getConnection(); // Đã chuẩn DBUtils
+        try (Connection conn = DBUtils.getConnection(); // Lấy kết nối cơ sở dữ liệu
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             
             int paramIndex = 1;
@@ -168,6 +230,12 @@ public class NotificationDAO {
             if (isRead != null) {
                 ps.setInt(paramIndex++, isRead);
             }
+            if (fromDate != null) {
+                ps.setDate(paramIndex++, fromDate);
+            }
+            if (toDate != null) {
+                ps.setDate(paramIndex++, toDate);
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -180,10 +248,10 @@ public class NotificationDAO {
         return list;
     }
 
-    // 7. Xóa thông báo (Nếu Admin cần tính năng dọn dẹp hệ thống)
+    // 9. Xóa một thông báo nếu Admin cần dọn dẹp dữ liệu
     public boolean deleteNotification(int notificationId) {
         String sql = "DELETE FROM Notifications WHERE notification_id = ?";
-        try (Connection conn = DBUtils.getConnection(); // Sửa thành DBUtils
+        try (Connection conn = DBUtils.getConnection(); // Lấy kết nối cơ sở dữ liệu
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setInt(1, notificationId);
@@ -194,7 +262,7 @@ public class NotificationDAO {
         return false;
     }
 
-    // Hàm Helper dùng để map dữ liệu từ ResultSet SQL sang Object Java DTO nhằm tránh lặp code
+    // Hàm hỗ trợ dùng để map dữ liệu từ ResultSet SQL sang DTO Notifications
     private Notifications mapResultSetToNotification(ResultSet rs) throws SQLException {
         Notifications noti = new Notifications();
         noti.setNotificationId(rs.getInt("notification_id"));
@@ -203,7 +271,7 @@ public class NotificationDAO {
         noti.setType(rs.getString("type"));
         noti.setIsRead(rs.getInt("is_read"));
         
-        // Xử lý trường reference_id có thể bị NULL trong database
+        // Xử lý trường reference_id có thể bị NULL trong cơ sở dữ liệu
         int refId = rs.getInt("reference_id");
         if (rs.wasNull()) {
             noti.setReferenceId(null);

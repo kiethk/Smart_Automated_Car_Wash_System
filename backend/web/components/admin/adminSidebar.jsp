@@ -12,7 +12,6 @@
     String slotActive = currentUri.contains("/admin/slots") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String notificationActive = currentUri.contains("/admin/notifications") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
 
-
 %>
 
 <aside class="w-72 min-h-screen bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-0">

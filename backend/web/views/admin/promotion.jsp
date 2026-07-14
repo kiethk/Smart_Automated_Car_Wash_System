@@ -74,38 +74,10 @@
                     <div class="space-y-6">
 
                         <%-- FORM --%>
-                        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                            <button type="button"
-                                    onclick="togglePromotionForm()"
-                                    class="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 transition-all">
-
-                                <div class="text-left">
-                                    <h3 class="text-lg font-bold text-slate-900">
-                                        <%= isEditMode ? "Edit Promotion" : "Add New Promotion"%>
-                                    </h3>
-                                    <p class="text-sm text-slate-400 mt-1">
-                                        <%= isEditMode ? "You are editing an existing promotion." : "Click to expand the form and create a new promotion."%>
-                                    </p>
-                                </div>
-
-                                <div class="flex items-center gap-3">
-                                    <% if (isEditMode) { %>
-                                    <a href="${pageContext.request.contextPath}/admin/promotions"
-                                       onclick="event.stopPropagation();"
-                                       class="hidden sm:inline-flex px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition-all">
-                                        Cancel Edit
-                                    </a>
-                                    <% }%>
-
-                                    <span id="promotionFormArrow"
-                                          class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-extrabold transition-transform duration-200 <%= isEditMode ? "rotate-180" : ""%>">
-                                        ↓
-                                    </span>
-                                </div>
-                            </button>
-
+                        <section id="promotionFormSection"
+                                 class="<%= isEditMode ? "" : "hidden"%> bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                             <div id="promotionFormBody"
-                                 class="<%= isEditMode ? "" : "hidden"%> border-t border-slate-100 p-5">
+                                 class="p-5">
 
                                 <p class="text-sm text-slate-400 mb-5">
                                     Use 0 usage limit for unlimited usage.
@@ -444,15 +416,13 @@
 
         <script>
             function togglePromotionForm() {
-                const body = document.getElementById("promotionFormBody");
-                const arrow = document.getElementById("promotionFormArrow");
+                const section = document.getElementById("promotionFormSection");
 
-                if (!body || !arrow) {
+                if (!section) {
                     return;
                 }
 
-                body.classList.toggle("hidden");
-                arrow.classList.toggle("rotate-180");
+                section.classList.toggle("hidden");
             }
 
             function filterPromotions() {
