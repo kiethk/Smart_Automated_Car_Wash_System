@@ -5,22 +5,17 @@ import dao.TiersDAO;
 import dto.Promotion;
 import dto.Tiers;
 import dto.User;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.servlet.http.Part;
-import utils.CloudinaryConfig;
 
 @WebServlet("/admin/promotions")
 public class AdminPromotionController extends HttpServlet {
@@ -133,8 +128,7 @@ public class AdminPromotionController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+
 
         if (!isAdmin(request, response)) {
             return;

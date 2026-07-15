@@ -29,6 +29,7 @@ public class AdminBookingView {
     private String promotionCode;
 
     private String serviceNames;
+    private String serviceDetails;
     private long serviceTotal;
 
     private String paymentMethod;
@@ -188,6 +189,14 @@ public class AdminBookingView {
 
     public void setServiceNames(String serviceNames) {
         this.serviceNames = serviceNames;
+    }
+
+    public String getServiceDetails() {
+        return serviceDetails;
+    }
+
+    public void setServiceDetails(String serviceDetails) {
+        this.serviceDetails = serviceDetails;
     }
 
     public long getServiceTotal() {

@@ -25,8 +25,6 @@ public class Profile extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
 
         // 1. Kiểm tra đăng nhập bảo mật chuẩn MVC2: Nếu chưa log-in, bắt quay về MainController để xử lý trang chủ/login

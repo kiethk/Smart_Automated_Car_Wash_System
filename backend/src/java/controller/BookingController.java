@@ -4,6 +4,7 @@ import dao.BayDAO;
 import dao.BookingDAO;
 import dao.CustomerDAO;
 import dao.PromotionDAO;
+import dao.NotificationDAO;
 import dao.ServiceDAO;
 import dao.SlotDAO;
 import dao.TiersDAO;
@@ -18,6 +19,7 @@ import dto.Tiers;
 import dto.User;
 import dto.Vehicle;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -26,6 +28,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import utils.VietQRUtil;
 
 @WebServlet("/booking")
 public class BookingController extends HttpServlet {
@@ -34,8 +37,6 @@ public class BookingController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession(false);
 
@@ -95,8 +96,7 @@ public class BookingController extends HttpServlet {
             List<Slot> allSlotList = sld.getAllSlots();
             List<Promotion> promoList = pd.getAvailablePromotionsForCustomer(
                     loginedCustomer.getCustomerId(),
-                    loginedCustomer.getTierId()
-            );
+                    loginedCustomer.getTierId());
 
             TiersDAO tiersDAO = new TiersDAO();
             Tiers currentTier = tiersDAO.getTierById(loginedCustomer.getTierId());
@@ -245,7 +245,8 @@ public class BookingController extends HttpServlet {
                 long currentBalance = (wallet != null) ? wallet.getBalance() : 0;
 
                 if (wallet == null || currentBalance < totalAmount) {
-                    request.setAttribute("ERROR_MSG", "Tài khoản ví của bạn không đủ số dư để thực hiện giao dịch này. Vui lòng nạp thêm tiền!");
+                    request.setAttribute("ERROR_MSG",
+                            "Tài khoản ví của bạn không đủ số dư để thực hiện giao dịch này. Vui lòng nạp thêm tiền!");
 
                     VehicleDAO vd = new VehicleDAO();
                     ServiceDAO sd = new ServiceDAO();
@@ -259,8 +260,7 @@ public class BookingController extends HttpServlet {
                     request.setAttribute("ALLSLOTLIST", sld.getAllSlots());
                     request.setAttribute("PROMOTIONS", pd.getAvailablePromotionsForCustomer(
                             loginedCustomer.getCustomerId(),
-                            loginedCustomer.getTierId()
-                    ));
+                            loginedCustomer.getTierId()));
                     request.setAttribute("SELECTED_DATE", bookingDate);
 
                     request.getRequestDispatcher("/views/auth/customer/booking.jsp").forward(request, response);
@@ -272,20 +272,98 @@ public class BookingController extends HttpServlet {
             boolean isSuccess = bd.insertBookingWithPayment(newBooking, paymentMethod, redeemPoints, serviceId);
 
             if (isSuccess) {
-                Customer refreshedCustomer = cd.getCustomerByUserId(loginedUser.getUserId());
 
-                dao.WalletDAO walletDAO = new dao.WalletDAO();
-                dto.Wallet refreshedWallet = walletDAO.getWalletByCustomerId(refreshedCustomer.getCustomerId());
+                Customer refreshedCustomer
+                        = cd.getCustomerByUserId(loginedUser.getUserId());
 
-                session.setAttribute("CUSTOMER", refreshedCustomer);
-                session.setAttribute("WALLET", refreshedWallet);
+                dao.WalletDAO walletDAO
+                        = new dao.WalletDAO();
 
-                response.sendRedirect(request.getContextPath() + "/MainController?action=bookingHistory&msg=Booking success!");
-                return; 
-            } else {
-                request.setAttribute("ERROR_MSG", "Failed to create your booking request. Database processing error.");
-                request.getRequestDispatcher("/views/error.jsp").forward(request, response);
-                return; // ĐÃ SỬA: Thêm return để bảo vệ luồng phản hồi
+                dto.Wallet refreshedWallet
+                        = walletDAO.getWalletByCustomerId(
+                                refreshedCustomer.getCustomerId());
+
+                session.setAttribute(
+                        "CUSTOMER",
+                        refreshedCustomer);
+
+                session.setAttribute(
+                        "WALLET",
+                        refreshedWallet);
+
+                int userId
+                        = refreshedCustomer.getUserId();
+
+                String title = "";
+                String content = "";
+                String type = "Customer";
+
+                Integer referenceId
+                        = newBooking.getBookingId();
+
+                if ("wallet".equalsIgnoreCase(paymentMethod)) {
+
+                    title = "Booking Confirmed";
+
+                    content
+                            = "Your booking has been accepted and paid via wallet.";
+
+                } else if ("qrcode".equalsIgnoreCase(paymentMethod)) {
+
+                    title = "QR Payment Pending";
+
+                    content
+                            = "Please complete payment by scanning QR code.";
+
+                } else {
+
+                    title = "Booking Pending";
+
+                    content
+                            = "Your booking is pending. Please wait for admin approval.";
+                }
+
+                NotificationDAO notificationDao
+                        = new NotificationDAO();
+
+                notificationDao.createNotification(
+                        userId,
+                        title,
+                        content,
+                        type,
+                        referenceId);
+
+                if ("QRCODE".equalsIgnoreCase(paymentMethod)) {
+
+                    String qrUrl
+                            = VietQRUtil.generateQRUrl(
+                                    newBooking.getBookingId(),
+                                    (long) newBooking.getTotalAmount()
+                            );
+
+                    response.sendRedirect(
+                            request.getContextPath()
+                            + "/MainController?action=booking"
+                            + "&showQR=true"
+                            + "&bookingId="
+                            + newBooking.getBookingId()
+                            + "&amount="
+                            + (long) newBooking.getTotalAmount()
+                            + "&qrUrl="
+                            + URLEncoder.encode(qrUrl, "UTF-8")
+                    );
+
+                } else {
+
+                    response.sendRedirect(
+                            request.getContextPath()
+                            + "/MainController?action=bookingHistory"
+                            + "&msg=Booking success!"
+                    );
+                }
+
+                return;
+
             }
 
         } catch (NumberFormatException nfe) {

@@ -5,13 +5,17 @@
 
     String dashboardActive = currentUri.contains("/admin/dashboard") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String bookingActive = currentUri.contains("/admin/bookings") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
+    String paymentActive = currentUri.contains("/admin/bookings") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String customerActive = currentUri.contains("/admin/customers") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String serviceActive = currentUri.contains("/admin/services") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String promotionActive = currentUri.contains("/admin/promotions") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String bayActive = currentUri.contains("/admin/bays") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String slotActive = currentUri.contains("/admin/slots") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String notificationActive = currentUri.contains("/admin/notifications") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
+    String monthlyStatsActive = currentUri.contains("/admin/monthly-stats") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
+     String feedbackActive = currentUri.contains("/admin/bookings") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
 
+    String tierActive = currentUri.contains("/admin/tiers") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
 %>
 
 <aside class="w-72 min-h-screen bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-0">
@@ -36,11 +40,27 @@
                 <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
                 Bookings
             </a>
-
+            <a href="${pageContext.request.contextPath}/admin/payments"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= paymentActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Payment
+            </a>
             <a href="${pageContext.request.contextPath}/admin/customers"
                class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= customerActive%>">
                 <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
                 Customers
+            </a>
+
+            <a href="${pageContext.request.contextPath}/admin/tiers"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= tierActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Tiers
+            </a>
+
+            <a href="${pageContext.request.contextPath}/admin/monthly-stats"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= monthlyStatsActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Monthly Stats
             </a>
 
             <a href="${pageContext.request.contextPath}/admin/services"
@@ -71,6 +91,11 @@
                class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= notificationActive%>">
                 <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
                 Notifications
+            </a>
+                <a href="${pageContext.request.contextPath}/admin/feedbacks"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= feedbackActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Feedback
             </a>
         </nav>
 

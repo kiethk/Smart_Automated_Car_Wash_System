@@ -52,7 +52,7 @@ public class BookingDAO {
 
         String sqlInsertPointHistory = "INSERT INTO LoyaltyPointHistory "
                 + "(points_earned, points_used, transaction_type, description, expired_date, created_at, customer_id) "
-                + "VALUES (?, ?, ?, ?, NULL, GETDATE(), ?)";
+                + "VALUES (?, ?, ?, ?, DATEADD(MONTH, " + config.LoyaltyConfig.POINT_EXPIRY_MONTHS + ", CAST(GETDATE() AS DATE)), GETDATE(), ?)";
 
         String sqlInsertUsedPointHistory = "INSERT INTO LoyaltyPointHistory "
                 + "(points_earned, points_used, transaction_type, description, expired_date, created_at, customer_id) "
@@ -130,9 +130,11 @@ public class BookingDAO {
             ps.executeUpdate();
 
             int generatedBookingId = 0;
-            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+            try ( ResultSet generatedKeys = ps.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     generatedBookingId = generatedKeys.getInt(1);
+
+                    booking.setBookingId(generatedBookingId);
                 } else {
                     throw new Exception("Inserting booking failed, no ID obtained.");
                 }
@@ -401,7 +403,7 @@ public class BookingDAO {
     public boolean finishBookingAndCheckTier(int bookingId) {
         String sqlInsertPointHistory = "INSERT INTO LoyaltyPointHistory "
                 + "(points_earned, points_used, transaction_type, description, expired_date, created_at, customer_id) "
-                + "VALUES (?, ?, ?, ?, NULL, GETDATE(), ?)";
+                + "VALUES (?, ?, ?, ?, DATEADD(MONTH, " + config.LoyaltyConfig.POINT_EXPIRY_MONTHS + ", CAST(GETDATE() AS DATE)), GETDATE(), ?)";
 
         String sqlGetInfo = "SELECT b.total_amount, b.customer_id, b.status, p.payment_method, p.payment_status, "
                 + "t.point_multiplier "
@@ -547,10 +549,10 @@ public class BookingDAO {
                 + "WHERE b.customer_id = ? AND b.status IN (N'pending', N'accepted') AND b.booking_date >= CAST(GETDATE() AS DATE) "
                 + "ORDER BY b.booking_date ASC, s.start_time ASC";
 
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, customerId);
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try ( ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     appointment = new HashMap<>();
                     appointment.put("bookingDate", rs.getDate("booking_date").toString());
@@ -597,14 +599,14 @@ public class BookingDAO {
 
         sql += "ORDER BY b.booking_date DESC, b.created_at DESC";
 
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, customerId);
             if (status != null && !status.isEmpty()) {
                 ps.setString(2, status);
             }
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try ( ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     BookingHistoryDTO b = new BookingHistoryDTO();
 
@@ -648,7 +650,7 @@ public class BookingDAO {
         String sql = "UPDATE Booking SET status = N'cancelled' "
                 + "WHERE booking_id = ? AND customer_id = ? AND status = N'pending'";
 
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, bookingId);
             ps.setInt(2, customerId);
@@ -661,5 +663,50 @@ public class BookingDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public long getBookingAmount(int bookingId) {
+
+        String sql
+                = "SELECT total_amount "
+                + "FROM Booking "
+                + "WHERE booking_id = ?";
+
+        Connection conn = null;
+
+        try {
+
+            conn = DBUtils.getConnection();
+
+            if (conn != null) {
+
+                PreparedStatement ps
+                        = conn.prepareStatement(sql);
+
+                ps.setInt(1, bookingId);
+
+                ResultSet rs
+                        = ps.executeQuery();
+
+                if (rs.next()) {
+                    return rs.getLong("total_amount");
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        return 0;
     }
 }
