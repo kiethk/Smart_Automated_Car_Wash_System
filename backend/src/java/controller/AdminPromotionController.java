@@ -4,7 +4,6 @@ import dao.PromotionDAO;
 import dao.TiersDAO;
 import dto.Promotion;
 import dto.Tiers;
-import dto.User;
 import java.io.IOException;
 import java.sql.Date;
 import java.util.HashMap;
@@ -15,31 +14,9 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 @WebServlet("/admin/promotions")
 public class AdminPromotionController extends HttpServlet {
-
-    private boolean isAdmin(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        HttpSession session = request.getSession(false);
-
-        if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/MainController?action=login");
-            return false;
-        }
-
-        User user = (User) session.getAttribute("USER");
-
-        if (user.getRoleId() != 1) {
-            request.setAttribute("ERROR_MSG", "You do not have permission to access this page.");
-            request.getRequestDispatcher("/views/error.jsp").forward(request, response);
-            return false;
-        }
-
-        return true;
-    }
 
     private boolean isValidDiscountType(String discountType) {
         return "percent".equalsIgnoreCase(discountType)
@@ -130,10 +107,6 @@ public class AdminPromotionController extends HttpServlet {
             throws ServletException, IOException {
 
 
-        if (!isAdmin(request, response)) {
-            return;
-        }
-
         PromotionDAO promotionDAO = new PromotionDAO();
         TiersDAO tiersDAO = new TiersDAO();
 
@@ -166,12 +139,6 @@ public class AdminPromotionController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
-
-        if (!isAdmin(request, response)) {
-            return;
-        }
 
         String action = request.getParameter("action");
         PromotionDAO promotionDAO = new PromotionDAO();

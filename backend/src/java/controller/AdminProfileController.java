@@ -13,34 +13,10 @@ import javax.servlet.http.HttpSession;
 @WebServlet("/admin/profile")
 public class AdminProfileController extends HttpServlet {
 
-    private boolean isAdmin(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        HttpSession session = request.getSession(false);
-
-        if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/MainController?action=login");
-            return false;
-        }
-
-        User user = (User) session.getAttribute("USER");
-
-        if (user.getRoleId() != 1) {
-            request.setAttribute("ERROR_MSG", "You do not have permission to access this page.");
-            request.getRequestDispatcher("/views/error.jsp").forward(request, response);
-            return false;
-        }
-
-        return true;
-    }
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        if (!isAdmin(request, response)) {
-            return;
-        }
 
         request.getRequestDispatcher("/views/admin/profile.jsp").forward(request, response);
     }
@@ -48,12 +24,6 @@ public class AdminProfileController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
-
-        if (!isAdmin(request, response)) {
-            return;
-        }
 
         HttpSession session = request.getSession(false);
         User currentAdmin = (User) session.getAttribute("USER");
