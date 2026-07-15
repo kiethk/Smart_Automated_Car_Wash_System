@@ -16,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  *
@@ -101,11 +102,19 @@ public class UTF8Filter implements Filter {
             ServletResponse response,
             FilterChain chain)
             throws IOException, ServletException {
-
         request.setCharacterEncoding("UTF-8");
-
         response.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html;charset=UTF-8");
+
+        // Chỉ set content-type cho HTML, không đụng vào CSS/JS/image
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        String uri = httpRequest.getRequestURI();
+
+        if (!uri.endsWith(".css") && !uri.endsWith(".js")
+                && !uri.endsWith(".png") && !uri.endsWith(".jpg")
+                && !uri.endsWith(".ico") && !uri.endsWith(".woff")
+                && !uri.endsWith(".woff2")) {
+            response.setContentType("text/html;charset=UTF-8");
+        }
 
         chain.doFilter(request, response);
     }
