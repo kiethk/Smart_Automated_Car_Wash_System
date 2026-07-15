@@ -18,6 +18,12 @@ public class Customer {
     private String tierName;
     private double pointMultiplier;
     private String fullName;
+    private double discountPercent;
+    private Long walletBalance;
+    private String email;
+    private String phone;
+    private String avatarUrl;
+    private int isActive;
 
     public Customer() {}
 
@@ -76,4 +82,22 @@ public class Customer {
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public double getDiscountPercent() { return discountPercent; }
+    public void setDiscountPercent(double discountPercent) { this.discountPercent = discountPercent; }
+
+    public Long getWalletBalance() { return walletBalance; }
+    public void setWalletBalance(Long walletBalance) { this.walletBalance = walletBalance; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public int getIsActive() { return isActive; }
+    public void setIsActive(int isActive) { this.isActive = isActive; }
 }

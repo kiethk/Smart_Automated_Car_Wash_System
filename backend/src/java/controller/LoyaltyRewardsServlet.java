@@ -55,7 +55,7 @@ public class LoyaltyRewardsServlet extends HttpServlet {
                 return;
             }
 
-            // ===== FIX: Lấy fullName từ User và gán vào customer =====
+            // Lấy fullName từ User và gán vào customer
             User user = userDAO.getUserById(loginedUser.getUserId());
             if (user != null) {
                 customer.setFullName(user.getFullName());
@@ -71,20 +71,37 @@ public class LoyaltyRewardsServlet extends HttpServlet {
             // Lấy tất cả Tiers
             List<Tiers> allTiers = tiersDAO.getAllTiers();
 
-            // Lấy lịch sử điểm
-            List<LoyaltyPointHistory> pointHistory = loyaltyDAO.getRecentByCustomerId(customer.getCustomerId(), 10);
+            // ===== PHẦN CẬP NHẬT: Lấy 3 loại lịch sử điểm =====
+            // 1. Earn history - Lịch sử điểm được cộng
+            List<LoyaltyPointHistory> earnHistory = loyaltyDAO.getEarnedHistory(customer.getCustomerId());
 
-            // Lấy tổng điểm earned và used
+            // 2. Redeem history - Lịch sử điểm được sử dụng
+            List<LoyaltyPointHistory> redeemHistory = loyaltyDAO.getRedeemedHistory(customer.getCustomerId());
+
+            // 3. Expired history - Lịch sử điểm bị hết hạn
+            List<LoyaltyPointHistory> expiredHistory = loyaltyDAO.getExpiredHistory(customer.getCustomerId());
+
+            // Lấy tổng điểm earned, used và current points
             int totalEarned = loyaltyDAO.getTotalEarnedPoints(customer.getCustomerId());
             int totalUsed = loyaltyDAO.getTotalUsedPoints(customer.getCustomerId());
+
+            // Tính tổng điểm hiện tại (đã trừ hết hạn)
+            int currentPoints = customer.getTotalPoints();
 
             // Set attributes
             request.setAttribute("customer", customer);
             request.setAttribute("currentTier", currentTier);
             request.setAttribute("allTiers", allTiers);
-            request.setAttribute("pointHistory", pointHistory);
+
+            // 3 loại lịch sử
+            request.setAttribute("earnHistory", earnHistory);
+            request.setAttribute("redeemHistory", redeemHistory);
+            request.setAttribute("expiredHistory", expiredHistory);
+
+            // Thống kê
             request.setAttribute("totalEarned", totalEarned);
             request.setAttribute("totalUsed", totalUsed);
+            request.setAttribute("currentPoints", currentPoints);
 
             request.getRequestDispatcher("views/auth/customer/loyalty-rewards.jsp").forward(request, response);
 

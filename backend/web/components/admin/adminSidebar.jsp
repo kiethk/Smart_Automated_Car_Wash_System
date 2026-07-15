@@ -11,11 +11,16 @@
     String promotionActive = currentUri.contains("/admin/promotions") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String bayActive = currentUri.contains("/admin/bays") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String slotActive = currentUri.contains("/admin/slots") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
+
+    String vehicleActive = currentUri.contains("/admin/vehicles") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
+    String loyaltyActive = currentUri.contains("/admin/loyalty") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
+
     String notificationActive = currentUri.contains("/admin/notifications") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
     String monthlyStatsActive = currentUri.contains("/admin/monthly-stats") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
      String feedbackActive = currentUri.contains("/admin/bookings") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
 
     String tierActive = currentUri.contains("/admin/tiers") ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "text-slate-600 border-transparent hover:bg-slate-50 hover:text-indigo-700";
+
 %>
 
 <aside class="w-72 min-h-screen bg-white border-r border-slate-200 hidden lg:flex flex-col sticky top-0">
@@ -87,6 +92,18 @@
                 Slots
             </a>
 
+
+            <a href="${pageContext.request.contextPath}/admin/vehicles"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= vehicleActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Vehicles
+            </a>
+
+            <a href="${pageContext.request.contextPath}/admin/loyalty"
+               class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= loyaltyActive%>">
+                <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
+                Loyalty
+
             <a href="${pageContext.request.contextPath}/admin/notifications"
                class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= notificationActive%>">
                 <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
@@ -96,6 +113,7 @@
                class="flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-semibold transition-all <%= feedbackActive%>">
                 <span class="w-2 h-2 rounded-full bg-current opacity-70"></span>
                 Feedback
+
             </a>
         </nav>
 
