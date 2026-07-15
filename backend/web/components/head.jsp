@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/assets/images/favicon.png">
 
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" type="text/css" charset="UTF-8" href="${pageContext.request.contextPath}/assets/css/global.css">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/global.css">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
     tailwind.config = {theme: {
