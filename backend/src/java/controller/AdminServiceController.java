@@ -15,34 +15,10 @@ import javax.servlet.http.HttpSession;
 @WebServlet("/admin/services")
 public class AdminServiceController extends HttpServlet {
 
-    private boolean isAdmin(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        HttpSession session = request.getSession(false);
-
-        if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/MainController?action=login");
-            return false;
-        }
-
-        User user = (User) session.getAttribute("USER");
-
-        if (user.getRoleId() != 1) {
-            request.setAttribute("ERROR_MSG", "You do not have permission to access this page.");
-            request.getRequestDispatcher("/views/error.jsp").forward(request, response);
-            return false;
-        }
-
-        return true;
-    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        if (!isAdmin(request, response)) {
-            return;
-        }
 
         ServiceDAO serviceDAO = new ServiceDAO();
 
@@ -66,10 +42,6 @@ public class AdminServiceController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        if (!isAdmin(request, response)) {
-            return;
-        }
 
         String action = request.getParameter("action");
         ServiceDAO serviceDAO = new ServiceDAO();
