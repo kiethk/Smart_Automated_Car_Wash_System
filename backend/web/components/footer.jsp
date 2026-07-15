@@ -35,39 +35,14 @@
         }
     }
 
-    function toggleNotificationDropdown(event) {
-        if (event) {
-            event.stopPropagation();
-        }
-
-        const dropdown = document.getElementById('notification-dropdown');
-        const userDropdown = document.getElementById('user-dropdown');
-
-        if (userDropdown && !userDropdown.classList.contains('hidden')) {
-            userDropdown.classList.add('hidden');
-        }
-
-        if (dropdown) {
-            dropdown.classList.toggle('hidden');
-        }
-    }
-
     window.onclick = function (event) {
         const userDropdown = document.getElementById('user-dropdown');
-        const notificationDropdown = document.getElementById('notification-dropdown');
 
         if (userDropdown
                 && !userDropdown.classList.contains('hidden')
                 && !event.target.closest('#user-dropdown')
                 && !event.target.closest('button')) {
             userDropdown.classList.add('hidden');
-        }
-
-        if (notificationDropdown
-                && !notificationDropdown.classList.contains('hidden')
-                && !event.target.closest('#notification-dropdown')
-                && !event.target.closest('button')) {
-            notificationDropdown.classList.add('hidden');
         }
     };
 </script>

@@ -24,10 +24,13 @@
                 </h1>
                 <div class="flex items-center gap-3">
                     <% if (unreadTotal > 0) { %>
-                    <a href="${pageContext.request.contextPath}/NotificationController?action=mark-all-read"
-                       class="text-xs font-semibold bg-primary text-white px-3 py-2 rounded-lg hover:opacity-90 transition-opacity">
-                        Mark all as read
-                    </a>
+                    <form action="${pageContext.request.contextPath}/NotificationController" method="POST" class="m-0">
+                        <input type="hidden" name="action" value="mark-all-read" />
+                        <button type="submit"
+                                class="text-xs font-semibold bg-primary text-white px-3 py-2 rounded-lg hover:opacity-90 transition-opacity">
+                            Mark all as read
+                        </button>
+                    </form>
                     <% } %>
                     <a href="${pageContext.request.contextPath}/MainController?action=home"
                        class="text-sm font-semibold text-primary hover:opacity-80 transition-opacity">
@@ -60,10 +63,14 @@
                     </div>
 
                     <% if (isUnread) {%>
-                    <a href="${pageContext.request.contextPath}/NotificationController?action=mark-read&id=<%= noti.getNotificationId()%>"
-                       class="text-xs font-semibold bg-primary text-white px-3 py-2 rounded-lg hover:opacity-90 transition-opacity shrink-0 shadow-sm shadow-primary/10">
-                        Mark as read
-                    </a>
+                    <form action="${pageContext.request.contextPath}/NotificationController" method="POST" class="m-0 shrink-0">
+                        <input type="hidden" name="action" value="mark-read" />
+                        <input type="hidden" name="id" value="<%= noti.getNotificationId()%>" />
+                        <button type="submit"
+                                class="text-xs font-semibold bg-primary text-white px-3 py-2 rounded-lg hover:opacity-90 transition-opacity shadow-sm shadow-primary/10">
+                            Mark as read
+                        </button>
+                    </form>
                     <% } %>
                 </div>
                 <%
