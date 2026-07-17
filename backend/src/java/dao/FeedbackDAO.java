@@ -34,31 +34,70 @@ public class FeedbackDAO {
     }
 
     // ===== ADMIN: LẤY TẤT CẢ FEEDBACK kèm tên customer và tên service =====
-    public List<AdminFeedbackView> getAllFeedbacksForAdmin() {
-        List<AdminFeedbackView> list = new ArrayList<>();
+ public List<AdminFeedbackView> getAllFeedbacksForAdmin(String keyword,
+                                                       String rating,
+                                                       String service) {
 
-        String sql = "SELECT "
-                + "f.feedback_id, f.rating, f.comment, f.created_at, f.booking_id, "
-                + "u.full_name AS customer_name, "
-                + "svc.service_names "
-                + "FROM Feedback f "
-                + "LEFT JOIN Customer c ON f.customer_id = c.customer_id "
-                + "LEFT JOIN [User] u ON c.user_id = u.user_id "
-                + "LEFT JOIN ( "
-                + "    SELECT bs.booking_id, "
-                + "           STRING_AGG(s.service_name, ', ') AS service_names "
-                + "    FROM BookingService bs "
-                + "    JOIN Service s ON bs.service_id = s.service_id "
-                + "    GROUP BY bs.booking_id "
-                + ") svc ON f.booking_id = svc.booking_id "
-                + "ORDER BY f.created_at DESC";
+    List<AdminFeedbackView> list = new ArrayList<>();
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+    String sql = "SELECT "
+            + "f.feedback_id, f.rating, f.comment, f.created_at, f.booking_id, "
+            + "u.full_name AS customer_name, "
+            + "svc.service_names "
+            + "FROM Feedback f "
+            + "LEFT JOIN Customer c ON f.customer_id = c.customer_id "
+            + "LEFT JOIN [User] u ON c.user_id = u.user_id "
+            + "LEFT JOIN ( "
+            + "    SELECT bs.booking_id, "
+            + "           STRING_AGG(s.service_name, ', ') AS service_names "
+            + "    FROM BookingService bs "
+            + "    JOIN Service s ON bs.service_id = s.service_id "
+            + "    GROUP BY bs.booking_id "
+            + ") svc ON f.booking_id = svc.booking_id "
+            + "WHERE 1 = 1 ";
+
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        sql += "AND (u.full_name LIKE ? "
+             + "OR CAST(f.booking_id AS NVARCHAR) LIKE ? "
+             + "OR f.comment LIKE ?) ";
+    }
+
+    if (rating != null && !rating.isEmpty() && !rating.equals("all")) {
+        sql += "AND f.rating = ? ";
+    }
+
+    if (service != null && !service.isEmpty() && !service.equals("all")) {
+        sql += "AND svc.service_names LIKE ? ";
+    }
+
+    sql += "ORDER BY f.created_at DESC";
+
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        int index = 1;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String like = "%" + keyword.trim() + "%";
+            ps.setString(index++, like);
+            ps.setString(index++, like);
+            ps.setString(index++, like);
+        }
+
+        if (rating != null && !rating.isEmpty() && !rating.equals("all")) {
+            ps.setInt(index++, Integer.parseInt(rating));
+        }
+
+        if (service != null && !service.isEmpty() && !service.equals("all")) {
+            ps.setString(index++, "%" + service + "%");
+        }
+
+        try (ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-               AdminFeedbackView fv = new AdminFeedbackView();
+
+                AdminFeedbackView fv = new AdminFeedbackView();
+
                 fv.setFeedbackId(rs.getInt("feedback_id"));
                 fv.setRating(rs.getInt("rating"));
                 fv.setComment(rs.getString("comment"));
@@ -66,16 +105,18 @@ public class FeedbackDAO {
                 fv.setBookingId(rs.getInt("booking_id"));
                 fv.setCustomerName(rs.getString("customer_name"));
                 fv.setServiceNames(rs.getString("service_names"));
+
                 list.add(fv);
             }
-
-        } catch (Exception e) {
-            System.out.println("Error at FeedbackDAO.getAllFeedbacksForAdmin(): " + e.getMessage());
-            e.printStackTrace();
         }
 
-        return list;
+    } catch (Exception e) {
+        System.out.println("Error at FeedbackDAO.getAllFeedbacksForAdmin(): " + e.getMessage());
+        e.printStackTrace();
     }
+
+    return list;
+}
     
     
     // IS FEEDBACK
