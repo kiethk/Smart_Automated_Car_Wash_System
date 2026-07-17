@@ -18,6 +18,19 @@
         }
         avgRating = (double) total / feedbacks.size();
     }
+
+    String currentKeyword = (String) request.getAttribute("CURRENT_KEYWORD");
+    String currentRating = (String) request.getAttribute("CURRENT_RATING");
+    String currentService = (String) request.getAttribute("CURRENT_SERVICE");
+
+    if (currentKeyword == null) {
+        currentKeyword = "";
+    }
+    if (currentRating == null) {
+        currentRating = "all";
+    }
+    if (currentService == null)
+        currentService = "all";
 %>
 
 <!DOCTYPE html>
@@ -68,52 +81,101 @@
                     <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
                         <!-- Filter Row -->
-                        <div class="px-5 py-4 border-b border-slate-100 flex flex-col gap-4">
-                            <div>
-                                <h3 class="text-lg font-bold text-slate-900">Feedback List</h3>
-                                <p class="text-sm text-slate-400">Search and filter customer feedback.</p>
-                            </div>
+                       <!-- Filter Row -->
+<div class="px-5 py-4 border-b border-slate-100 flex flex-col gap-4">
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+    <div>
+        <h3 class="text-lg font-bold text-slate-900">Feedback List</h3>
+        <p class="text-sm text-slate-400">
+            Search and filter all feedback records.
+        </p>
+    </div>
 
-                                <input type="text"
-                                       id="feedbackSearch"
-                                       placeholder="Search customer name or comment..."
-                                       onkeyup="filterFeedback()"
-                                       class="xl:col-span-2 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
+    <form method="get"
+          action="${pageContext.request.contextPath}/admin/feedbacks"
+          class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
 
-                                <select id="ratingFilter"
-                                        onchange="filterFeedback()"
-                                        class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
-                                    <option value="all">All Ratings</option>
-                                    <option value="5">5 Stars</option>
-                                    <option value="4">4 Stars</option>
-                                    <option value="3">3 Stars</option>
-                                    <option value="2">2 Stars</option>
-                                    <option value="1">1 Star</option>
-                                </select>
+        <!-- Search -->
+        <input
+            type="text"
+            name="keyword"
+            value="<%= currentKeyword %>"
+            placeholder="Search customer name or comment..."
+            class="xl:col-span-2 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
 
-                                
-                                <select id="serviceFilter"
-                                        onchange="filterFeedback()"
-                                        class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
-                                    <option value="all">All Services</option>
-                                    <% if (serviceNames != null) {
-                                            for (String sn : serviceNames) {%>
-                                    <option value="<%= sn.toLowerCase()%>"><%= sn%></option>
-                                    <% }
-                                        } %>
-                                </select>
+        <!-- Rating -->
+        <select
+            name="rating"
+            class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
 
-                                <button type="button"
-                                        onclick="clearFeedbackFilters()"
-                                        class="w-full px-3 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition-all">
-                                    Clear Filters
-                                </button>
+            <option value="all" <%= "all".equals(currentRating) ? "selected" : "" %>>
+                All Ratings
+            </option>
 
-                            </div>
-                        </div>
+            <option value="5" <%= "5".equals(currentRating) ? "selected" : "" %>>
+                5 Stars
+            </option>
 
+            <option value="4" <%= "4".equals(currentRating) ? "selected" : "" %>>
+                4 Stars
+            </option>
+
+            <option value="3" <%= "3".equals(currentRating) ? "selected" : "" %>>
+                3 Stars
+            </option>
+
+            <option value="2" <%= "2".equals(currentRating) ? "selected" : "" %>>
+                2 Stars
+            </option>
+
+            <option value="1" <%= "1".equals(currentRating) ? "selected" : "" %>>
+                1 Star
+            </option>
+
+        </select>
+
+        <!-- Service -->
+        <select
+            name="service"
+            class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
+
+            <option value="all">All Services</option>
+
+            <%
+                if (serviceNames != null) {
+                    for (String s : serviceNames) {
+            %>
+
+            <option value="<%= s %>"
+                    <%= s.equals(currentService) ? "selected" : "" %>>
+                <%= s %>
+            </option>
+
+            <%
+                    }
+                }
+            %>
+
+        </select>
+
+        <!-- Button -->
+        <div class="flex gap-2">
+
+            <button type="submit"
+                    class="w-full px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-all">
+                Search
+            </button>
+
+            <a href="${pageContext.request.contextPath}/admin/feedbacks"
+               class="w-full flex items-center justify-center px-3 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition-all">
+                Clear
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
                         <!-- Table -->
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
@@ -188,35 +250,5 @@
                 </main>
             </div>
         </div>
-
-        <script>
-            function filterFeedback() {
-                const keyword = document.getElementById("feedbackSearch").value.toLowerCase();
-                const ratingFilter = document.getElementById("ratingFilter").value;
-                const serviceFilter = document.getElementById("serviceFilter").value;
-
-                const rows = document.querySelectorAll(".feedback-row");
-
-                rows.forEach(row => {
-                    const rating = row.getAttribute("data-rating");
-                    const service = row.getAttribute("data-service");
-                    const text = row.innerText.toLowerCase();
-
-                    const matchesKeyword = text.includes(keyword);
-                    const matchesRating = ratingFilter === "all" || ratingFilter === rating;
-                    const matchesService = serviceFilter === "all" || service.includes(serviceFilter.toLowerCase());
-
-                    row.style.display = matchesKeyword && matchesRating && matchesService ? "" : "none";
-                });
-            }
-
-            function clearFeedbackFilters() {
-                document.getElementById("feedbackSearch").value = "";
-                document.getElementById("ratingFilter").value = "all";
-                document.getElementById("serviceFilter").value = "all";
-                filterFeedback();
-            }
-        </script>
-
     </body>
 </html>

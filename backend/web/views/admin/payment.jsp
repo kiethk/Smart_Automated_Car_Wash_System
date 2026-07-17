@@ -15,6 +15,13 @@
 
     String uploadBookingId = (String) request.getAttribute("UPLOAD_BOOKING_ID");
     boolean showUploadModal = request.getAttribute("SHOW_UPLOAD_MODAL") != null;
+
+    String currentKeyword = (String) request.getAttribute("CURRENT_KEYWORD");
+    String currentMethod  = (String) request.getAttribute("CURRENT_METHOD");
+    String currentStatus  = (String) request.getAttribute("CURRENT_STATUS");
+    if (currentKeyword == null) currentKeyword = "";
+    if (currentMethod == null) currentMethod = "all";
+    if (currentStatus == null) currentStatus = "all";
 %>
 
 <!DOCTYPE html>
@@ -66,29 +73,35 @@
                                 <h3 class="text-lg font-bold text-slate-900">Payment List</h3>
                                 <p class="text-sm text-slate-400">Search and filter all payment records.</p>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-                                <input type="text" id="paymentSearch"
+                            <form method="get" action="${pageContext.request.contextPath}/admin/payments"
+                                  class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+                                <input type="text" name="keyword" value="<%= currentKeyword %>"
                                        placeholder="Search booking ID, transaction ID, customer..."
-                                       onkeyup="filterPayments()"
                                        class="xl:col-span-2 w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
-                                <select id="methodFilter" onchange="filterPayments()"
+                                <select name="method"
                                         class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
-                                    <option value="all">All Methods</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="wallet">Wallet</option>
-                                    <option value="qrcode">QR Code</option>
+                                    <option value="all" <%= "all".equals(currentMethod) ? "selected" : "" %>>All Methods</option>
+                                    <option value="cash" <%= "cash".equals(currentMethod) ? "selected" : "" %>>Cash</option>
+                                    <option value="wallet" <%= "wallet".equals(currentMethod) ? "selected" : "" %>>Wallet</option>
+                                    <option value="qrcode" <%= "qrcode".equals(currentMethod) ? "selected" : "" %>>QR Code</option>
                                 </select>
-                                <select id="statusFilter" onchange="filterPayments()"
+                                <select name="status"
                                         class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
-                                    <option value="all">All Status</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="paid">Paid</option>
+                                    <option value="all" <%= "all".equals(currentStatus) ? "selected" : "" %>>All Status</option>
+                                    <option value="pending" <%= "pending".equals(currentStatus) ? "selected" : "" %>>Pending</option>
+                                    <option value="paid" <%= "paid".equals(currentStatus) ? "selected" : "" %>>Paid</option>
                                 </select>
-                                <button type="button" onclick="clearPaymentFilters()"
-                                        class="w-full px-3 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition-all">
-                                    Clear Filters
-                                </button>
-                            </div>
+                                <div class="flex gap-2">
+                                    <button type="submit"
+                                            class="w-full px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-all">
+                                        Search
+                                    </button>
+                                    <a href="${pageContext.request.contextPath}/admin/payments"
+                                       class="w-full flex items-center justify-center px-3 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition-all">
+                                        Clear
+                                    </a>
+                                </div>
+                            </form>
                         </div>
 
                         <!-- Table -->
@@ -178,11 +191,11 @@
 
                                                     <% if ("pending".equals(status)) { %>
                                                     <!-- Mark Paid -->
-                                                    <a href="${pageContext.request.contextPath}/admin/payments?action=updateStatus&paymentId=<%= p.getPaymentId() %>&status=paid"
-                                                       onclick="return confirm('Mark this payment as paid?')"
-                                                       class="block w-full px-4 py-3 text-left text-emerald-600 hover:bg-emerald-50 text-sm">
+                                                    <button type="button"
+                                                            onclick="event.stopPropagation(); openMarkPaidConfirm(<%= p.getPaymentId() %>)"
+                                                            class="block w-full px-4 py-3 text-left text-emerald-600 hover:bg-emerald-50 text-sm">
                                                         Mark Paid
-                                                    </a>
+                                                    </button>
                                                     <% } %>
 
                                                 </div>
@@ -196,6 +209,31 @@
                         </div>
                     </section>
                 </main>
+            </div>
+        </div>
+
+        <!-- ===== MARK PAID CONFIRM MODAL ===== -->
+        <div id="markPaidConfirmModal"
+             class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+             onclick="closeMarkPaidConfirm(event)">
+            <div class="w-[380px] max-w-full rounded-2xl bg-white shadow-2xl p-6 text-center"
+                 onclick="event.stopPropagation()">
+                <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-2xl">
+                    ✓
+                </div>
+                <h3 class="text-base font-bold text-slate-800 mb-2">Mark this payment as paid?</h3>
+                <p class="text-sm text-slate-500 mb-6">This will update the payment status to "Paid". Are you sure?</p>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeMarkPaidConfirm()"
+                            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors">
+                        Cancel
+                    </button>
+                    <a id="markPaidConfirmLink" href="#"
+                       class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-colors">
+                        Yes, Mark Paid
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -352,28 +390,17 @@
         </div>
 
         <script>
-            // ===== FILTER =====
-            function filterPayments() {
-                const keyword = document.getElementById("paymentSearch").value.toLowerCase();
-                const methodFilter = document.getElementById("methodFilter").value;
-                const statusFilter = document.getElementById("statusFilter").value;
-                document.querySelectorAll(".payment-row").forEach(row => {
-                    const method = row.getAttribute("data-method");
-                    const status = row.getAttribute("data-status");
-                    const text = row.innerText.toLowerCase();
-                    row.style.display =
-                        text.includes(keyword) &&
-                        (methodFilter === "all" || methodFilter === method) &&
-                        (statusFilter === "all" || statusFilter === status)
-                        ? "" : "none";
-                });
+            // ===== MARK PAID CONFIRM MODAL =====
+            function openMarkPaidConfirm(paymentId) {
+                const link = document.getElementById("markPaidConfirmLink");
+                link.href = "${pageContext.request.contextPath}/admin/payments?action=updateStatus&paymentId=" + paymentId + "&status=paid";
+                document.getElementById("markPaidConfirmModal").classList.remove("hidden");
             }
 
-            function clearPaymentFilters() {
-                document.getElementById("paymentSearch").value = "";
-                document.getElementById("methodFilter").value = "all";
-                document.getElementById("statusFilter").value = "all";
-                filterPayments();
+            function closeMarkPaidConfirm(e) {
+                if (!e || e.target === document.getElementById("markPaidConfirmModal")) {
+                    document.getElementById("markPaidConfirmModal").classList.add("hidden");
+                }
             }
 
             // ===== DROPDOWN =====

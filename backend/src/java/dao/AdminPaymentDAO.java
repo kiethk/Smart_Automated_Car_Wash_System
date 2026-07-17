@@ -10,8 +10,8 @@ import utils.DBUtils;
 
 public class AdminPaymentDAO {
 
-    // ===== LẤY TẤT CẢ PAYMENT KÈM THÔNG TIN CHI TIẾT =====
-    public List<AdminPaymentView> getAllPayments() {
+    // ===== get all payment and filter
+    public List<AdminPaymentView> getAllPayments(String keyword, String method, String status) {
         List<AdminPaymentView> list = new ArrayList<>();
 
         String sql = "SELECT p.payment_id, p.payment_method, p.payment_status, "
@@ -23,39 +23,65 @@ public class AdminPaymentDAO {
                 + "LEFT JOIN Booking b ON p.booking_id = b.booking_id "
                 + "LEFT JOIN Customer c ON b.customer_id = c.customer_id "
                 + "LEFT JOIN [User] u ON c.user_id = u.user_id "
-                + "LEFT JOIN ( "
+                + "LEFT JOIN ( "    
                 + "    SELECT bs.booking_id, "
                 + "           STRING_AGG(s.service_name, ', ') AS service_names "
                 + "    FROM BookingService bs "
                 + "    JOIN Service s ON bs.service_id = s.service_id "
                 + "    GROUP BY bs.booking_id "
                 + ") svc ON p.booking_id = svc.booking_id "
-                + "ORDER BY p.payment_id DESC";
+                + "WHERE 1 = 1 ";
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        if (keyword != null && !keyword.isEmpty()) {
+            sql += "AND (CAST(p.booking_id AS NVARCHAR) LIKE ? OR p.transaction_id LIKE ? OR u.full_name LIKE ?) ";
+        }
+        if (method != null && !method.isEmpty() && !method.equals("all")) {
+            sql += "AND p.payment_method = ? ";
+        }
+        if (status != null && !status.isEmpty() && !status.equals("all")) {
+            sql += "AND p.payment_status = ? ";
+        }
 
-            while (rs.next()) {
-                AdminPaymentView p = new AdminPaymentView();
-                p.setPaymentId(rs.getInt("payment_id"));
-                p.setPaymentMethod(rs.getString("payment_method"));
-                p.setPaymentStatus(rs.getString("payment_status"));
-                p.setAmount(rs.getLong("amount"));
-                p.setPaidAt(rs.getTimestamp("paid_at"));
-                p.setTransactionId(rs.getString("transaction_id"));
-                p.setBookingId(rs.getInt("booking_id"));
-                p.setCheckinImageUrl(rs.getString("checkin_image_url"));
-                p.setCheckoutImageUrl(rs.getString("checkout_image_url"));
-                p.setCustomerName(rs.getString("full_name"));
-                p.setCustomerPhone(rs.getString("phone"));
-                p.setCustomerEmail(rs.getString("email"));
-                p.setServiceNames(rs.getString("service_names"));
-                list.add(p);
+        sql += "ORDER BY p.payment_id DESC";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int index = 1;
+            if (keyword != null && !keyword.isEmpty()) {
+                String likeKeyword = "%" + keyword + "%";
+                ps.setString(index++, likeKeyword);
+                ps.setString(index++, likeKeyword);
+                ps.setString(index++, likeKeyword);
+            }
+            if (method != null && !method.isEmpty() && !method.equals("all")) {
+                ps.setString(index++, method);
+            }
+            if (status != null && !status.isEmpty() && !status.equals("all")) {
+                ps.setString(index++, status);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AdminPaymentView p = new AdminPaymentView();
+                    p.setPaymentId(rs.getInt("payment_id"));
+                    p.setPaymentMethod(rs.getString("payment_method"));
+                    p.setPaymentStatus(rs.getString("payment_status"));
+                    p.setAmount(rs.getLong("amount"));
+                    p.setPaidAt(rs.getTimestamp("paid_at"));
+                    p.setTransactionId(rs.getString("transaction_id"));
+                    p.setBookingId(rs.getInt("booking_id"));
+                    p.setCheckinImageUrl(rs.getString("checkin_image_url"));
+                    p.setCheckoutImageUrl(rs.getString("checkout_image_url"));
+                    p.setCustomerName(rs.getString("full_name"));
+                    p.setCustomerPhone(rs.getString("phone"));
+                    p.setCustomerEmail(rs.getString("email"));
+                    p.setServiceNames(rs.getString("service_names"));
+                    list.add(p);
+                }
             }
 
         } catch (Exception e) {
-            System.out.println("Error at AdminPaymentDAO.getAllPayments(): " + e.getMessage());
+            System.out.println("Error at AdminPaymentDAO.searchPayments(): " + e.getMessage());
             e.printStackTrace();
         }
 

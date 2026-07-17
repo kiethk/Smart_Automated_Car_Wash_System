@@ -41,12 +41,22 @@ public class AdminPaymentController extends HttpServlet {
         return true;
     }
 
-    // ===== HELPER: load danh sách payment với detail =====
+   //helper
     private void loadPayments(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String keyword = request.getParameter("keyword");
+        String method  = request.getParameter("method");
+        String status  = request.getParameter("status");
+
         AdminPaymentDAO paymentDAO = new AdminPaymentDAO();
-        List<AdminPaymentView> payments = paymentDAO.getAllPayments();
+        List<AdminPaymentView> payments = paymentDAO.getAllPayments(keyword, method, status);
         request.setAttribute("PAYMENTS", payments);
+
+     
+        request.setAttribute("CURRENT_KEYWORD", keyword != null ? keyword : "");
+        request.setAttribute("CURRENT_METHOD", method != null ? method : "all");
+        request.setAttribute("CURRENT_STATUS", status != null ? status : "all");
+
         request.getRequestDispatcher("/views/admin/payment.jsp").forward(request, response);
     }
 
