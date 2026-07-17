@@ -97,7 +97,136 @@ public class AdminDashboardDAO {
             e.printStackTrace();
         }
 
+        loadBookingStatusCounts(stats);
+        loadMonthlyRevenue(stats);
+        loadDailyBookings(stats);
+        loadServiceRevenue(stats);
+        loadTierDistribution(stats);
+
         return stats;
+    }
+
+    private void loadBookingStatusCounts(AdminDashboardStats stats) {
+        String sql = "SELECT status, COUNT(*) AS cnt FROM Booking GROUP BY status";
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String status = rs.getString("status");
+                int cnt = rs.getInt("cnt");
+                if ("accepted".equalsIgnoreCase(status)) {
+                    stats.setAcceptedBookings(cnt);
+                }
+                if ("completed".equalsIgnoreCase(status)) {
+                    stats.setCompletedBookings(cnt);
+                }
+                if ("cancelled".equalsIgnoreCase(status)) {
+                    stats.setCancelledBookings(cnt);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error loadBookingStatusCounts: " + e.getMessage());
+        }
+    }
+
+    private void loadMonthlyRevenue(AdminDashboardStats stats) {
+        String sql = "SELECT MONTH(booking_date) AS m, ISNULL(SUM(total_amount), 0) AS rev "
+                + "FROM Booking "
+                + "WHERE status = N'completed' AND YEAR(booking_date) = YEAR(GETDATE()) "
+                + "GROUP BY MONTH(booking_date) ORDER BY m ASC";
+
+        java.util.Map<Integer, Long> map = new java.util.LinkedHashMap<>();
+        for (int i = 1; i <= 12; i++) {
+            map.put(i, 0L);
+        }
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                map.put(rs.getInt("m"), rs.getLong("rev"));
+            }
+        } catch (Exception e) {
+            System.out.println("Error loadMonthlyRevenue: " + e.getMessage());
+        }
+
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        java.util.List<Long> values = new java.util.ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            labels.add(months[i - 1]);
+            values.add(map.get(i));
+        }
+        stats.setMonthlyLabels(labels);
+        stats.setMonthlyRevenue(values);
+    }
+
+    private void loadDailyBookings(AdminDashboardStats stats) {
+        String sql = "SELECT CAST(booking_date AS DATE) AS d, COUNT(*) AS cnt "
+                + "FROM Booking "
+                + "WHERE booking_date >= DATEADD(DAY, -29, CAST(GETDATE() AS DATE)) "
+                + "GROUP BY CAST(booking_date AS DATE) ORDER BY d ASC";
+
+        java.util.Map<String, Integer> map = new java.util.LinkedHashMap<>();
+        java.time.LocalDate today = java.time.LocalDate.now();
+        for (int i = 29; i >= 0; i--) {
+            map.put(today.minusDays(i).toString(), 0);
+        }
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String d = rs.getDate("d").toString();
+                if (map.containsKey(d)) {
+                    map.put(d, rs.getInt("cnt"));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error loadDailyBookings: " + e.getMessage());
+        }
+
+        stats.setDailyLabels(new java.util.ArrayList<>(map.keySet()));
+        stats.setDailyBookings(new java.util.ArrayList<>(map.values()));
+    }
+
+    private void loadServiceRevenue(AdminDashboardStats stats) {
+        String sql = "SELECT TOP 6 s.service_name, ISNULL(SUM(bs.price * bs.quantity), 0) AS rev "
+                + "FROM BookingService bs "
+                + "JOIN Service s ON bs.service_id = s.service_id "
+                + "JOIN Booking b ON bs.booking_id = b.booking_id "
+                + "WHERE b.status = N'completed' "
+                + "GROUP BY s.service_name ORDER BY rev DESC";
+
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        java.util.List<Long> values = new java.util.ArrayList<>();
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                labels.add(rs.getString("service_name"));
+                values.add(rs.getLong("rev"));
+            }
+        } catch (Exception e) {
+            System.out.println("Error loadServiceRevenue: " + e.getMessage());
+        }
+
+        stats.setServiceLabels(labels);
+        stats.setServiceRevenue(values);
+    }
+
+    private void loadTierDistribution(AdminDashboardStats stats) {
+        String sql = "SELECT t.tier_name, COUNT(c.customer_id) AS cnt "
+                + "FROM Tiers t LEFT JOIN Customer c ON t.tier_id = c.tier_id "
+                + "GROUP BY t.tier_id, t.tier_name ORDER BY t.tier_id ASC";
+
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        java.util.List<Integer> values = new java.util.ArrayList<>();
+
+        try ( Connection conn = DBUtils.getConnection();  PreparedStatement ps = conn.prepareStatement(sql);  ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                labels.add(rs.getString("tier_name"));
+                values.add(rs.getInt("cnt"));
+            }
+        } catch (Exception e) {
+            System.out.println("Error loadTierDistribution: " + e.getMessage());
+        }
+
+        stats.setTierLabels(labels);
+        stats.setTierCounts(values);
     }
 
     public List<AdminDashboardBookingView> getTodayBookings() {

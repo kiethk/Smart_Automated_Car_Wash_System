@@ -111,6 +111,49 @@
                         </div>
                     </div>
 
+                    <%-- CHARTS SECTION --%>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+
+                        <%-- Chart 1: Revenue by Month --%>
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                            <h3 class="text-base font-bold text-slate-900">Monthly Revenue</h3>
+                            <p class="text-xs text-slate-400 mt-1 mb-4">Completed bookings revenue by month (<%= java.time.Year.now().getValue()%>)</p>
+                            <canvas id="chartMonthlyRevenue" height="200"></canvas>
+                        </div>
+
+                        <%-- Chart 3: Bookings per Day --%>
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                            <h3 class="text-base font-bold text-slate-900">Daily Bookings</h3>
+                            <p class="text-xs text-slate-400 mt-1 mb-4">Number of bookings over the last 30 days</p>
+                            <canvas id="chartDailyBookings" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+
+                        <%-- Chart 2: Booking Status --%>
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col items-center">
+                            <h3 class="text-base font-bold text-slate-900 w-full">Booking Status</h3>
+                            <p class="text-xs text-slate-400 mt-1 mb-4 w-full">All-time distribution</p>
+                            <canvas id="chartBookingStatus" height="220"></canvas>
+                        </div>
+
+                        <%-- Chart 4: Tier Distribution --%>
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col items-center">
+                            <h3 class="text-base font-bold text-slate-900 w-full">Customer Tiers</h3>
+                            <p class="text-xs text-slate-400 mt-1 mb-4 w-full">Distribution by membership level</p>
+                            <canvas id="chartTierDistribution" height="220"></canvas>
+                        </div>
+
+                        <%-- Chart 5: Top Services --%>
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                            <h3 class="text-base font-bold text-slate-900">Top Services</h3>
+                            <p class="text-xs text-slate-400 mt-1 mb-4">Revenue by service (completed)</p>
+                            <canvas id="chartServiceRevenue" height="220"></canvas>
+                        </div>
+                    </div>
+
+
 
                     <%-- Today’s Bookings --%>
                     <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
@@ -306,4 +349,192 @@
             </div>
         </div>
     </body>
+
+    <%-- Chart.js --%>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // ---- Data từ Java ----
+        const monthlyLabels = [<% for (int i = 0; i < stats.getMonthlyLabels().size(); i++) {%>"<%= stats.getMonthlyLabels().get(i)%>"<%= i < stats.getMonthlyLabels().size() - 1 ? "," : ""%><% } %>];
+        const monthlyRevenue = [<% for (int i = 0; i < stats.getMonthlyRevenue().size(); i++) {%><%= stats.getMonthlyRevenue().get(i)%><%= i < stats.getMonthlyRevenue().size() - 1 ? "," : ""%><% } %>];
+
+        const dailyLabels = [<% for (int i = 0; i < stats.getDailyLabels().size(); i++) {%>"<%= stats.getDailyLabels().get(i)%>"<%= i < stats.getDailyLabels().size() - 1 ? "," : ""%><% } %>];
+        const dailyBookings = [<% for (int i = 0; i < stats.getDailyBookings().size(); i++) {%><%= stats.getDailyBookings().get(i)%><%= i < stats.getDailyBookings().size() - 1 ? "," : ""%><% } %>];
+
+        const serviceLabels = [<% for (int i = 0; i < stats.getServiceLabels().size(); i++) {%>"<%= stats.getServiceLabels().get(i).replace("\"", "\\\"")%>"<%= i < stats.getServiceLabels().size() - 1 ? "," : ""%><% } %>];
+        const serviceRevenue = [<% for (int i = 0; i < stats.getServiceRevenue().size(); i++) {%><%= stats.getServiceRevenue().get(i)%><%= i < stats.getServiceRevenue().size() - 1 ? "," : ""%><% } %>];
+
+        const tierLabels = [<% for (int i = 0; i < stats.getTierLabels().size(); i++) {%>"<%= stats.getTierLabels().get(i)%>"<%= i < stats.getTierLabels().size() - 1 ? "," : ""%><% } %>];
+        const tierCounts = [<% for (int i = 0; i < stats.getTierCounts().size(); i++) {%><%= stats.getTierCounts().get(i)%><%= i < stats.getTierCounts().size() - 1 ? "," : ""%><% }%>];
+
+        const bookingStatusData = {
+            pending: <%= stats.getPendingBookings()%>,
+            accepted: <%= stats.getAcceptedBookings()%>,
+            completed: <%= stats.getCompletedBookings()%>,
+            cancelled: <%= stats.getCancelledBookings()%>
+        };
+
+        // ---- Chart 1: Monthly Revenue ----
+        new Chart(document.getElementById('chartMonthlyRevenue'), {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                        label: 'Revenue (VND)',
+                        data: monthlyRevenue,
+                        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+            },
+            options: {
+                responsive: true,
+                plugins: {legend: {display: false}},
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: v => new Intl.NumberFormat('vi-VN').format(v)
+                        },
+                        grid: {color: 'rgba(0,0,0,0.04)'}
+                    },
+                    x: {grid: {display: false}}
+                }
+            }
+        });
+
+        // ---- Chart 2: Booking Status Donut ----
+        new Chart(document.getElementById('chartBookingStatus'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Accepted', 'Completed', 'Cancelled'],
+                datasets: [{
+                        data: [
+                            bookingStatusData.pending,
+                            bookingStatusData.accepted,
+                            bookingStatusData.completed,
+                            bookingStatusData.cancelled
+                        ],
+                        backgroundColor: [
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(244, 63, 94, 0.8)'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+            },
+            options: {
+                responsive: true,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {padding: 12, font: {size: 11}}
+                    }
+                }
+            }
+        });
+
+        // ---- Chart 3: Daily Bookings Line ----
+        new Chart(document.getElementById('chartDailyBookings'), {
+            type: 'line',
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                        label: 'Bookings',
+                        data: dailyBookings,
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+            },
+            options: {
+                responsive: true,
+                plugins: {legend: {display: false}},
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {stepSize: 1},
+                        grid: {color: 'rgba(0,0,0,0.04)'}
+                    },
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 10,
+                            maxRotation: 0
+                        },
+                        grid: {display: false}
+                    }
+                }
+            }
+        });
+
+        // ---- Chart 4: Tier Distribution Pie ----
+        new Chart(document.getElementById('chartTierDistribution'), {
+            type: 'pie',
+            data: {
+                labels: tierLabels,
+                datasets: [{
+                        data: tierCounts,
+                        backgroundColor: [
+                            'rgba(148, 163, 184, 0.8)', // Member - slate
+                            'rgba(148, 163, 184, 1)', // Silver
+                            'rgba(245, 158, 11, 0.8)', // Gold
+                            'rgba(139, 92, 246, 0.8)'       // Platinum
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {padding: 12, font: {size: 11}}
+                    }
+                }
+            }
+        });
+
+        // ---- Chart 5: Top Services Horizontal Bar ----
+        new Chart(document.getElementById('chartServiceRevenue'), {
+            type: 'bar',
+            data: {
+                labels: serviceLabels,
+                datasets: [{
+                        label: 'Revenue (VND)',
+                        data: serviceRevenue,
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(244, 63, 94, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 6
+                    }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {legend: {display: false}},
+                scales: {
+                    x: {
+                        ticks: {
+                            callback: v => new Intl.NumberFormat('vi-VN').format(v)
+                        },
+                        grid: {color: 'rgba(0,0,0,0.04)'}
+                    },
+                    y: {grid: {display: false}}
+                }
+            }
+        });
+    </script>
 </html>
