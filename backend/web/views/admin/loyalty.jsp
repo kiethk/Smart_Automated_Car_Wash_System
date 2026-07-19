@@ -267,14 +267,6 @@
                                        onkeyup="filterLoyalty()"
                                        class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
                             </div>
-                            <div>
-                                <select id="typeFilter" onchange="filterLoyalty()" class="px-4 py-2.5 rounded-2xl border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50">
-                                    <option value="all">All Types</option>
-                                    <option value="earn">Earn</option>
-                                    <option value="redeem">Redeem</option>
-                                    <option value="expired">Expired</option>
-                                </select>
-                            </div>
                             <button onclick="clearFilters()" class="px-4 py-2.5 rounded-2xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition-all">
                                 Clear Filters
                             </button>
@@ -449,7 +441,6 @@
         <script>
             function filterLoyalty() {
                 const keyword = document.getElementById("loyaltySearch").value.toLowerCase();
-                const typeFilter = document.getElementById("typeFilter").value;
                 const rows = document.querySelectorAll(".loyalty-row");
 
                 rows.forEach(row => {
@@ -462,22 +453,12 @@
 
                     const matchesKeyword = name.includes(keyword) || email.includes(keyword);
 
-                    let matchesType = true;
-                    if (typeFilter === "earn") {
-                        matchesType = earnText.includes("+") && !earnText.includes("no earn");
-                    } else if (typeFilter === "redeem") {
-                        matchesType = redeemText.includes("-") && !redeemText.includes("no redeem");
-                    } else if (typeFilter === "expired") {
-                        matchesType = expiredText.includes("-") && !expiredText.includes("no expired");
-                    }
-
-                    row.style.display = matchesKeyword && matchesType ? "" : "none";
+                    row.style.display = matchesKeyword ? "" : "none";
                 });
             }
 
             function clearFilters() {
                 document.getElementById("loyaltySearch").value = "";
-                document.getElementById("typeFilter").value = "all";
                 filterLoyalty();
             }
 

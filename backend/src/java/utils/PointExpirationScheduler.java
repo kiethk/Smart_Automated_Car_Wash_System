@@ -16,7 +16,6 @@ public class PointExpirationScheduler implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         scheduler = Executors.newSingleThreadScheduledExecutor();
-        // Chạy mỗi ngày lúc 1:00 AM (sau 1 giờ khởi động và lặp lại mỗi 24 giờ)
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 LoyaltyPointHistoryDAO loyaltyDAO = new LoyaltyPointHistoryDAO();
@@ -26,7 +25,7 @@ public class PointExpirationScheduler implements ServletContextListener {
                 e.printStackTrace();
                 System.err.println("Point expiration job failed: " + e.getMessage());
             }
-        }, 1, 24, TimeUnit.HOURS);
+        }, 1, 1, TimeUnit.MINUTES);
     }
 
     @Override

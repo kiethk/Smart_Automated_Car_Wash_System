@@ -212,11 +212,6 @@
 
                                         <td class="px-5 py-4">
                                             <div class="flex items-center justify-end gap-2">
-                                                <a href="${pageContext.request.contextPath}/admin/vehicles?vehicleId=<%= v.getVehicleId()%>"
-                                                   class="px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-xs font-bold hover:bg-blue-100 transition-all">
-                                                    View
-                                                </a>
-
                                                 <form action="${pageContext.request.contextPath}/admin/vehicles"
                                                       method="post"
                                                       onsubmit="return confirm('Are you sure you want to change this vehicle status?');">

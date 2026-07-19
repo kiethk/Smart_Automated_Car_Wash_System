@@ -48,8 +48,6 @@ public class BookingDAO {
         String sqlInsertPromotionUsage = "INSERT INTO PromotionUsage (promotion_id, booking_id, used_at) "
                 + "VALUES (?, ?, GETDATE())";
 
-        String sqlDeductPoints = "UPDATE Customer SET total_points = total_points - ? WHERE customer_id = ?";
-
         String sqlInsertPointHistory = "INSERT INTO LoyaltyPointHistory "
                 + "(points_earned, points_used, transaction_type, description, expired_date, created_at, customer_id) "
                 + "VALUES (?, ?, ?, ?, DATEADD(MONTH, " + config.LoyaltyConfig.POINT_EXPIRY_MONTHS + ", CAST(GETDATE() AS DATE)), GETDATE(), ?)";
@@ -79,12 +77,10 @@ public class BookingDAO {
             if ("wallet".equalsIgnoreCase(paymentMethod)) {
                 bookingStatus = "accepted";
                 paymentStatus = "paid";
-                isPaidImmediately = true; // Đánh dấu là đã thu tiền xong
+                isPaidImmediately = true;
             }
 
             // 2. TÍNH TOÁN ĐIỂM THƯỞNG GỐC DỰ KIẾN (1.000đ = 1 điểm)
-            // Lấy tổng tiền phải trả cộng lại số điểm đã đổi để ra giá trị gốc trước khi
-            // giảm giá
             long originalAmount = booking.getTotalAmount() + redeemPoints;
             int pointsToEarn = (int) (originalAmount / 1000);
 
@@ -94,7 +90,7 @@ public class BookingDAO {
             ps.setInt(2, booking.getSlotId());
             ps.setLong(3, booking.getDiscountAmount());
             ps.setLong(4, booking.getTotalAmount());
-            ps.setInt(5, pointsToEarn); // Lưu số điểm dự kiến kiếm được vào Booking
+            ps.setInt(5, pointsToEarn);
             ps.setString(6, bookingStatus);
 
             if (booking.getNotes() != null) {
@@ -116,7 +112,7 @@ public class BookingDAO {
             }
 
             if (booking.getBayId() != null && booking.getBayId() > 0) {
-                ps.setInt(10, booking.getBayId()); // Gán đúng ID khoang rửa trống tìm được từ Controller
+                ps.setInt(10, booking.getBayId());
             } else {
                 ps.setNull(10, Types.INTEGER);
             }
@@ -133,7 +129,6 @@ public class BookingDAO {
             try ( ResultSet generatedKeys = ps.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     generatedBookingId = generatedKeys.getInt(1);
-
                     booking.setBookingId(generatedBookingId);
                 } else {
                     throw new Exception("Inserting booking failed, no ID obtained.");
@@ -158,14 +153,14 @@ public class BookingDAO {
             ps.close();
 
             ps = conn.prepareStatement(sqlInsertBookingService);
-            ps.setInt(1, 1); // quantity
+            ps.setInt(1, 1);
             ps.setLong(2, servicePrice);
             ps.setInt(3, generatedBookingId);
             ps.setInt(4, serviceId);
             ps.executeUpdate();
             ps.close();
 
-            // 3.1. Nếu khách có dùng promotion -> ghi nhận vào PromotionUsage
+            // 3.2. Nếu khách có dùng promotion -> ghi nhận vào PromotionUsage
             if (booking.getPromotionId() != null && booking.getPromotionId() > 0) {
                 ps = conn.prepareStatement(sqlInsertPromotionUsage);
                 ps.setInt(1, booking.getPromotionId());
@@ -206,12 +201,11 @@ public class BookingDAO {
                 ps.setInt(1, booking.getCustomerId());
                 ps.setLong(2, booking.getTotalAmount());
                 ps.setString(3, "Payment for Booking #" + generatedBookingId);
-                ps.setInt(4, generatedBookingId); // thêm booking_id
+                ps.setInt(4, generatedBookingId);
                 ps.executeUpdate();
                 ps.close();
 
-                // Wallet payment: cộng spent + points ngay, còn total_washes sẽ cộng khi
-                // completed.
+                // Wallet payment: cộng spent + points ngay
                 ps = conn.prepareStatement(sqlUpdateCustomerStatsPaid);
                 ps.setLong(1, booking.getTotalAmount());
                 ps.setInt(2, pointsToEarn);
@@ -231,34 +225,93 @@ public class BookingDAO {
                 }
             }
 
-            // 5. TRỪ ĐIỂM THƯỞNG CŨ NẾU KHÁCH CÓ ĐỔI ĐIỂM ĐỂ GIẢM GIÁ
-            // Thêm check trước khi trừ
+            // ========================================================
+            // 5. XỬ LÝ TRỪ ĐIỂM (REDEEM) - ĐÃ SỬA HOÀN CHỈNH
+            // ========================================================
             if (redeemPoints > 0) {
-                // Validate server-side
+                // 5.1. Kiểm tra tổng điểm khả dụng
                 String sqlCheckPoints = "SELECT total_points FROM Customer WHERE customer_id = ?";
                 ps = conn.prepareStatement(sqlCheckPoints);
                 ps.setInt(1, booking.getCustomerId());
                 ResultSet rsPoints = ps.executeQuery();
+                int availablePoints = 0;
                 if (rsPoints.next()) {
-                    int availablePoints = rsPoints.getInt("total_points");
-                    if (redeemPoints > availablePoints) {
-                        throw new Exception("Insufficient points: requested " + redeemPoints + " but only "
-                                + availablePoints + " available.");
-                    }
+                    availablePoints = rsPoints.getInt("total_points");
                 }
                 rsPoints.close();
                 ps.close();
 
-                ps = conn.prepareStatement(sqlDeductPoints);
-                ps.setInt(1, redeemPoints);
-                ps.setInt(2, booking.getCustomerId());
+                if (redeemPoints > availablePoints) {
+                    throw new Exception("Insufficient points: requested " + redeemPoints + " but only "
+                            + availablePoints + " available.");
+                }
+
+                // 5.2. Lấy danh sách điểm chưa dùng hết (FIFO - mới nhất trước)
+                String selectPoints = 
+                    "SELECT point_history_id, points_earned, points_used " +
+                    "FROM LoyaltyPointHistory " +
+                    "WHERE customer_id = ? " +
+                    "AND points_earned > points_used " +
+                    "AND (expired_date IS NULL OR expired_date > GETDATE()) " +
+                    "ORDER BY created_at DESC";
+
+                ps = conn.prepareStatement(selectPoints);
+                ps.setInt(1, booking.getCustomerId());
+                rs = ps.executeQuery();
+
+                int remainingPoints = redeemPoints;
+                int totalRedeemed = 0;
+
+                while (rs.next() && remainingPoints > 0) {
+                    int historyId = rs.getInt("point_history_id");
+                    int pointsEarned = rs.getInt("points_earned");
+                    int pointsUsed = rs.getInt("points_used");
+                    int available = pointsEarned - pointsUsed;
+
+                    int pointsToUse = Math.min(available, remainingPoints);
+                    int newPointsUsed = pointsUsed + pointsToUse;
+
+                    // 5.3. Cập nhật points_used cho điểm đó
+                    String updatePoints = "UPDATE LoyaltyPointHistory SET points_used = ? WHERE point_history_id = ?";
+                    PreparedStatement psUpdate = conn.prepareStatement(updatePoints);
+                    psUpdate.setInt(1, newPointsUsed);
+                    psUpdate.setInt(2, historyId);
+                    psUpdate.executeUpdate();
+                    psUpdate.close();
+
+                    remainingPoints -= pointsToUse;
+                    totalRedeemed += pointsToUse;
+                    
+                    System.out.println("Redeemed " + pointsToUse + " points from history ID " + historyId);
+                }
+                rs.close();
+                ps.close();
+
+                if (remainingPoints > 0) {
+                    throw new Exception("Not enough available points after checking.");
+                }
+
+                // 5.4. Tính lại total_points từ LoyaltyPointHistory
+                String recalculatePoints = 
+                    "UPDATE Customer " +
+                    "SET total_points = ( " +
+                    "    SELECT ISNULL(SUM(points_earned - points_used), 0) " +
+                    "    FROM LoyaltyPointHistory " +
+                    "    WHERE customer_id = Customer.customer_id " +
+                    "    AND (expired_date IS NULL OR expired_date > GETDATE()) " +
+                    ") " +
+                    "WHERE customer_id = ?";
+
+                ps = conn.prepareStatement(recalculatePoints);
+                ps.setInt(1, booking.getCustomerId());
                 ps.executeUpdate();
                 ps.close();
 
+                // 5.5. Ghi lại lịch sử redeem
                 ps = conn.prepareStatement(sqlInsertUsedPointHistory);
                 ps.setInt(1, 0);
-                ps.setInt(2, redeemPoints);
-                ps.setString(3, "used");
+                ps.setInt(2, totalRedeemed);
+                ps.setString(3, "redeem");
                 ps.setString(4, "Redeem points for Booking #" + generatedBookingId);
                 ps.setInt(5, booking.getCustomerId());
                 ps.executeUpdate();
@@ -320,11 +373,8 @@ public class BookingDAO {
     // ĐIỂM
     // =========================================================================
     public boolean confirmPaymentSuccess(int bookingId) {
-        // Lấy thông tin điểm thưởng đã tính sẵn và customer_id của booking
         String sqlGetBooking = "SELECT customer_id, points_earned FROM Booking WHERE booking_id = ?";
-
         String sqlUpdatePayment = "UPDATE Payment SET payment_status = N'paid', paid_at = GETDATE() WHERE booking_id = ?";
-
         String sqlAddPoints = "UPDATE Customer SET total_points = total_points + ? WHERE customer_id = ?";
 
         Connection conn = null;
@@ -339,7 +389,6 @@ public class BookingDAO {
 
             conn.setAutoCommit(false);
 
-            // Bước 1: Lấy thông tin điểm dự kiến lưu trong đơn
             ps = conn.prepareStatement(sqlGetBooking);
             ps.setInt(1, bookingId);
             rs = ps.executeQuery();
@@ -350,18 +399,16 @@ public class BookingDAO {
                 customerId = rs.getInt("customer_id");
                 pointsToEarn = rs.getInt("points_earned");
             } else {
-                return false; // Không tìm thấy đơn hàng
+                return false;
             }
             rs.close();
             ps.close();
 
-            // Bước 2: Cập nhật trạng thái Payment thành 'paid'
             ps = conn.prepareStatement(sqlUpdatePayment);
             ps.setInt(1, bookingId);
             ps.executeUpdate();
             ps.close();
 
-            // Bước 3: CHÍNH THỨC CỘNG ĐIỂM VÀO TÀI KHOẢN KHÁCH HÀNG
             if (pointsToEarn > 0) {
                 ps = conn.prepareStatement(sqlAddPoints);
                 ps.setInt(1, pointsToEarn);
@@ -418,11 +465,25 @@ public class BookingDAO {
         String sqlUpdateCustomerStats = "UPDATE Customer "
                 + "SET total_spent = total_spent + ?, "
                 + "    total_washes = total_washes + 1, "
-                + "    total_points = total_points + ? "
+                + "    total_points = ( "
+                + "        SELECT ISNULL(SUM(points_earned - points_used), 0) "
+                + "        FROM LoyaltyPointHistory "
+                + "        WHERE customer_id = Customer.customer_id "
+                + "        AND (expired_date IS NULL OR expired_date > GETDATE()) "
+                + "    ) "
                 + "WHERE customer_id = ?";
 
         String sqlUpdateCustomerWashesOnly = "UPDATE Customer "
                 + "SET total_washes = total_washes + 1 "
+                + "WHERE customer_id = ?";
+
+        String sqlRecalculatePoints = "UPDATE Customer "
+                + "SET total_points = ( "
+                + "    SELECT ISNULL(SUM(points_earned - points_used), 0) "
+                + "    FROM LoyaltyPointHistory "
+                + "    WHERE customer_id = Customer.customer_id "
+                + "    AND (expired_date IS NULL OR expired_date > GETDATE()) "
+                + ") "
                 + "WHERE customer_id = ?";
 
         Connection conn = null;
@@ -480,11 +541,15 @@ public class BookingDAO {
                 ps.executeUpdate();
                 ps.close();
 
+                ps = conn.prepareStatement(sqlRecalculatePoints);
+                ps.setInt(1, customerId);
+                ps.executeUpdate();
+                ps.close();
+
             } else if (!alreadyPaidByWallet && !alreadyCompleted) {
                 ps = conn.prepareStatement(sqlUpdateCustomerStats);
                 ps.setLong(1, totalAmount);
-                ps.setInt(2, pointsEarned);
-                ps.setInt(3, customerId);
+                ps.setInt(2, customerId);
                 ps.executeUpdate();
                 ps.close();
 
@@ -539,8 +604,6 @@ public class BookingDAO {
     public Map<String, Object> getUpcomingAppointmentByCustomerId(int customerId) {
         Map<String, Object> appointment = null;
 
-        // Truy vấn bốc lịch hẹn gần nhất, trạng thái chưa hủy/hoàn thành, ngày hẹn từ
-        // hôm nay trở đi
         String sql = "SELECT TOP 1 b.booking_date, b.status, s.time_value, vd.plate_number, vd.brand_display, vd.model_display, bay.bay_name "
                 + "FROM Booking b "
                 + "JOIN Slot s ON b.slot_id = s.slot_id "
@@ -570,12 +633,10 @@ public class BookingDAO {
         }
         return appointment;
     }
+
     // =========================================================================
     // LẤY LỊCH SỬ BOOKING THEO CUSTOMER ID (CÓ LỌC STATUS)
-    // Trả về List<BookingHistoryDTO> thay vì List<Booking>,
-    // vì kết quả này JOIN nhiều bảng, không còn map 1-1 với bảng Booking nữa.
     // =========================================================================
-
     public List<BookingHistoryDTO> getBookingHistoryByCustomerId(int customerId, String status) {
         List<BookingHistoryDTO> list = new ArrayList<>();
 
@@ -610,26 +671,21 @@ public class BookingDAO {
                 while (rs.next()) {
                     BookingHistoryDTO b = new BookingHistoryDTO();
 
-                    // Các field gốc
                     b.setBookingId(rs.getInt("booking_id"));
                     b.setBookingDate(rs.getDate("booking_date") != null ? rs.getDate("booking_date").toString() : null);
                     b.setCreatedAt(rs.getTimestamp("created_at"));
                     b.setCustomerId(rs.getInt("customer_id"));
                     b.setStatus(rs.getString("status"));
 
-                    // Thông tin khách hàng (từ User)
                     b.setCustomerFullName(rs.getString("full_name"));
                     b.setCustomerPhone(rs.getString("phone"));
                     b.setCustomerEmail(rs.getString("email"));
 
-                    // Payment method (từ Payment)
                     b.setPaymentMethod(rs.getString("payment_method"));
 
-                    // Vehicle info (từ Vehicle + Model)
                     b.setPlateNumber(rs.getString("plate_number"));
                     b.setModelName(rs.getString("model_name"));
 
-                    // Checkin/Checkout images (từ Payment)
                     b.setCheckinImageUrl(rs.getString("checkin_image_url"));
                     b.setCheckoutImageUrl(rs.getString("checkout_image_url"));
 
@@ -644,7 +700,6 @@ public class BookingDAO {
 
         return list;
     }
-    // hủy booking và cập nhật lại trạng thái
 
     public boolean cancelBooking(int bookingId, int customerId) {
         String sql = "UPDATE Booking SET status = N'cancelled' "
@@ -667,10 +722,7 @@ public class BookingDAO {
 
     public long getBookingAmount(int bookingId) {
 
-        String sql
-                = "SELECT total_amount "
-                + "FROM Booking "
-                + "WHERE booking_id = ?";
+        String sql = "SELECT total_amount FROM Booking WHERE booking_id = ?";
 
         Connection conn = null;
 
@@ -680,13 +732,11 @@ public class BookingDAO {
 
             if (conn != null) {
 
-                PreparedStatement ps
-                        = conn.prepareStatement(sql);
+                PreparedStatement ps = conn.prepareStatement(sql);
 
                 ps.setInt(1, bookingId);
 
-                ResultSet rs
-                        = ps.executeQuery();
+                ResultSet rs = ps.executeQuery();
 
                 if (rs.next()) {
                     return rs.getLong("total_amount");
