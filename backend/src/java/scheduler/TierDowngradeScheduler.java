@@ -17,14 +17,14 @@ public class TierDowngradeScheduler {
         scheduler = Executors.newSingleThreadScheduledExecutor();
 
         long initialDelay = computeInitialDelaySeconds();
-        long periodSeconds = TimeUnit.DAYS.toSeconds(1); // check mỗi ngày
+        long periodSeconds = TimeUnit.DAYS.toSeconds(1); // check má»—i ngÃ y
 
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 LocalDate today = LocalDate.now();
 
-                // Chỉ chạy vào ngày 1 đầu tháng
-                if (today.getDayOfMonth() == 17) {
+                // Chá»‰ cháº¡y vÃ o ngÃ y 1 Ä‘áº§u thÃ¡ng
+                if (today.getDayOfMonth() == 1) {
                     System.out.println("[TierDowngradeScheduler] Running monthly tier downgrade at " + LocalDateTime.now());
                     TierDowngradeDAO dao = new TierDowngradeDAO();
                     boolean success = dao.runMonthlyDowngradeAuto();
@@ -46,18 +46,18 @@ public class TierDowngradeScheduler {
         }
     }
 
-    // Tính số giây delay đến 00:05 sáng hôm nay hoặc ngày mai
+    // TÃ­nh sá»‘ giÃ¢y delay Ä‘áº¿n 00:05 sÃ¡ng hÃ´m nay hoáº·c ngÃ y mai
     private long computeInitialDelaySeconds() {
-//        LocalDateTime now = LocalDateTime.now();
-//        // Chạy lúc 00:05 sáng mỗi ngày
-//        LocalDateTime nextRun = now.toLocalDate().atTime(LocalTime.of(0, 5));
-//
-//        if (now.isAfter(nextRun)) {
-//            nextRun = nextRun.plusDays(1);
-//        }
-//
-//        return ChronoUnit.SECONDS.between(now, nextRun);
+        LocalDateTime now = LocalDateTime.now();
+        // Cháº¡y lÃºc 00:05 sÃ¡ng má»—i ngÃ y
+        LocalDateTime nextRun = now.toLocalDate().atTime(LocalTime.of(0, 5));
 
-        return 3;
+        if (now.isAfter(nextRun)) {
+            nextRun = nextRun.plusDays(1);
+        }
+
+        return ChronoUnit.SECONDS.between(now, nextRun);
+
+//        return 3;
     }
 }
