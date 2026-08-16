@@ -727,3 +727,110 @@ Environment Variables
 ```
 
 This configuration strategy makes it possible to deploy the same application to different environments by changing configuration values without modifying the application source code.
+## Screenshots
+
+The following screenshots demonstrate the main customer-facing and administrative workflows of the Smart Automated Car Wash System.
+
+### Customer Experience
+
+<table>
+  <tr>
+    <td align="left" valign="top">
+      <strong>Home Page</strong><br><br>
+      <img src="./docs/screenshots/home.png" width="450">
+    </td>
+    <td align="left" valign="top">
+      <strong>Booking</strong><br><br>
+      <img src="./docs/screenshots/booking.png" width="450">
+    </td>
+  </tr>
+</table>
+
+The **Home Page** provides an overview of the car wash services and navigation to the main features of the system.
+
+The **Booking Page** allows customers to select their vehicle, service, booking date, and available time slot.
+
+---
+
+### Customer Management
+
+<table>
+  <tr>
+    <td align="left" valign="top">
+      <strong>Customer Dashboard</strong><br><br>
+      <img src="./docs/screenshots/customer-dashboard.png" width="450">
+    </td>
+    <td align="left" valign="top">
+      <strong>Booking History</strong><br><br>
+      <img src="./docs/screenshots/booking-history.png" width="450">
+    </td>
+  </tr>
+</table>
+
+The **Customer Dashboard** allows customers to view their profile, membership tier, loyalty points, booking statistics, and account information.
+
+The **Booking History** page allows customers to review their previous and upcoming bookings.
+
+---
+
+### Administration
+
+<table>
+  <tr>
+    <td align="left" valign="top">
+      <strong>Admin Dashboard</strong><br><br>
+      <img src="./docs/screenshots/admin-dashboard.png" width="450">
+    </td>
+    <td align="left" valign="top">
+      <strong>Booking Management</strong><br><br>
+      <img src="./docs/screenshots/admin-bookings.png" width="450">
+    </td>
+  </tr>
+  <tr>
+    <td align="left" valign="top">
+      <strong>Service Management</strong><br><br>
+      <img src="./docs/screenshots/admin-services.png" width="450">
+    </td>
+    <td align="left" valign="top">
+      <strong>Promotion Management</strong><br><br>
+      <img src="./docs/screenshots/admin-promotions.png" width="450">
+    </td>
+  </tr>
+</table>
+
+The **Admin Dashboard** provides an overview of the main system operations.
+
+The **Booking Management** interface allows administrators to manage customer bookings and monitor booking status.
+
+The **Service Management** interface allows administrators to manage car wash services, pricing, duration, and activation status.
+
+The **Promotion Management** interface allows administrators to create and manage promotional campaigns and their usage rules.
+## Future Improvements
+
+The current system provides the core functionality required for an automated car wash management platform. The following improvements could be considered for future development:
+
+* **Online Payment Integration** — Integrate payment gateways such as MoMo, VNPay, or other online payment providers.
+* **Customer Notifications** — Add email or real-time notifications for booking confirmations, booking status changes, and promotions.
+* **Advanced Reporting** — Provide revenue reports, service usage statistics, customer analytics, and operational dashboards.
+* **Improved Scheduling** — Enhance the scheduling system with automatic slot management and conflict prevention.
+* **Mobile Application** — Develop a mobile application to provide a more convenient booking experience for customers.
+* **CI/CD Pipeline** — Introduce automated testing, Docker image builds, and continuous deployment through a CI/CD pipeline.
+* **Cloud Infrastructure** — Gradually migrate the current deployment architecture to a more scalable cloud infrastructure.
+## Authors
+
+This project was developed collaboratively by a team of **FPT University** students. Each member was responsible for the full-stack implementation of their assigned features, including frontend, backend, database integration, and related business logic.
+
+| Member         | Role            |
+| -------------- | --------------- |
+| **Huynh Khac Kiet** | **Team Leader** |
+| **Truong Van Khai**   | Team Member     |
+| **Pham Quoc Huy**   | Team Member     |
+| **Nguyen Ha Cao Ky**   | Team Member     |
+
+### Contact
+
+**Huynh Khac Kiet**
+
+GitHub: [@kiethk](https://github.com/kiethk)
+
+Email: `kiethk.dt.vn@gmail.com`
