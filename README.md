@@ -665,7 +665,7 @@ backend/dist/backend.war
 ```
 
 has been generated.
-## 12. Environment Variables
+## Environment Variables
 
 The application uses environment variables to separate deployment-specific configuration from the application source code.
 
